@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useLiveRefresh from '../../lib/liveRefresh';
 import { supabase } from '../../lib/supabaseClient';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
-import { useDashboardData, getTasksForGroup, getTaskSubmissions, saveTaskSubmission } from '../../context/DashboardDataContext';
+import { useDashboardData, getTasksForGroup, getTaskSubmissions, saveTaskSubmission, MAX_TASK_PHOTOS, manyPhotosSupported } from '../../context/DashboardDataContext';
 import { compressImage, fmtBytes, imageMime, IMAGE_ACCEPT } from '../../lib/imageCompress';
 import { fmtDate as fmtDateL, currentLang } from '../../lib/dateLocale';
 import PageStyle from '../../components/PageStyle';
 import Loader from '../../components/Loader';
+import PhotoLightbox from '../../components/PhotoLightbox';
 import tasksCss from './tasks.css?inline';
 
 const svgp = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
@@ -38,18 +39,21 @@ function stateOf(task, sub) {
   return 'todo';
 }
 
-function useSignedUrl(path, enabled) {
-  const [url, setUrl] = useState(null);
+/** Signed links (1 h) for several stored photos at once: { path -> url } */
+function useSignedUrls(paths, enabled) {
+  const [urls, setUrls] = useState({});
+  const key = (paths || []).join('|');
   useEffect(() => {
     let off = false;
-    setUrl(null);
-    if (!enabled || !path) return undefined;
-    supabase.storage.from('task-submissions').createSignedUrl(path, 3600).then(({ data }) => { if (!off && data) setUrl(data.signedUrl); }).catch(() => {});
+    setUrls({});
+    if (!enabled || !key) return undefined;
+    supabase.storage.from('task-submissions').createSignedUrls(key.split('|'), 3600)
+      .then(({ data }) => { if (!off && data) setUrls(Object.fromEntries(data.filter((x) => x.signedUrl).map((x) => [x.path, x.signedUrl]))); })
+      .catch(() => {});
     return () => { off = true; };
-  }, [path, enabled]);
-  return url;
+  }, [key, enabled]);
+  return urls;
 }
-
 function DueText({ task, t }) {
   const left = daysUntil(task.due);
   const date = task.due ? fmtDateL(task.due + 'T00:00:00', currentLang(), { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
@@ -61,75 +65,101 @@ function DueText({ task, t }) {
   return <span className="tk2-due">{IC.cal}<b>{date}</b>{rel && <em>{rel}</em>}</span>;
 }
 
-/** Upload area for PHOTOS ONLY: click, drop, or take a picture. Any image format is accepted; big photos are shrunk before upload. */
-function DropZone({ file, preview, onPreviewError, onPick, onClear, busy, t }) {
+/** Photo picker (PHOTOS ONLY, any image format): thumbnails of the chosen photos, a tile to add more (up to `max`), click / drop / camera. */
+function PhotoPicker({ items, max, onPick, onRemove, onPreviewError, busy, t }) {
   const inp = useRef(null);
   const [over, setOver] = useState(false);
-  const take = (f) => { if (f) onPick(f); };
-  if (file) {
+  const take = (list) => { if (list && list.length) onPick(Array.from(list)); };
+  const open = () => { if (inp.current) inp.current.click(); };
+  const input = <input ref={inp} type="file" accept={IMAGE_ACCEPT} multiple={max > 1} hidden onChange={(e) => { take(e.target.files); e.target.value = ''; }} />;
+  if (items.length === 0) {
     return (
-      <div className="tk2-picked">
-        {preview ? <img src={preview} alt="" className="tk2-thumb" onError={onPreviewError} /> : <span className="tk2-fileico">{IC.img}</span>}
-        <div className="tk2-pickedtxt"><b dir="auto">{file.name}</b><span>{fmtBytes(file.size)}</span></div>
-        {!busy && <button type="button" className="tk2-iconbtn" onClick={onClear} aria-label={t('Remove')}>{IC.x}</button>}
+      <div className={'tk2-drop' + (over ? ' over' : '')} role="button" tabIndex={0} onClick={open}
+           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}
+           onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+           onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
+        {IC.upload}
+        <b>{max > 1 ? t('Tap to add photos') : t('Tap to add a photo')}</b>
+        <span>{max > 1 ? t('Photos only (JPG, PNG, HEIC and more) · up to {n} photos').replace('{n}', max) : t('Photos only (JPG, PNG, HEIC and more) · up to 20 MB')}</span>
+        {input}
       </div>
     );
   }
   return (
-    <div className={'tk2-drop' + (over ? ' over' : '')} role="button" tabIndex={0}
-         onClick={() => inp.current && inp.current.click()}
-         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.current && inp.current.click(); } }}
-         onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
-         onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files && e.dataTransfer.files[0]); }}>
-      {IC.upload}
-      <b>{t('Tap to add a photo')}</b>
-      <span>{t('Photos only (JPG, PNG, HEIC and more) · up to 20 MB')}</span>
-      <input ref={inp} type="file" accept={IMAGE_ACCEPT} hidden onChange={(e) => { take(e.target.files && e.target.files[0]); e.target.value = ''; }} />
+    <div className="tk2-pickwrap" onDragOver={(e) => { e.preventDefault(); }} onDrop={(e) => { e.preventDefault(); take(e.dataTransfer.files); }}>
+      <div className="tk2-grid">
+        {items.map((it, i) => (
+          <div className="tk2-pic" key={it.key}>
+            {it.preview ? <img src={it.preview} alt="" onError={() => onPreviewError(it.key)} /> : <span className="tk2-fileico">{IC.img}</span>}
+            <span className="tk2-picsize">{fmtBytes(it.file.size)}</span>
+            {!busy && <button type="button" className="tk2-picx" onClick={() => onRemove(i)} aria-label={t('Remove')}>{IC.x}</button>}
+          </div>
+        ))}
+        {items.length < max && !busy && (
+          <button type="button" className="tk2-add" onClick={open}>{IC.upload}<span>{t('Add photo')}</span></button>
+        )}
+      </div>
+      {max > 1 && <div className="tk2-cnt">{items.length} / {max}</div>}
+      {input}
     </div>
   );
 }
 
-function TaskCard({ task, submission, onSubmitted, t, toast }) {
+function TaskCard({ task, submission, onSubmitted, t, toast, max }) {
   const { user } = useDashboardData();
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [items, setItems] = useState([]);                    // [{ key, file, preview }]
+  const [badKeys, setBadKeys] = useState({});                // photos the browser cannot draw (HEIC outside Safari) -> icon
   const [busy, setBusy] = useState(false);
   const [replacing, setReplacing] = useState(false);
   const [err, setErr] = useState('');
-  const [badPrev, setBadPrev] = useState(false);          // the browser cannot draw this photo (e.g. HEIC outside Safari): show an icon instead
-  const [badSigned, setBadSigned] = useState(false);
+  const [badSigned, setBadSigned] = useState({});
+  const [light, setLight] = useState(null);                // index of the photo open in the viewer (it opens on this page, not in a new tab)
+  const seq = useRef(0);
 
   const st = stateOf(task, submission);
-  const removed = !!submission && !submission.filePath;       // the file was cleaned up after 2 months
-  const isImg = !!submission && /\.(jpe?g|jfif|png|webp|gif|avif|bmp)$/i.test(submission.fileName || '');   // formats every browser can draw (HEIC shows a picture icon)
-  const signed = useSignedUrl(submission && submission.filePath, !!submission && !removed && isImg);
+  const files = (submission && submission.files) || [];
+  const removed = !!submission && files.length === 0;        // the photos were cleaned up after 2 months
+  const drawable = (n) => /\.(jpe?g|jfif|png|webp|gif|avif|bmp)$/i.test(n || '');   // formats every browser can draw
+  const urls = useSignedUrls(files.map((x) => x.path), !!submission && !removed);
+  const viewable = files.filter((fl) => urls[fl.path] && drawable(fl.name) && !badSigned[fl.path]).map((fl) => ({ path: fl.path, url: urls[fl.path], name: fl.name }));
   const late = !!submission && !!task.due && new Date(submission.submittedAt) > new Date(task.due + 'T23:59:59');
   const canChange = !!submission && !submission.gradedAt;
   const showPicker = !submission || replacing;
 
-  useEffect(() => {
-    setBadPrev(false);
-    if (!file || !imageMime(file)) { setPreview(null); return undefined; }
-    const u = URL.createObjectURL(file);
-    setPreview(u);
-    return () => URL.revokeObjectURL(u);
-  }, [file]);
+  // free the preview links of removed / replaced photos
+  const itemsRef = useRef([]);
+  itemsRef.current = items;
+  useEffect(() => () => { itemsRef.current.forEach((it) => { if (it.preview) URL.revokeObjectURL(it.preview); }); }, []);
 
-  async function pick(f) {
+  async function pick(list) {
     setErr('');
-    if (!imageMime(f)) { setErr(t('Only photos can be uploaded. Choose an image file.')); return; }
-    if (f.size > MAX_BYTES * 2) { setErr(t('The file is too large (max 20 MB).')); return; }
-    const small = await compressImage(f);
-    if (small.size > MAX_BYTES) { setErr(t('The file is too large (max 20 MB).')); return; }
-    setFile(small);
+    const room = max - items.length;
+    const next = [];
+    let msg = '';
+    for (const f of list) {
+      if (next.length >= room) { msg = t('You can add up to {n} photos.').replace('{n}', max); break; }
+      if (!imageMime(f)) { msg = t('Only photos can be uploaded. Choose an image file.'); continue; }
+      if (f.size > MAX_BYTES * 2) { msg = t('The file is too large (max 20 MB).'); continue; }
+      const small = await compressImage(f);
+      if (small.size > MAX_BYTES) { msg = t('The file is too large (max 20 MB).'); continue; }
+      seq.current += 1;
+      next.push({ key: 'p' + seq.current, file: small, preview: URL.createObjectURL(small) });
+    }
+    if (next.length) setItems((cur) => [...cur, ...next].slice(0, max));
+    if (msg) setErr(msg);
   }
+  function removeAt(i) {
+    setItems((cur) => { const it = cur[i]; if (it && it.preview) URL.revokeObjectURL(it.preview); return cur.filter((_, k) => k !== i); });
+    setErr('');
+  }
+  function clearAll() { items.forEach((it) => { if (it.preview) URL.revokeObjectURL(it.preview); }); setItems([]); }
 
   async function submit() {
-    if (!file) return;
+    if (!items.length) return;
     setBusy(true); setErr('');
-    const res = await saveTaskSubmission(user && user.id, task.id, file);
+    const res = await saveTaskSubmission(user && user.id, task.id, items.map((it) => it.file));
     setBusy(false);
-    if (res.ok) { setFile(null); setReplacing(false); toast && toast(t('Your work was submitted.')); onSubmitted(); }
+    if (res.ok) { clearAll(); setReplacing(false); toast && toast(t('Your work was submitted.')); onSubmitted(); }
     else setErr(res.error === 'NOT_AN_IMAGE' || /mime|type/i.test(String(res.error || '')) ? t('Only photos can be uploaded. Choose an image file.') : t('Could not upload. Check your connection and try again.'));
   }
 
@@ -156,11 +186,19 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
           {removed ? (
             <div className="tk2-removed">{IC.file}<span>{t('The file was removed automatically after 2 months.')}</span></div>
           ) : (
-            <div className="tk2-subfile">
-              {signed && isImg && !badSigned ? <a href={signed} target="_blank" rel="noopener noreferrer"><img src={signed} alt="" className="tk2-thumb big" onError={() => setBadSigned(true)} /></a> : <span className="tk2-fileico">{IC.img}</span>}
-              <div className="tk2-pickedtxt"><b dir="auto">{submission.fileName}</b>
+            <>
+              <div className="tk2-grid sent">
+                {files.map((fl) => {
+                  const url = urls[fl.path];
+                  const ok = url && drawable(fl.name) && !badSigned[fl.path];
+                  return ok
+                    ? <button type="button" className="tk2-pic" key={fl.path} onClick={() => setLight(viewable.findIndex((v) => v.path === fl.path))} title={t('View')}><img src={url} alt="" onError={() => setBadSigned((m) => ({ ...m, [fl.path]: true }))} /></button>
+                    : <span className="tk2-pic" key={fl.path}><span className="tk2-fileico">{IC.img}</span></span>;
+                })}
+              </div>
+              <div className="tk2-pickedtxt"><b dir="auto">{files.length > 1 ? t('{n} photos').replace('{n}', files.length) : (files[0] && files[0].name)}</b>
                 <span>{t('Submitted')} · {fmtDateL(submission.submittedAt, currentLang(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div>
-            </div>
+            </>
           )}
           {submission.gradedAt && (
             <div className="tk2-grade">
@@ -168,26 +206,27 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
               {submission.feedback ? <div className="tk2-fb">{IC.msg}<p dir="auto">{submission.feedback}</p></div> : null}
             </div>
           )}
-          {canChange && <button type="button" className="tk2-link" onClick={() => setReplacing(true)}>{t('Replace the file')}</button>}
+          {canChange && <button type="button" className="tk2-link" onClick={() => setReplacing(true)}>{max > 1 ? t('Replace the photos') : t('Replace the file')}</button>}
         </div>
       )}
 
       {showPicker && (
         <div className="tk2-upload">
-          <DropZone file={file} preview={badPrev ? null : preview} onPreviewError={() => setBadPrev(true)} onPick={pick} onClear={() => setFile(null)} busy={busy} t={t} />
+          <PhotoPicker items={items.map((it) => ({ ...it, preview: badKeys[it.key] ? null : it.preview }))} max={max} onPick={pick} onRemove={removeAt}
+                       onPreviewError={(k) => setBadKeys((m) => ({ ...m, [k]: true }))} busy={busy} t={t} />
           {err ? <p className="tk2-err" role="alert">{err}</p> : null}
           <div className="tk2-actions">
-            {replacing && <button type="button" className="tk2-ghost" disabled={busy} onClick={() => { setReplacing(false); setFile(null); setErr(''); }}>{t('Cancel')}</button>}
-            <button type="button" className="tk2-primary" disabled={!file || busy} onClick={submit}>
+            {replacing && <button type="button" className="tk2-ghost" disabled={busy} onClick={() => { setReplacing(false); clearAll(); setErr(''); }}>{t('Cancel')}</button>}
+            <button type="button" className="tk2-primary" disabled={!items.length || busy} onClick={submit}>
               {busy ? t('Uploading…') : replacing ? t('Replace') : t('Submit')}
             </button>
           </div>
         </div>
       )}
+      <PhotoLightbox photos={viewable} index={light} onIndex={setLight} onClose={() => setLight(null)} labels={{ close: t('Close'), prev: t('Previous'), next: t('Next') }} />
     </article>
   );
 }
-
 const FILTERS = ['all', 'todo', 'submitted', 'overdue'];
 
 /** Tasks (homework): cards with a clear status, photo / file upload, and the teacher's grade + comment. */
@@ -199,12 +238,14 @@ export default function TasksView() {
   const [submissions, setSubmissions] = useState({});
   const [filter, setFilter] = useState('all');
   const [note, setNote] = useState('');
+  const [maxPhotos, setMaxPhotos] = useState(1);            // 5 once the database column for extra photos exists, else 1 (as before)
 
   const reload = useCallback(async () => {
     if (!joined) return;
     const [rows, subs] = await Promise.all([getTasksForGroup(groupCode), getTaskSubmissions(user && user.id)]);
     setTasks(rows);
     setSubmissions(subs);
+    setMaxPhotos(manyPhotosSupported() ? MAX_TASK_PHOTOS : 1);
   }, [joined, groupCode, user]);
 
   useEffect(() => {
@@ -265,7 +306,7 @@ export default function TasksView() {
           </div>
           <div className="tk2-list" id="tasksList">
             {view.shown.length === 0 ? <div className="tk2-empty small"><p>{t('Nothing here.')}</p></div>
-              : view.shown.map(({ task, sub }) => <TaskCard key={task.id} task={task} submission={sub} onSubmitted={reload} t={t} toast={setNote} />)}
+              : view.shown.map(({ task, sub }) => <TaskCard key={task.id} task={task} submission={sub} onSubmitted={reload} t={t} toast={setNote} max={maxPhotos} />)}
           </div>
           <p className="tk2-keep">{t('Uploaded files are kept for 2 months, then deleted automatically. Your grades stay.')}</p>
         </>

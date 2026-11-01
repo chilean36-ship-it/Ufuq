@@ -6,6 +6,7 @@ import { EditIcon, Modal, TrashIcon } from '../../components/panel/ui';
 import { fmtDate, todayStr } from '../../lib/panelUtils';
 import PageStyle from '../../components/PageStyle';
 import Loader from '../../components/Loader';
+import PhotoLightbox from '../../components/PhotoLightbox';
 import tasksCss from './tasks-teacher.css?inline';
 
 import { fmtDate as fmtDateL, fmtDateTime as fmtDateTimeL, currentLang } from '../../lib/dateLocale';
@@ -20,6 +21,8 @@ const IC = {
   users: <svg {...svgp}><circle cx="9" cy="8" r="3.2" /><path d="M3 19c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5" /><circle cx="17" cy="9" r="2.4" /><path d="M16.5 14c2.6 0 4.5 1.8 4.5 4.5" /></svg>,
 };
 
+/** All the photos of one submission: the first in file_path / file_name, the others in extra_files (jsonb, up to 4 more). [] when they were cleaned up. */
+const filesOf = (s) => (s && s.file_path ? [{ path: s.file_path, name: s.file_name }, ...((Array.isArray(s.extra_files) ? s.extra_files : []).filter((x) => x && x.path).map((x) => ({ path: x.path, name: x.name || '' })))] : []);
 const IMG_RE = /\.(jpe?g|jfif|png|webp|gif|avif|bmp)$/i;   // formats every browser can draw; HEIC photos get a picture icon + the download button
 
 export default function TasksPage() {
@@ -204,6 +207,7 @@ function SubmissionsModal({ state, onClose, onChanged }) {
   const [draft, setDraft] = useState({});   // id -> { grade, feedback }
   const [saving, setSaving] = useState(null);
   const [urls, setUrls] = useState({});     // file_path -> signed url (images only)
+  const [light, setLight] = useState(null);  // { photos: [{ url, name, path }], index } = the photo viewer that opens on this page
 
   useEffect(() => {
     if (!state.open || !task) return undefined;
@@ -223,7 +227,7 @@ function SubmissionsModal({ state, onClose, onChanged }) {
       const missing = (memRes.data || []).filter((m) => !doneIds.has(m.user_id));
       setData({ rows, missing });
       setDraft(Object.fromEntries(rows.map((s) => [s.id, { grade: s.grade || '', feedback: s.feedback || '' }])));
-      const imgPaths = rows.filter((r) => r.file_path && IMG_RE.test(r.file_name || '')).map((r) => r.file_path);
+      const imgPaths = rows.flatMap((r) => filesOf(r)).filter((x) => IMG_RE.test(x.name || '')).map((x) => x.path);
       if (imgPaths.length) {
         const { data: signed } = await supabase.storage.from('task-submissions').createSignedUrls(imgPaths, 3600);
         if (!cancelled && signed) setUrls(Object.fromEntries(signed.filter((x) => x.signedUrl).map((x) => [x.path, x.signedUrl])));
@@ -232,11 +236,17 @@ function SubmissionsModal({ state, onClose, onChanged }) {
     return () => { cancelled = true; };
   }, [state.open, task]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function download(path) {
-    const { data: d, error } = await supabase.storage.from('task-submissions').createSignedUrl(path, 300);
+  // A photo the browser cannot draw (HEIC) and the viewer's Download button: the file is sent as an attachment, the page stays where it is.
+  async function download(path, name) {
+    const { data: d, error } = await supabase.storage.from('task-submissions').createSignedUrl(path, 300, { download: name || true });
     if (error) { toast(error.message, 'err'); return; }
-    window.open(d.signedUrl, '_blank', 'noopener,noreferrer');
+    const a = document.createElement('a'); a.href = d.signedUrl; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
   }
+  const openPhoto = (row, path) => {
+    const list = filesOf(row).filter((x) => urls[x.path]).map((x) => ({ url: urls[x.path], name: x.name, path: x.path }));
+    const i = list.findIndex((x) => x.path === path);
+    if (i >= 0) setLight({ photos: list, index: i });
+  };
 
   async function saveGrade(id) {
     const d = draft[id] || { grade: '', feedback: '' };
@@ -276,9 +286,12 @@ function SubmissionsModal({ state, onClose, onChanged }) {
                   return (
                     <div className={'tt-sub' + (s.graded_at ? ' graded' : '')} key={s.id}>
                       <div className="tt-sub-file">
-                        {removed ? <span className="tt-fileico off">{IC.file}</span>
-                          : urls[s.file_path] ? <a href={urls[s.file_path]} target="_blank" rel="noopener noreferrer"><img className="tt-thumb" src={urls[s.file_path]} alt="" onError={(e) => { e.currentTarget.closest('a').replaceWith(Object.assign(document.createElement('span'), { className: 'tt-fileico', textContent: '\u{1F5BC}' })); }} /></a>
-                          : <span className="tt-fileico">{IC.file}</span>}
+                        {removed ? <span className="tt-fileico off">{IC.file}</span> : (
+                          <div className="tt-photos">
+                            {filesOf(s).map((x) => (urls[x.path]
+                              ? <button type="button" key={x.path} className="tt-ph" onClick={() => openPhoto(s, x.path)} title={t('View')}><img src={urls[x.path]} alt="" onError={(e) => { e.currentTarget.parentElement.replaceWith(Object.assign(document.createElement('span'), { className: 'tt-fileico', textContent: '\u{1F5BC}' })); }} /></button>
+                              : <button type="button" key={x.path} className="tt-ph file" onClick={() => download(x.path, x.name)} title={t('Download')}>{IC.file}</button>))}
+                          </div>)}
                       </div>
                       <div className="tt-sub-body">
                         <div className="tt-sub-head">
@@ -287,7 +300,7 @@ function SubmissionsModal({ state, onClose, onChanged }) {
                           {late && <span className="u-pill amber">{t('Late')}</span>}
                           {s.graded_at && <span className="u-pill gold">{t('Graded')}</span>}
                         </div>
-                        <div className="tt-sub-name" dir="auto">{removed ? t('File removed (older than 2 months)') : (s.file_name || '—')}</div>
+                        <div className="tt-sub-name" dir="auto">{removed ? t('File removed (older than 2 months)') : (filesOf(s).length > 1 ? t('{n} photos').replace('{n}', filesOf(s).length) : (s.file_name || '—'))}</div>
                         <div className="tt-grade-row">
                           <input className="grade-input" aria-label={t('Grade')} placeholder={t('Grade') + ' (5 / A / 85)'} value={draft[s.id] ? draft[s.id].grade : ''} onChange={(e) => setD(s.id, 'grade', e.target.value)} />
                           <input className="grade-fb" aria-label={t('Feedback')} placeholder={t('Feedback')} value={draft[s.id] ? draft[s.id].feedback : ''} onChange={(e) => setD(s.id, 'feedback', e.target.value)} />
@@ -295,7 +308,6 @@ function SubmissionsModal({ state, onClose, onChanged }) {
                       </div>
                       <div className="tt-sub-actions">
                         <button className="btn btn-gold btn-sm" disabled={saving === s.id} onClick={() => saveGrade(s.id)}>{t('Save')}</button>
-                        {!removed && <button className="btn btn-ghost btn-sm" onClick={() => download(s.file_path)} title={t('Download')}>{IC.dl}</button>}
                       </div>
                     </div>
                   );
@@ -310,6 +322,8 @@ function SubmissionsModal({ state, onClose, onChanged }) {
             )}
           </>
         )}
+      <PhotoLightbox photos={light ? light.photos : null} index={light ? light.index : null} onIndex={(i) => setLight((l) => (l ? { ...l, index: i } : l))} onClose={() => setLight(null)}
+                     onDownload={(p) => download(p.path, p.name)} labels={{ close: t('Close'), prev: t('Previous'), next: t('Next'), download: t('Download') }} />
     </Modal>
   );
 }

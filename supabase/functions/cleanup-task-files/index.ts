@@ -37,18 +37,24 @@ Deno.serve(async (req: Request) => {
   const cutoff = new Date(Date.now() - KEEP_DAYS * 86_400_000);
   const stats = { dry, cutoff: cutoff.toISOString(), rows: 0, removedFiles: 0, orphanFiles: 0, errors: [] as string[] };
 
+  let withExtra = true;   // false once we learn that the extra_files column does not exist yet
   // 1) submissions older than the cutoff
   for (let guard = 0; guard < 50; guard++) {
-    const { data, error } = await db.from("task_submissions").select("id, file_path").lt("submitted_at", cutoff.toISOString()).neq("file_path", "").limit(PAGE);
+    let res = await db.from("task_submissions").select(withExtra ? "id, file_path, extra_files" : "id, file_path").lt("submitted_at", cutoff.toISOString()).neq("file_path", "").limit(PAGE);
+    if (res.error && /extra_files/i.test(res.error.message || "")) {   // the column for extra photos does not exist yet (migration 20261125)
+      withExtra = false;
+      res = await db.from("task_submissions").select("id, file_path").lt("submitted_at", cutoff.toISOString()).neq("file_path", "").limit(PAGE);
+    }
+    const { data, error } = res;
     if (error) { stats.errors.push("rows: " + error.message); break; }
     if (!data || data.length === 0) break;
     stats.rows += data.length;
     if (dry) break;
-    const paths = data.map((r: { file_path: string }) => r.file_path);
+    const paths = data.flatMap((r: { file_path: string; extra_files?: Array<{ path?: string }> }) => [r.file_path, ...((Array.isArray(r.extra_files) ? r.extra_files : []).map((x) => String((x && x.path) || "")).filter(Boolean))]);
     const rm = await db.storage.from(BUCKET).remove(paths);
     if (rm.error) { stats.errors.push("remove: " + rm.error.message); break; }
     stats.removedFiles += (rm.data || []).length;
-    const { error: upErr } = await db.from("task_submissions").update({ file_path: "" }).in("id", data.map((r: { id: string }) => r.id));
+    const { error: upErr } = await db.from("task_submissions").update(withExtra ? { file_path: "", extra_files: [] } : { file_path: "" }).in("id", data.map((r: { id: string }) => r.id));
     if (upErr) { stats.errors.push("update: " + upErr.message); break; }
     if (stats.removedFiles >= MAX_FILES) break;
   }

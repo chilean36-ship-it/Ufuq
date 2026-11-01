@@ -226,15 +226,30 @@ export async function getTasksForGroup(code) {
   }
 }
 
+// A homework submission may hold up to MAX_TASK_PHOTOS photos: the first one in file_path / file_name, the others in the jsonb column
+// extra_files (migration 20261125). Until that migration is applied the column does not exist; this is detected on the first read and
+// the page then accepts ONE photo, exactly as before.
+export const MAX_TASK_PHOTOS = 5;
+let EXTRA_FILES_OK = null;   // null = not known yet, true / false after the first read
+export const manyPhotosSupported = () => EXTRA_FILES_OK !== false;
+
 export async function getTaskSubmissions(userId) {
   if (!userId) return {};
   try {
-    const { data, error } = await supabase
-      .from('task_submissions').select('task_id, file_name, file_path, submitted_at, grade, feedback, graded_at').eq('user_id', userId);
-    if (error) throw error;
+    const cols = 'task_id, file_name, file_path, submitted_at, grade, feedback, graded_at';
+    let res = await supabase.from('task_submissions').select(cols + ', extra_files').eq('user_id', userId);
+    if (res.error && /extra_files/i.test(res.error.message || '')) {
+      EXTRA_FILES_OK = false;
+      res = await supabase.from('task_submissions').select(cols).eq('user_id', userId);
+    } else if (!res.error) {
+      EXTRA_FILES_OK = true;
+    }
+    if (res.error) throw res.error;
     const map = {};
-    (data || []).forEach((s) => {
-      map[s.task_id] = { fileName: s.file_name, filePath: s.file_path, submittedAt: s.submitted_at, grade: s.grade || '', feedback: s.feedback || '', gradedAt: s.graded_at || null };
+    (res.data || []).forEach((s) => {
+      const extra = Array.isArray(s.extra_files) ? s.extra_files.filter((x) => x && x.path) : [];
+      const files = s.file_path ? [{ path: s.file_path, name: s.file_name }, ...extra.map((x) => ({ path: x.path, name: x.name || '' }))] : [];   // [] = cleaned up after 2 months
+      map[s.task_id] = { fileName: s.file_name, filePath: s.file_path, files, submittedAt: s.submitted_at, grade: s.grade || '', feedback: s.feedback || '', gradedAt: s.graded_at || null };
     });
     return map;
   } catch (err) {
@@ -242,7 +257,6 @@ export async function getTaskSubmissions(userId) {
     return {};
   }
 }
-
 export async function getAttendanceData(code, userId) {
   if (!userId) return [];
   try {
@@ -294,23 +308,35 @@ export function overallFromProgress(data) {
   return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
 }
 
-/** Uploads the file to the private "task-submissions" bucket (folder = the student's id; files older than 2 months are
- *  removed automatically by the cleanup-task-files function) and records it. Resolves { ok, error? } — never throws. */
-export async function saveTaskSubmission(userId, taskId, file) {
+/** Uploads the photos (1..MAX_TASK_PHOTOS) to the private "task-submissions" bucket (folder = the student's id; files older than 2 months
+ *  are removed automatically by the cleanup-task-files function) and records them. A new submission REPLACES the previous photos.
+ *  Resolves { ok, error? } — never throws. */
+export async function saveTaskSubmission(userId, taskId, files) {
   if (!userId) return { ok: false, error: 'NOT_SIGNED_IN' };
-  const mime = imageMime(file);                                  // homework is photos only (any image format)
-  if (!mime) return { ok: false, error: 'NOT_AN_IMAGE' };
+  const list = (Array.isArray(files) ? files : [files]).filter(Boolean).slice(0, MAX_TASK_PHOTOS);
+  if (list.length === 0) return { ok: false, error: 'NO_FILE' };
+  const mimes = list.map((f) => imageMime(f));                    // homework is photos only (any image format)
+  if (mimes.some((m) => !m)) return { ok: false, error: 'NOT_AN_IMAGE' };
+  if (list.length > 1 && EXTRA_FILES_OK === false) return { ok: false, error: 'MANY_NOT_SUPPORTED' };
   try {
-    const safe = String(file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(-80);
-    const path = `${userId}/${taskId}-${Date.now()}-${safe}`;
-    const { error: uploadError } = await supabase.storage.from('task-submissions').upload(path, file, { upsert: true, contentType: mime });
-    if (uploadError) throw uploadError;
-    const { error } = await supabase.from('task_submissions').upsert(
-      { task_id: taskId, user_id: userId, file_path: path, file_name: file.name, submitted_at: new Date().toISOString() },
-      { onConflict: 'task_id,user_id' }
-    );
+    const stamp = Date.now();
+    const uploaded = await Promise.all(list.map(async (file, i) => {
+      const safe = String(file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(-70);
+      const path = `${userId}/${taskId}-${stamp}-${i + 1}-${safe}`;
+      const { error: uploadError } = await supabase.storage.from('task-submissions').upload(path, file, { upsert: true, contentType: mimes[i] });
+      if (uploadError) throw uploadError;
+      return { path, name: file.name || 'photo' };
+    }));
+    const row = { task_id: taskId, user_id: userId, file_path: uploaded[0].path, file_name: uploaded[0].name, submitted_at: new Date().toISOString() };
+    if (EXTRA_FILES_OK !== false) row.extra_files = uploaded.slice(1);   // also clears the extras of an earlier submission
+    let { error } = await supabase.from('task_submissions').upsert(row, { onConflict: 'task_id,user_id' });
+    if (error && row.extra_files && list.length === 1 && /extra_files/i.test(error.message || '')) {   // column not there yet
+      EXTRA_FILES_OK = false;
+      delete row.extra_files;
+      ({ error } = await supabase.from('task_submissions').upsert(row, { onConflict: 'task_id,user_id' }));
+    }
     if (error) throw error;
-    return { ok: true, path };
+    return { ok: true, paths: uploaded.map((u) => u.path) };
   } catch (err) {
     console.error('Vazifani topshirishda xatolik:', err.message);
     return { ok: false, error: (err && err.message) || String(err) };

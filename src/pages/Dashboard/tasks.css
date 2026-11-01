@@ -104,3 +104,21 @@ html[data-theme="light"] .tk2{ --tk-ok:#2C8F55; --tk-warn:#B9791A; --tk-bad:#C24
   .tk2-grade{ flex-direction:column; }
 }
 @media (prefers-reduced-motion:reduce){ .tk2-card, .tk2-tab, .tk2-drop, .tk2-primary{ transition:none; } }
+
+/* several photos (up to 5): thumbnails, add tile, counter */
+.tk2-pickwrap{ display:grid; gap:8px; }
+.tk2-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:10px; }
+.tk2-grid.sent{ grid-template-columns:repeat(auto-fill,minmax(84px,96px)); }
+.tk2-pic{ position:relative; aspect-ratio:1/1; display:grid; place-items:center; padding:0; border:1px solid var(--line); border-radius:12px; background:var(--bg-3); overflow:hidden; cursor:default; }
+button.tk2-pic{ cursor:zoom-in; }
+button.tk2-pic:hover{ border-color:var(--gold); }
+.tk2-pic img{ width:100%; height:100%; object-fit:cover; display:block; }
+.tk2-pic .tk2-fileico{ background:transparent; }
+.tk2-picsize{ position:absolute; inset-inline-start:5px; bottom:5px; padding:2px 7px; border-radius:99px; background:rgba(0,0,0,.62); color:#fff; font-size:11px; }
+.tk2-picx{ position:absolute; inset-inline-end:5px; top:5px; width:26px; height:26px; display:grid; place-items:center; border:0; border-radius:50%; background:rgba(0,0,0,.66); color:#fff; cursor:pointer; }
+.tk2-picx:hover{ background:var(--tk-bad); }
+.tk2-picx svg{ width:14px; height:14px; }
+.tk2-add{ aspect-ratio:1/1; display:grid; place-content:center; justify-items:center; gap:4px; border:2px dashed var(--line); border-radius:12px; background:transparent; color:var(--text-muted); font:600 12.5px/1.2 inherit; cursor:pointer; }
+.tk2-add svg{ width:24px; height:24px; color:var(--gold); }
+.tk2-add:hover{ border-color:var(--gold); background:var(--gold-dim); color:var(--text); }
+.tk2-cnt{ font-size:12.5px; color:var(--text-muted); }
