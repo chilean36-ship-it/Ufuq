@@ -230,7 +230,7 @@ export const TEMPLATES = [
 export const LISTENING_SECTIONS = {
   1: {
     midterm: {
-      part: '', title: "السؤال الأول: الاستماع", type: 'listening',
+      part: '', title: "الاستماع: استمع إلى الصوت ثم اختر الإجابة الصحيحة", type: 'listening',
       items: [
         { text: "مِنْ أَيْنَ زَيْنَب؟", criteria: "مِنْ مِصْرَ",
           audio: "/listening/level1/midterm-m1.mp3", opts: ["مِنْ سُورِيَا","مِنْ مِصْرَ","مِنْ تُرْكِيَا"] },
@@ -245,7 +245,7 @@ export const LISTENING_SECTIONS = {
       ],
     },
     final: {
-      part: '', title: "السؤال الأول: الاستماع", type: 'listening',
+      part: '', title: "الاستماع: استمع إلى الصوت ثم اختر الإجابة الصحيحة", type: 'listening',
       items: [
         { text: "مَاذَا تَطْلُبُ المُسَافِرَةُ مِنَ الطَّعَام؟", criteria: "الدَّجَاجُ وَالخُبْز",
           audio: "/listening/level1/final-f1.mp3", opts: ["السَّمَكُ وَالأَرُزّ","الدَّجَاجُ وَالخُبْز","اللَّحْمُ وَالسَّلَطَة"] },
