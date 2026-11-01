@@ -1,0 +1,30 @@
+/* Voice message bubble — Telegram-style: round play button, thin waveform (played part is brighter), duration under it.
+   One stylesheet for every panel (student, teacher, admin); it overrides the older per-panel voice rules. */
+.gc-msg-bubble.gc-voice-bubble{
+  display:flex; align-items:center; gap:10px; box-sizing:border-box;
+  min-width:220px; max-width:100%; padding:8px 12px 8px 8px;
+}
+.gc-voice-bubble .gc-voice-play{
+  width:40px; height:40px; min-width:40px; padding:0; border:0; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;
+  background:rgba(0,0,0,.14); color:inherit; transition:background .15s ease;
+}
+.gc-voice-bubble .gc-voice-play:hover{ background:rgba(0,0,0,.24); }
+.gc-msg-row.is-mine .gc-voice-bubble .gc-voice-play{ background:rgba(255,255,255,.22); }
+.gc-msg-row.is-mine .gc-voice-bubble .gc-voice-play:hover{ background:rgba(255,255,255,.32); }
+.gc-voice-bubble .gc-voice-play svg{ width:16px; height:16px; display:block; }
+.gc-voice-bubble .gc-voice-main{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.gc-voice-bubble .gc-voice-wave{
+  display:flex; align-items:center; gap:2px; height:30px; width:100%;
+}
+.gc-voice-bubble .gc-voice-wave span{
+  flex:1 1 0; min-width:2px; height:var(--h, 40%); border-radius:2px;
+  background:currentColor; opacity:.35; transition:opacity .12s linear;
+}
+.gc-voice-bubble .gc-voice-wave span.is-played{ opacity:.95; }
+.gc-voice-bubble .gc-voice-dur{
+  font-size:11px; line-height:1; opacity:.75; font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.gc-voice-bubble.gc-voice-uploading{ opacity:.6; }
+.gc-voice-bubble.gc-voice-uploading .gc-voice-play{ cursor:default; }
+.gc-voice-bubble.gc-voice-error .gc-voice-dur{ color:#E17076; opacity:1; }

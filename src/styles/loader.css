@@ -1,0 +1,68 @@
+/* Ufuq loader (see components/Loader.jsx). Global, theme-aware, no layout side effects. */
+.ufq-loader{
+  --ufq-gold:var(--gold,#C9A24B); --ufq-gold-hi:var(--gold-bright,#E5C878);
+  --ufq-bg:var(--bg,#121212); --ufq-muted:var(--text-muted,#A8A29B);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center;
+  font-family:'Inter',system-ui,sans-serif; color:var(--ufq-muted);
+}
+.ufq-loader.is-full{
+  position:fixed; inset:0; z-index:100000;
+  background:radial-gradient(520px 320px at 50% 46%, color-mix(in srgb, var(--ufq-gold) 13%, transparent), transparent 72%), var(--ufq-bg);
+}
+.ufq-loader.is-inline{ position:relative; padding:26px 12px; gap:12px; width:100%; }
+
+.ufq-stage{ position:relative; width:var(--s); height:var(--s); display:grid; place-items:center; }
+.ufq-lg{ --s:132px; } .ufq-md{ --s:92px; } .ufq-sm{ --s:64px; } .ufq-xs{ --s:28px; }
+.ufq-loader.is-inline.ufq-xs{ display:inline-flex; width:auto; padding:0; }
+
+.ufq-glow{ position:absolute; inset:14%; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, var(--ufq-gold) 42%, transparent), transparent 68%); filter:blur(8px); animation:ufqBreathe 2.4s ease-in-out infinite; }
+
+.ufq-ring{ position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); animation:ufqSpin 2.2s linear infinite; }
+.ufq-ring circle{ fill:none; stroke-width:1.6; }
+.ufq-ring-track{ stroke:color-mix(in srgb, var(--ufq-gold) 20%, transparent); }
+.ufq-ring-arc{ stroke:var(--ufq-gold-hi); stroke-linecap:round; stroke-dasharray:26 74; filter:drop-shadow(0 0 4px color-mix(in srgb, var(--ufq-gold) 70%, transparent)); }
+
+.ufq-orbit{ position:absolute; inset:0; animation:ufqSpin 3.6s linear infinite reverse; }
+.ufq-orbit i{ position:absolute; top:-2%; left:calc(50% - 3px); width:6px; height:6px; border-radius:50%; background:var(--ufq-gold-hi); box-shadow:0 0 10px var(--ufq-gold); }
+
+/* the emblem: painted gold through the logo's own shape, a bright band sweeps over it */
+.ufq-logo{
+  position:relative; width:56%; height:56%;
+  background:linear-gradient(180deg, var(--ufq-gold-hi), var(--ufq-gold));
+  -webkit-mask:url(/assets/images/logo-mark.png) center/contain no-repeat; mask:url(/assets/images/logo-mark.png) center/contain no-repeat;
+  animation:ufqPulse 2.4s ease-in-out infinite; overflow:hidden;
+}
+.ufq-logo-shine{
+  position:absolute; inset:-10% -60%; background:linear-gradient(105deg, transparent 38%, rgba(255,255,255,.95) 50%, transparent 62%);
+  transform:translateX(-60%); animation:ufqShine 2.2s ease-in-out infinite;
+}
+
+.ufq-label{ font-size:13.5px; letter-spacing:.02em; animation:ufqFade 1.8s ease-in-out infinite; }
+.ufq-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.ufq-xs .ufq-glow, .ufq-xs .ufq-orbit{ display:none; }
+.ufq-xs .ufq-ring circle{ stroke-width:5; }
+
+@keyframes ufqSpin{ to{ transform:rotate(360deg); } }
+.ufq-ring{ animation-name:ufqSpinRing; }
+@keyframes ufqSpinRing{ from{ transform:rotate(-90deg); } to{ transform:rotate(270deg); } }
+@keyframes ufqBreathe{ 0%,100%{ opacity:.45; transform:scale(.9); } 50%{ opacity:1; transform:scale(1.08); } }
+@keyframes ufqPulse{ 0%,100%{ transform:scale(.94); opacity:.88; } 50%{ transform:scale(1.04); opacity:1; } }
+@keyframes ufqShine{ 0%{ transform:translateX(-70%); } 60%,100%{ transform:translateX(70%); } }
+@keyframes ufqFade{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+
+@media (prefers-reduced-motion:reduce){
+  .ufq-ring, .ufq-orbit, .ufq-logo-shine, .ufq-glow, .ufq-label{ animation:none !important; }
+  .ufq-logo{ animation:none; }
+}
+
+/* Old round spinners all over the site now show the emblem instead. */
+.spinner, .co-spinner, .pv-spinner, .pw-spin{
+  display:inline-block; flex:none; border:0 !important; border-radius:0 !important; animation:ufqPulse 1.4s ease-in-out infinite !important;
+  background:linear-gradient(180deg, var(--gold-bright,#E5C878), var(--gold,#C9A24B)) !important;
+  -webkit-mask:url(/assets/images/logo-mark.png) center/contain no-repeat; mask:url(/assets/images/logo-mark.png) center/contain no-repeat;
+}
+.spinner{ width:54px !important; height:54px !important; }
+.co-spinner{ width:22px !important; height:22px !important; }
+.pv-spinner{ width:28px !important; height:28px !important; background:#fff !important; }
+.pw-spin{ width:22px !important; height:22px !important; background:currentColor !important; }
+.checkout-pay-btn .co-spinner{ background:#1A1406 !important; }

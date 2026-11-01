@@ -1,0 +1,2 @@
+-- SUPERSEDED by 20261031c_exam_offline_guard_fix.sql (the original version was undone by the guard trigger).
+-- Do not run this file on its own. Run 20261031c, which contains the final, corrected function.

@@ -1,0 +1,93 @@
+/* Media — tabs, compact toolbar, dense cards/list, compact studio */
+#page-media [hidden]{ display:none !important; }
+#page-media .mx-tabs{ display:inline-flex; gap:4px; padding:4px; margin-bottom:14px; background:var(--bg-3); border:1px solid var(--line); border-radius:10px; max-width:100%; }
+#page-media .mx-tab{ display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border:0; border-radius:7px; background:transparent; color:var(--text-muted); font:600 13px/1 inherit; font-family:inherit; cursor:pointer; white-space:nowrap; transition:background .15s,color .15s; }
+#page-media .mx-tab svg{ width:16px; height:16px; }
+#page-media .mx-tab:hover{ color:var(--text); }
+#page-media .mx-tab.on{ background:var(--bg-2); color:var(--gold-bright); box-shadow:0 1px 3px rgba(0,0,0,.25); }
+#page-media .mx-tab em{ font-style:normal; font-size:11px; font-weight:700; min-width:20px; padding:2px 6px; border-radius:999px; background:var(--gold-dim); color:var(--gold-bright); text-align:center; }
+
+/* toolbar */
+#page-media .mx-library .panel-head{ display:none; }
+#page-media .mx-filters{ gap:10px; margin-bottom:10px; }
+#page-media .mx-chips{ gap:6px; }
+#page-media .mx-fchip{ padding:6px 11px; font-size:12.5px; }
+#page-media .mx-filter-row{ gap:8px; flex-wrap:nowrap; }
+#page-media .mx-search{ padding:8px 12px; font-size:13px; }
+#page-media .mx-seg-sm{ flex-wrap:nowrap; }
+#page-media .mx-view{ display:inline-flex; padding:3px; gap:2px; border:1px solid var(--line); border-radius:9px; background:var(--bg-3); }
+#page-media .mx-view button{ width:30px; height:28px; display:grid; place-items:center; border:0; border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; }
+#page-media .mx-view button svg{ width:15px; height:15px; }
+#page-media .mx-view button.on{ background:var(--gold-dim); color:var(--gold-bright); }
+
+/* sections (accordion) */
+#page-media .mx-section{ margin-top:10px; border:1px solid var(--line); border-radius:12px; background:var(--bg-2); padding:0 12px 12px; }
+#page-media .mx-section-head{ margin:0; padding:11px 0; border-bottom:0; cursor:pointer; user-select:none; }
+#page-media .mx-section-title{ font-size:14.5px; font-weight:650; gap:8px; }
+#page-media .mx-sec-chev{ display:grid; place-items:center; color:var(--text-muted); transition:transform .2s; }
+#page-media .mx-sec-chev svg{ width:14px; height:14px; }
+#page-media .mx-sec-chev.shut{ transform:rotate(-90deg); }
+#page-media .mx-section-meta{ gap:8px; font-size:11.5px; }
+#page-media .mx-folder{ display:none; }
+
+/* dense cards */
+#page-media .mx-grid{ grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr)); gap:10px; }
+#page-media .mx-card{ position:relative; border-radius:10px; }
+#page-media .mx-card:hover{ transform:none; }
+#page-media .mx-thumb{ height:92px; }
+#page-media .mx-play{ width:38px; height:38px; }
+#page-media .mx-play svg{ width:16px; height:16px; }
+#page-media .mx-body{ padding:9px 10px 4px; }
+#page-media .mx-title{ font-size:13px; -webkit-line-clamp:1; }
+#page-media .mx-desc{ display:none; }
+#page-media .mx-pills{ margin-top:6px; gap:4px; }
+#page-media .mx-pills .u-pill{ padding:2px 6px; font-size:10.5px; }
+#page-media .mx-actions{ position:absolute; top:6px; right:6px; padding:0; gap:4px; z-index:3; opacity:0; transition:opacity .15s; }
+#page-media .mx-card:hover .mx-actions, #page-media .mx-card:focus-within .mx-actions{ opacity:1; }
+@media (hover:none){ #page-media .mx-actions{ opacity:1; } }
+#page-media .mx-ib{ width:28px; height:28px; display:grid; place-items:center; border:0; border-radius:7px; background:rgba(0,0,0,.55); color:#fff; cursor:pointer; backdrop-filter:blur(4px); }
+#page-media .mx-ib svg{ width:14px; height:14px; }
+#page-media .mx-ib.play{ display:none; }
+#page-media .mx-ib.danger:hover{ background:#E5484D; }
+#page-media .mx-kind{ top:6px; left:6px; padding:2px 7px; font-size:10.5px; }
+#page-media .mx-dur{ bottom:6px; right:6px; font-size:10.5px; padding:2px 6px; }
+
+/* list view */
+#page-media .mx-grid.as-list{ grid-template-columns:1fr; gap:6px; }
+#page-media .mx-grid.as-list .mx-card{ flex-direction:row; align-items:center; gap:10px; padding:6px 8px; background:var(--bg-2); }
+#page-media .mx-grid.as-list .mx-thumb{ flex:0 0 56px; height:42px; border-radius:8px; }
+#page-media .mx-grid.as-list .mx-play{ width:26px; height:26px; }
+#page-media .mx-grid.as-list .mx-play svg{ width:11px; height:11px; margin-left:1px; }
+#page-media .mx-grid.as-list .mx-kind, #page-media .mx-grid.as-list .mx-dur, #page-media .mx-grid.as-list .mx-wave{ display:none; }
+#page-media .mx-grid.as-list .mx-body{ padding:0; min-width:0; }
+#page-media .mx-grid.as-list .mx-pills{ margin-top:3px; }
+#page-media .mx-grid.as-list .mx-actions{ position:static; opacity:1; }
+#page-media .mx-grid.as-list .mx-ib{ background:transparent; color:var(--text-muted); backdrop-filter:none; }
+#page-media .mx-grid.as-list .mx-ib.play{ display:grid; }
+#page-media .mx-grid.as-list .mx-ib:hover{ background:var(--gold-dim); color:var(--gold-bright); }
+#page-media .mx-grid.as-list .mx-ib.danger:hover{ background:rgba(229,72,77,.14); color:#E5484D; }
+
+/* upload studio */
+#page-media .mx-studio{ padding:16px; }
+#page-media .mx-drop{ display:flex; align-items:center; gap:14px; text-align:left; padding:16px 18px; }
+html[dir="rtl"] #page-media .mx-drop{ text-align:right; }
+#page-media .mx-drop-ico{ flex:0 0 42px; width:42px; height:42px; margin:0; }
+#page-media .mx-drop-ico svg{ width:20px; height:20px; }
+#page-media .mx-drop-t{ font-size:15px; font-weight:600; }
+#page-media .mx-queue{ margin-top:12px; gap:8px; }
+#page-media .mx-q{ padding:10px; }
+#page-media .mx-audience{ margin-top:14px; padding-top:14px; display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; }
+#page-media .mx-aud-label{ margin:0; }
+#page-media .mx-pick{ margin:0; flex-basis:100%; gap:6px; }
+#page-media .mx-pchip{ padding:7px 12px 7px 8px; font-size:13px; }
+#page-media .mx-hint{ margin:0; flex-basis:100%; }
+#page-media .mx-foot{ margin-top:12px; }
+@media (max-width:600px){
+  #page-media .mx-tabs{ display:flex; }
+  #page-media .mx-tab{ flex:1; justify-content:center; padding:9px 8px; }
+  #page-media .mx-filter-row{ flex-wrap:wrap; }
+  #page-media .mx-search{ flex-basis:100%; order:3; }
+  #page-media .mx-grid{ grid-template-columns:repeat(2,1fr); }
+  #page-media .mx-grid.as-list{ grid-template-columns:1fr; }
+  #page-media .mx-drop{ padding:14px; }
+}

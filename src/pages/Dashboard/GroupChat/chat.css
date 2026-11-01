@@ -1,0 +1,369 @@
+/* =====================================================================
+   Group chat — refined, compact "workspace messenger" look.
+   Loaded by <GroupChat/> itself, so student, teacher and admin pages all
+   get the same design. Selectors are scoped under .group-chat-card (or are
+   portal-level classes) and come last in the cascade, so they replace the
+   older per-page chat rules without touching them.
+   ===================================================================== */
+.group-chat-fullview{
+  --gc-radius:14px;
+  --gc-ink:#1A1406;                       /* text on gold */
+  --gc-hair:var(--line, rgba(237,234,227,.09));
+  --gc-other:var(--bg-3, #212121);
+  --gc-mine:var(--gold, #C9A24B);
+  --gc-mine-bg:#2A2414;                   /* own bubble: warm, quiet — gold stays for the send button */
+  --gc-mine-line:rgba(201,162,75,.38);
+  --gc-offset:156px;                      /* topbar + page padding: the card fills the screen exactly, so the page never scrolls */
+  max-width:1080px; margin-inline:auto; width:100%;
+}
+html[data-theme="light"] .group-chat-fullview{ --gc-other:#FFFFFF; --gc-ink:#1D1708; --gc-mine-bg:#F6ECD3; --gc-mine-line:rgba(184,134,60,.4); }
+
+/* ---------- frame ----------
+   Height is tied to the *small* viewport (svh) and capped, so the card never resizes while the mobile address bar
+   slides in/out, and it always fits under the topbar — the page itself has nothing left to scroll, only the messages do. */
+.group-chat-card.panel,
+.group-chat-card{
+  padding:0; overflow:hidden; display:flex; flex-direction:column; contain:layout style;
+  height:min(calc(100vh - var(--gc-offset)), 680px);
+  height:min(calc(100svh - var(--gc-offset)), 680px);
+  min-height:420px;
+  border-radius:14px; border:1px solid var(--gc-hair); background:var(--bg-2);
+  box-shadow:0 1px 2px rgba(0,0,0,.14), 0 10px 28px -20px rgba(0,0,0,.5);
+}
+.group-page.chat-mode .group-chat-card.group-chat-card--full{
+  height:min(calc(100vh - var(--gc-offset)), 720px);
+  height:min(calc(100svh - var(--gc-offset)), 720px);
+}
+
+/* ---------- header ---------- */
+.group-chat-card .panel-head.group-chat-full-head{
+  display:flex; align-items:center; gap:10px; min-height:56px; padding:8px 12px; margin:0;
+  background:var(--bg-2); border-bottom:1px solid var(--gc-hair);
+}
+.group-chat-card .group-chat-back-btn{ width:34px; height:34px; border:none; background:transparent; color:var(--text-muted); }
+.group-chat-card .group-chat-back-btn:hover{ background:var(--bg-3); color:var(--text); border:none; }
+.group-chat-card .gc-header-avatar{
+  width:34px; height:34px; border-radius:50%; font:600 15px 'Fraunces', serif;
+  color:var(--gold-bright); background:var(--gold-dim); box-shadow:none; border:1px solid rgba(201,162,75,.25);
+}
+.group-chat-card .gc-header-info h3{ font:600 14.5px/1.25 'Inter', sans-serif; letter-spacing:-.005em; }
+.group-chat-card .gc-header-meta{ font-size:12px; color:var(--text-muted); }
+.group-chat-card .gc-header-icon-btn{ width:34px; height:34px; border-radius:10px; border:none; }
+.group-chat-card .gc-header-icon-btn:hover,
+.group-chat-card .gc-header-icon-btn.active{ background:var(--bg-3); color:var(--text); border:none; }
+
+.group-chat-card .gc-search-bar{ padding:8px 16px; background:var(--bg-2); border-bottom:1px solid var(--gc-hair); }
+.group-chat-card .group-chat-pinned-bar{
+  padding:8px 16px; gap:10px; background:var(--bg-2); border-bottom:1px solid var(--gc-hair);
+  border-left:2px solid var(--gold); cursor:pointer;
+}
+.group-chat-card .gc-pinned-label{ font-size:10.5px; letter-spacing:.07em; }
+.group-chat-card .gc-pinned-text{ font-size:12.5px; color:var(--text-muted); }
+
+/* ---------- message area ---------- */
+.group-chat-card .group-chat-body{
+  padding:12px clamp(12px, 3vw, 22px) 14px; gap:0; background:var(--bg);
+  overscroll-behavior:contain; scroll-behavior:auto; overflow-anchor:auto;
+  scrollbar-width:thin; scrollbar-color:var(--gc-hair) transparent;
+}
+.group-chat-card .group-chat-body::-webkit-scrollbar{ width:8px; }
+.group-chat-card .group-chat-body::-webkit-scrollbar-thumb{ background:var(--gc-hair); border-radius:8px; border:2px solid transparent; background-clip:content-box; }
+.group-chat-card .gc-empty-icon{ border-radius:16px; width:56px; height:56px; }
+
+/* day + "new messages" dividers: hairline with a label */
+.group-chat-card .gc-day-sep,
+.group-chat-card .gc-unread-sep{
+  align-self:stretch; display:flex; align-items:center; gap:12px; margin:16px 0 8px; padding:0;
+  background:none; border:none; border-radius:0; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+  font:600 11px/1 'Inter', sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted);
+}
+.group-chat-card .gc-day-sep::before, .group-chat-card .gc-day-sep::after,
+.group-chat-card .gc-unread-sep::before, .group-chat-card .gc-unread-sep::after{ content:''; flex:1; height:1px; background:var(--gc-hair); }
+.group-chat-card .gc-day-sep{ position:static; }
+.group-chat-card .gc-unread-sep{ color:var(--gold-bright); }
+.group-chat-card .gc-unread-sep::before, .group-chat-card .gc-unread-sep::after{ background:rgba(201,162,75,.4); }
+
+/* rows */
+.group-chat-card .gc-msg-row{ max-width:min(74%, 520px); gap:8px; margin-top:10px; animation:none; }
+.group-chat-card .gc-msg-row.gc-grouped{ margin-top:2px; }
+@media (hover:none){ .group-chat-card .gc-msg-row{ -webkit-tap-highlight-color:transparent; } }
+@keyframes gcRowIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+.group-chat-card .gc-msg-avatar{ width:26px; height:26px; font-size:11px; font-weight:700; }
+.group-chat-card .gc-msg-avatar-gap{ width:26px; height:26px; }
+.group-chat-card .gc-msg-row.is-mine .gc-msg-avatar{ background:var(--gc-mine); color:var(--gc-ink); }
+.group-chat-card .gc-msg-name{ font-size:12px; font-weight:600; margin:0 0 3px 2px; letter-spacing:0; }
+
+/* bubbles */
+.group-chat-card .gc-msg-bubble{
+  padding:6px 10px 5px; font-size:13.5px; line-height:1.45; font-weight:400;
+  background:var(--gc-other); color:var(--text); border:1px solid var(--gc-hair);
+  border-radius:12px 12px 12px 4px; box-shadow:none;
+}
+.group-chat-card .gc-msg-row.is-mine .gc-msg-bubble{
+  background:var(--gc-mine-bg); color:var(--text); font-weight:400; border:1px solid var(--gc-mine-line);
+  border-radius:12px 12px 4px 12px; box-shadow:none;
+}
+.group-chat-card .gc-msg-bubble.gc-no-tail,
+.group-chat-card .gc-msg-row.is-mine .gc-msg-bubble.gc-no-tail{ border-radius:12px; }
+.group-chat-card .gc-bubble-meta{ margin:6px 0 -2px 12px; font-size:10.5px; gap:3px; opacity:.6; }
+.group-chat-card .gc-msg-row.is-mine .gc-bubble-meta{ color:var(--text-muted); opacity:.9; }
+.group-chat-card .gc-msg-row.gc-search-current .gc-msg-bubble{ box-shadow:0 0 0 2px var(--gold-bright); }
+
+/* read ticks: one grey-ish check = sent, two solid checks = seen */
+.group-chat-card .gc-bubble-tick{ display:inline-flex; align-items:center; opacity:.75; transition:opacity .2s ease, color .2s ease; }
+.group-chat-card .gc-bubble-tick.is-seen{ opacity:1; }
+.group-chat-card .gc-msg-row.is-mine .gc-bubble-tick.is-seen{ color:#4C9AD6; }
+.group-chat-card .gc-msg-time{ display:flex; align-items:center; gap:4px; font-size:10.5px; margin-top:3px; }
+.group-chat-card .gc-msg-time .gc-bubble-tick.is-seen{ color:#4C9AD6; }
+
+/* reply quote */
+.group-chat-card .gc-reply-quote{ padding:5px 10px; margin:0 0 3px; border-radius:10px; border-left-width:2px; }
+.group-chat-card .gc-reply-quote-name{ font-size:11.5px; font-weight:600; }
+.group-chat-card .gc-reply-quote-text{ font-size:12px; }
+
+/* attachments */
+.group-chat-card .gc-msg-bubble.gc-media-bubble{ padding:2px; border-radius:14px; background:transparent; border:1px solid var(--gc-hair); }
+.group-chat-card .gc-msg-bubble.gc-voice-bubble{ padding:7px 12px 7px 7px; }
+.group-chat-card .gc-msg-bubble.gc-file-bubble{ padding:8px 12px; border-radius:12px; }
+
+/* "⋮" trigger */
+.group-chat-card .gc-msg-more-btn{ width:24px; height:24px; border-radius:8px; }
+
+/* ---------- reactions ---------- */
+.group-chat-card .gc-reactions{ display:flex; flex-wrap:wrap; gap:4px; margin:4px 2px 0; }
+.group-chat-card .gc-msg-row.is-mine .gc-reactions{ justify-content:flex-end; }
+.group-chat-card .gc-reaction{
+  display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 8px 0 7px; border-radius:999px; cursor:pointer;
+  font:600 12px/1 'Inter', sans-serif; color:var(--text-muted);
+  background:var(--bg-2); border:1px solid var(--gc-hair); transition:background .15s ease, border-color .15s ease, transform .12s ease;
+}
+.group-chat-card .gc-reaction:hover{ background:var(--bg-3); transform:translateY(-1px); }
+.group-chat-card .gc-reaction:active{ transform:scale(.94); }
+.group-chat-card .gc-reaction.is-mine{ color:var(--gold-bright); background:var(--gold-dim); border-color:rgba(201,162,75,.5); }
+.group-chat-card .gc-reaction-emoji{ font-size:13.5px; line-height:1; }
+.group-chat-card .gc-reaction-count{ font-variant-numeric:tabular-nums; }
+
+/* menu: quick-reaction strip + refined list (portal, so not scoped) */
+.gc-msg-menu{ min-width:196px; padding:5px; border-radius:14px; border:1px solid var(--line); box-shadow:0 18px 44px -14px rgba(0,0,0,.6); }
+.gc-menu-reactions{ display:flex; justify-content:space-between; gap:2px; padding:3px 3px 6px; margin-bottom:4px; border-bottom:1px solid var(--line); }
+.gc-menu-react{
+  width:32px; height:32px; border:none; border-radius:10px; background:transparent; font-size:18px; line-height:1; cursor:pointer;
+  transition:background .12s ease, transform .14s cubic-bezier(.3,1.5,.5,1);
+}
+.gc-menu-react:hover{ background:var(--bg-3); transform:scale(1.18); }
+.gc-menu-react.is-mine{ background:var(--gold-dim); box-shadow:inset 0 0 0 1px rgba(201,162,75,.5); }
+.gc-msg-menu-item{ padding:8px 11px; border-radius:9px; font-size:13.5px; }
+
+/* ---------- delete confirmation ---------- */
+.gc-confirm-scrim{
+  position:fixed; inset:0; z-index:600; display:grid; place-items:center; padding:20px;
+  background:rgba(8,8,8,.55); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); animation:gcFade .14s ease;
+}
+.gc-confirm{
+  width:min(360px, 100%); padding:22px 22px 18px; text-align:center; border-radius:18px;
+  background:var(--bg-2); color:var(--text); border:1px solid var(--line);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.75); animation:gcPop .18s cubic-bezier(.2,.9,.25,1.1);
+}
+.gc-confirm-ico{ width:46px; height:46px; margin:0 auto 12px; border-radius:50%; display:grid; place-items:center; background:rgba(229,72,77,.14); color:#E5484D; }
+.gc-confirm h4{ margin:0 0 6px; font:600 16px/1.3 'Inter', sans-serif; }
+.gc-confirm p{ margin:0 0 18px; font-size:13px; line-height:1.5; color:var(--text-muted); }
+.gc-confirm-actions{ display:flex; gap:10px; }
+.gc-confirm-btn{
+  flex:1; height:42px; border-radius:11px; cursor:pointer; font:600 14px 'Inter', sans-serif; color:var(--text);
+  background:var(--bg-3); border:1px solid var(--line); transition:filter .15s ease, transform .12s ease, background .15s ease;
+}
+.gc-confirm-btn:hover{ filter:brightness(1.08); }
+.gc-confirm-btn:active{ transform:scale(.97); }
+.gc-confirm-btn--danger{ background:#D9484D; border-color:transparent; color:#fff; }
+@keyframes gcFade{ from{opacity:0;} to{opacity:1;} }
+@keyframes gcPop{ from{opacity:0; transform:translateY(8px) scale(.96);} to{opacity:1; transform:none;} }
+
+/* ---------- jump / toast ---------- */
+.group-chat-card .gc-jump-btn{ width:38px; height:38px; right:16px; bottom:14px; box-shadow:0 6px 18px -8px rgba(0,0,0,.6); }
+.group-chat-card .gc-toast{ border-radius:10px; padding:8px 14px; font-size:12.5px; }
+
+/* ---------- composer ---------- */
+.group-chat-card .gc-composer-bar{ padding:8px 14px; background:var(--bg-2); border-top:1px solid var(--gc-hair); border-left:2px solid var(--gold); }
+.group-chat-card .gc-footer-wrap{ background:var(--bg-2); border-top:1px solid var(--gc-hair); }
+.group-chat-card .group-chat-footer{ align-items:flex-end; gap:8px; padding:8px 12px 10px; }
+.group-chat-card .gc-input-shell{ border-radius:14px; padding:3px 4px; background:var(--bg); border:1px solid var(--gc-hair); }
+.group-chat-card .gc-input-shell:focus-within{ border-color:rgba(201,162,75,.6); box-shadow:0 0 0 3px var(--gold-dim); }
+.group-chat-card .gc-input-shell .group-chat-input,
+.group-chat-card .gc-input-shell .group-chat-input:focus{ padding:9px 6px; font:14px/1.45 'Inter', sans-serif; }
+.group-chat-card .gc-emoji-btn, .group-chat-card .gc-input-shell .gc-attach-btn{ width:34px; height:34px; border-radius:10px; }
+.group-chat-card .group-chat-send,
+.group-chat-card .gc-mic-btn{ width:38px; height:38px; border-radius:50%; }
+.group-chat-card .group-chat-send{ background:var(--gc-mine); color:var(--gc-ink); box-shadow:none; }
+.group-chat-card .group-chat-send:hover{ background:var(--gold-bright); transform:translateY(-1px); }
+.group-chat-card .gc-mic-btn{ background:var(--bg); border:1px solid var(--gc-hair); }
+.group-chat-card .gc-mic-btn:hover{ background:var(--gc-mine); color:var(--gc-ink); border-color:transparent; }
+.group-chat-card .gc-record-bar{ border-radius:14px; min-height:38px; background:var(--bg); }
+.group-chat-card .gc-emoji-panel{ border-radius:14px; box-shadow:0 18px 44px -14px rgba(0,0,0,.6); }
+
+/* ---------- small screens ---------- */
+@media (max-width:900px){
+  .group-chat-fullview{ --gc-offset:112px; }              /* compact topbar (62px) + 16px page padding on both sides … */
+  .group-chat-card.panel, .group-chat-card{ border-radius:12px; }
+  .group-page.chat-mode .group-chat-card.group-chat-card--full{ height:calc(100vh - 94px); height:calc(100svh - 94px); }
+  .group-chat-card .gc-msg-row{ max-width:88%; }
+  .group-chat-card .group-chat-body{ padding:10px 12px 12px; }
+}
+@media (prefers-reduced-motion:reduce){
+  .group-chat-card .gc-msg-row, .gc-confirm, .gc-confirm-scrim{ animation:none !important; }
+}
+
+.gc-send-failed-reason{font-weight:400;opacity:.85;word-break:break-word;}
+.gc-voice-error .gc-voice-dur{color:#E17076;}
+
+/* ==========================================================================
+   Bosqich 1 — o'lcham: ekran kengligidan to'liq foydalanish.
+   Oldin chat 820px va 680px bilan cheklangan edi; keng ekranda bo'sh joy ko'p qolardi.
+   ========================================================================== */
+.group-chat-card.panel, .group-chat-card{
+  height:min(calc(100vh - var(--gc-offset)), 760px);
+  height:min(calc(100svh - var(--gc-offset)), 760px);
+  min-height:460px;
+}
+.group-page.chat-mode .group-chat-card.group-chat-card--full{
+  height:min(calc(100vh - var(--gc-offset)), 840px);
+  height:min(calc(100svh - var(--gc-offset)), 840px);
+}
+.group-chat-card .gc-msg-row{ max-width:min(72%, 640px); }
+.group-chat-card .group-chat-body{ padding:14px clamp(14px, 3vw, 28px) 16px; }
+@media (max-width:900px){
+  .group-chat-card .gc-msg-row{ max-width:86%; }
+  .group-chat-card .group-chat-body{ padding:10px 12px 12px; }
+}
+
+/* ==========================================================================
+   Bosqich 2 — zamonaviy professional dizayn.
+   Sarlavha (profil/guruh ma'lumoti), xabarlar oqimi, kiritish maydoni va
+   tugmalar bir xil ritm, hover/focus holatlari va aniq ierarxiya bilan.
+   ========================================================================== */
+
+/* Sarlavha: guruh avatari, nomi va holat chizig'i aniq ajratilgan */
+.group-chat-card .panel-head.group-chat-full-head{
+  min-height:64px; padding:10px 14px; gap:12px;
+  background:linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+}
+.group-chat-card .gc-header-avatar{
+  width:40px; height:40px; font:600 17px/1 'Fraunces', serif;
+  background:linear-gradient(135deg, var(--gold-dim) 0%, rgba(201,162,75,.08) 100%);
+  border:1px solid rgba(201,162,75,.32);
+  position:relative;
+}
+.group-chat-card .gc-header-avatar::after{
+  content:''; position:absolute; right:-1px; bottom:-1px; width:10px; height:10px; border-radius:50%;
+  background:#6FCF97; border:2px solid var(--bg-2);
+}
+.group-chat-card .gc-header-info h3{ font:600 15px/1.25 'Inter', sans-serif; }
+.group-chat-card .gc-header-meta{ font-size:12px; color:var(--text-muted); }
+.group-chat-card .gc-header-icon-btn,
+.group-chat-card .group-chat-back-btn{ width:36px; height:36px; }
+.group-chat-card .gc-header-icon-btn:focus-visible,
+.group-chat-card .group-chat-back-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; }
+
+/* Xabarlar oqimi: bir xil vertikal ritm, yaxshi o'qiladigan matn */
+.group-chat-card .group-chat-body{ background:var(--bg); scroll-padding-bottom:16px; }
+.group-chat-card .gc-msg-row{ margin-top:12px; }
+.group-chat-card .gc-msg-row.gc-grouped{ margin-top:3px; }
+.group-chat-card .gc-msg-bubble{
+  padding:8px 12px 6px; font-size:14px; line-height:1.5;
+  transition:background .18s ease, border-color .18s ease;
+}
+.group-chat-card .gc-msg-row:not(.is-mine) .gc-msg-bubble:hover{ border-color:rgba(237,234,227,.16); }
+.group-chat-card .gc-msg-row.is-mine .gc-msg-bubble:hover{ border-color:rgba(201,162,75,.6); }
+.group-chat-card .gc-msg-time{ font-size:10.5px; color:var(--text-muted); opacity:.85; }
+.group-chat-card .gc-day-sep, .group-chat-card .gc-unread-sep{ margin:18px 0 10px; }
+
+/* Kiritish maydoni: yaxlit "pill" paneli, tugmalar bir xil o'lchamda */
+.group-chat-card .group-chat-footer{
+  align-items:center; gap:8px; padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background:var(--bg-2); border-top:1px solid var(--gc-hair);
+}
+.group-chat-card .gc-input-shell{
+  display:flex; align-items:center; gap:2px; flex:1; min-width:0;
+  border-radius:999px; padding:3px 6px 3px 4px; background:var(--bg);
+  border:1px solid var(--gc-hair); transition:border-color .18s ease, box-shadow .18s ease;
+}
+.group-chat-card .gc-input-shell:focus-within{ border-color:rgba(201,162,75,.55); box-shadow:0 0 0 3px var(--gold-dim); }
+.group-chat-card .gc-input-shell .group-chat-input{
+  flex:1; min-width:0; background:transparent; border:none; box-shadow:none; padding:9px 6px;
+  font:14px/1.4 'Inter', sans-serif;
+}
+.group-chat-card .gc-input-shell .group-chat-input::placeholder{ color:var(--text-muted); }
+.group-chat-card .gc-emoji-btn, .group-chat-card .gc-input-shell .gc-attach-btn{
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; border:none; color:var(--text-muted); cursor:pointer;
+  transition:background .15s ease, color .15s ease;
+}
+.group-chat-card .gc-emoji-btn:hover, .group-chat-card .gc-input-shell .gc-attach-btn:hover,
+.group-chat-card .gc-emoji-btn.active{ background:var(--bg-3); color:var(--text); }
+.group-chat-card .group-chat-send,
+.group-chat-card .gc-mic-btn{ width:40px; height:40px; flex-shrink:0; }
+.group-chat-card .group-chat-send:focus-visible,
+.group-chat-card .gc-mic-btn:focus-visible,
+.group-chat-card .gc-emoji-btn:focus-visible,
+.group-chat-card .gc-attach-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; }
+.group-chat-card .group-chat-send:disabled{ opacity:.45; transform:none; }
+
+/* Javob (composer) va yozib olish paneli bir xil ko'rinishda */
+.group-chat-card .gc-composer-bar{ border-radius:0; }
+.group-chat-card .gc-record-bar{ border-radius:999px; }
+
+/* Juda tor ekranlar: tugmalar barmoq uchun yetarli (kamida 40px), matn maydoni kengroq */
+@media (max-width:480px){
+  .group-chat-card .group-chat-footer{ gap:6px; padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .group-chat-card .gc-emoji-btn, .group-chat-card .gc-input-shell .gc-attach-btn{ width:34px; height:34px; }
+  .group-chat-card .group-chat-send, .group-chat-card .gc-mic-btn{ width:40px; height:40px; }
+  .group-chat-card .gc-msg-row{ max-width:90%; }
+}
+
+/* ==========================================================================
+   Bosqich 3 — mobil moslashuvchanlik (telefon).
+   Talaba va o'qituvchi panelida bir xil: chat rejimida sahifa sarlavhasi
+   yashirinadi (o'qituvchi panelidagi kabi), chat ekranni to'liq egallaydi,
+   gorizontal scroll bo'lmaydi, elementlar ustma-ust tushmaydi.
+   ========================================================================== */
+
+/* Ikkala panelda ham chat rejimida sahifa sarlavhasi yashirin — ekran chatga beriladi */
+.gp2.chat-mode .group-page-head,
+.group-page.chat-mode .group-page-head{ display:none; }
+
+.group-chat-fullview{ max-width:100%; overflow-x:hidden; min-width:0; }
+.group-chat-fullview *{ min-width:0; }
+.group-chat-card .gc-msg-col, .group-chat-card .gc-msg-bubble{ min-width:0; }
+.group-chat-card img, .group-chat-card video{ max-width:100%; height:auto; }
+
+@media (max-width:760px){
+  /* Chat kartasi ekran balandligini to'liq egallaydi (svh — manzil paneli yig'ilganda o'zgarmaydi) */
+  .group-page.chat-mode .group-chat-fullview .group-chat-card.group-chat-card--full{
+    height:calc(100vh - var(--gc-offset)); height:calc(100svh - var(--gc-offset));
+    min-height:0; border-radius:12px;
+  }
+  .group-chat-card .panel-head.group-chat-full-head{ min-height:54px; padding:8px 10px; gap:10px; }
+  .group-chat-card .gc-header-avatar{ width:36px; height:36px; font-size:15px; }
+  .group-chat-card .gc-header-info h3{ font-size:14.5px; }
+  .group-chat-card .gc-header-meta{ font-size:11.5px; }
+
+  .group-chat-card .gc-search-bar{ padding:8px 10px; gap:6px; }
+  .group-chat-card .gc-search-input{ font-size:16px; }          /* iOS zoom'ni oldini oladi */
+
+  .group-chat-card .group-chat-pinned-bar{ padding:6px 10px; }
+  .group-chat-card .gc-msg-row{ max-width:92%; }
+  .group-chat-card .group-chat-body{ padding:8px 10px 10px; }
+
+  /* Kiritish: matn 16px (iOS zoom yo'q), panel ekran kengligidan chiqmaydi */
+  .group-chat-card .gc-input-shell .group-chat-input{ font-size:16px; }
+  .group-chat-card .gc-emoji-panel{ max-width:calc(100vw - 24px); }
+  .group-chat-card .gc-jump-btn{ right:10px; bottom:10px; }
+}
+
+@media (max-width:420px){
+  .group-chat-card .gc-search-count{ display:none; }
+  .group-chat-card .gc-msg-row{ max-width:94%; }
+  .group-chat-card .gc-msg-name{ font-size:11.5px; }
+  .group-chat-card .gc-header-actions{ gap:2px; }
+}

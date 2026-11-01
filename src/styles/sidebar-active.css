@@ -1,0 +1,22 @@
+/* ============================================================================
+   UFUQ — unified sidebar «active item» design (single source of truth).
+   Reference: the Admin panel. A sidebar opts in with the class `usb` (Admin, Teacher, Student).
+   - active link : soft gold fade (left → right) + 2px gold edge bar, gold text
+   - hover       : slight nudge to the right (inactive links only)
+   - sub-link    : gold tint pill + semibold gold text
+   - collapsed   : edge bar hidden, flat gold tint
+   Tokens below can be tuned in one place for all panels.
+   ========================================================================== */
+.sidebar.usb{
+  --usb-radius:12px; --usb-sub-radius:10px; --usb-edge:2px;
+  --usb-active-bg:linear-gradient(90deg, var(--gold-dim), transparent);
+  --usb-ease:cubic-bezier(.22,1,.36,1);
+}
+body .sidebar.usb .sb-link{ position:relative; border-radius:var(--usb-radius); padding:10px 12px; font-size:14px; transition:background .16s, color .16s, transform .16s var(--usb-ease); }
+body .sidebar.usb .sb-link.active{ background:var(--usb-active-bg); color:var(--gold-bright); box-shadow:inset var(--usb-edge) 0 0 var(--gold); }
+body .sidebar.usb .sb-link:hover:not(.active){ transform:translateX(2px); }
+body .sidebar.usb .sb-sublink{ border-radius:var(--usb-sub-radius); }
+body .sidebar.usb .sb-sublink.active{ background:var(--gold-dim); }
+body .sidebar.usb.collapsed .sb-link:hover:not(.active){ transform:none; }
+body .sidebar.usb.collapsed .sb-link.active{ box-shadow:none; background:var(--gold-dim); }
+@media (prefers-reduced-motion:reduce){ body .sidebar.usb .sb-link{ transition:background .01s, color .01s; } body .sidebar.usb .sb-link:hover:not(.active){ transform:none; } }

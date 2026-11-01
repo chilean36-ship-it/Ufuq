@@ -1,0 +1,17 @@
+/* Interface preferences chosen in Settings → Appearance (see lib/uiPrefs.js). Specificity beats the page :root tokens. */
+html[data-accent="emerald"][data-theme="dark"]{--gold:#2FA37A; --gold-bright:#5FD6A6; --gold-dim:rgba(47,163,122,.15);}
+html[data-accent="emerald"][data-theme="light"]{--gold:#1E8A63; --gold-bright:#13694B; --gold-dim:rgba(30,138,99,.14);}
+html[data-accent="sky"][data-theme="dark"]{--gold:#4A90D9; --gold-bright:#7DB8F0; --gold-dim:rgba(74,144,217,.15);}
+html[data-accent="sky"][data-theme="light"]{--gold:#2F6FB5; --gold-bright:#1F5190; --gold-dim:rgba(47,111,181,.14);}
+html[data-accent="violet"][data-theme="dark"]{--gold:#8B72E0; --gold-bright:#B5A2F5; --gold-dim:rgba(139,114,224,.16);}
+html[data-accent="violet"][data-theme="light"]{--gold:#6F55C9; --gold-bright:#523BA6; --gold-dim:rgba(111,85,201,.14);}
+html[data-accent="rose"][data-theme="dark"]{--gold:#D9647A; --gold-bright:#F092A3; --gold-dim:rgba(217,100,122,.15);}
+html[data-accent="rose"][data-theme="light"]{--gold:#C24560; --gold-bright:#9C2E47; --gold-dim:rgba(194,69,96,.14);}
+
+html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-motion="reduce"] *::after{
+  animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important;
+}
+html[data-text="small"] .main .content{zoom:.93;}
+html[data-text="large"] .main .content{zoom:1.1;}
+html[data-density="compact"] .main .content{--density-gap:.82;}
+html[data-density="compact"] .panel, html[data-density="compact"] .settings-row, html[data-density="compact"] .st-row{padding-top:11px; padding-bottom:11px;}

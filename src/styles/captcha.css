@@ -1,0 +1,77 @@
+/* ==========================================================================
+   CAPTCHA bloki — sayt uslubiga mos (tokens.css o'zgaruvchilari asosida).
+   Odatda ko'rinmas; faqat Turnstile tasdiqlashni so'rasa chiqadi.
+   ========================================================================== */
+
+.cf-captcha{
+  display:block; width:100%; max-width:100%; min-width:0;
+  margin:0; padding:0; border:0; box-sizing:border-box;
+  overflow:hidden;
+}
+.cf-captcha-box{ width:100%; max-width:100%; min-width:0; min-height:0; }
+.cf-captcha-box iframe{ display:block; max-width:100%; }
+
+/* Ko'rinadigan holat: sayt kartasi ichida yengil, markazlashgan panel */
+.cf-captcha.show{
+  margin:0 0 16px;
+  padding:14px 14px 12px;
+  border:1px solid var(--line, rgba(237,234,227,.09));
+  border-radius:6px;
+  background:var(--bg-3, #212121);
+  animation:cf-captcha-in .28s ease both;
+}
+.cf-captcha.show .cf-captcha-box{
+  min-height:65px;
+  display:flex; align-items:center; justify-content:center;
+}
+
+.cf-captcha-label{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  margin:0 0 12px;
+  font-size:13px; line-height:1.45; text-align:center;
+  color:var(--text-muted, #A8A29B);
+}
+.cf-captcha-label svg{ flex:0 0 auto; color:var(--gold, #C9A24B); }
+
+.cf-captcha.err{ border-color:var(--danger, #E5484D); }
+.cf-captcha.err .cf-captcha-label{ color:var(--danger, #E5484D); }
+.cf-captcha.err .cf-captcha-label svg{ color:var(--danger, #E5484D); }
+
+.cf-captcha-retry{
+  display:block; width:100%; min-height:42px; margin-top:12px;
+  border:1px solid var(--line, rgba(237,234,227,.2));
+  border-radius:6px;
+  background:transparent; color:var(--text, #EDEAE3);
+  font:inherit; font-size:14px; font-weight:600;
+  cursor:pointer;
+  transition:border-color .2s ease, color .2s ease;
+}
+.cf-captcha-retry:hover{ border-color:var(--gold, #C9A24B); color:var(--gold-bright, #E5C878); }
+.cf-captcha-retry:focus-visible{ outline:2px solid var(--gold-bright, #E5C878); outline-offset:2px; }
+
+@keyframes cf-captcha-in{
+  from{ opacity:0; transform:translateY(-4px); }
+  to{ opacity:1; transform:none; }
+}
+@media (prefers-reduced-motion: reduce){
+  .cf-captcha.show{ animation:none; }
+  .cf-captcha-retry{ transition:none; }
+}
+
+/* Juda tor ekranlar (360px gacha): panel ichki bo'shlig'ini kamaytirish */
+@media (max-width:360px){
+  .cf-captcha.show{ padding:10px; }
+  .cf-captcha-label{ font-size:12.5px; }
+}
+
+/* Honeypot: odamga ko'rinmaydi, ekran o'qigichlarga ham yashirin */
+.hp-field{
+  position:absolute !important; inset-inline-start:-9999px; top:auto;
+  width:1px; height:1px; overflow:hidden;
+  opacity:0; pointer-events:none;
+}
+
+/* Modal ichida (auth-modal / password-modal) ortiqcha chetni olib tashlash */
+.auth-modal .cf-captcha.show,
+.password-modal .cf-captcha.show{ margin-bottom:14px; }
+.password-modal .cf-captcha.show{ margin-top:4px; }

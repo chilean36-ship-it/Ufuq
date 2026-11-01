@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Zoom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="format-detection" content="telephone=no" />
+  <style>
+    #ufuq-msg { color: #EDEAE3; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; background: #121212; }
+    #ufuq-msg.hidden { display: none; }
+    #ufuq-msg a, #ufuq-msg button { border: 1px solid #C9A24B; background: rgba(201,162,75,.14); color: #E5C878; border-radius: 3px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div id="ufuq-msg"><div id="ufuq-text">Connecting to the lesson…</div><div id="ufuq-actions"></div></div>
+
+  <!-- Zoom Meeting SDK (Client View) — rasmiy CDN usuli: bundler'siz, alohida sahifada -->
+  <script src="https://source.zoom.us/6.5.0/lib/vendor/react.min.js"></script>
+  <script src="https://source.zoom.us/6.5.0/lib/vendor/react-dom.min.js"></script>
+  <script src="https://source.zoom.us/6.5.0/lib/vendor/react-redux.min.js"></script>
+  <script src="https://source.zoom.us/6.5.0/lib/vendor/redux.min.js"></script>
+  <script src="https://source.zoom.us/6.5.0/lib/vendor/redux-thunk.min.js"></script>
+  <script src="https://source.zoom.us/6.5.0/lib/vendor/lodash.min.js"></script>
+  <script src="https://source.zoom.us/6.5.0/zoom-meeting-6.5.0.min.js"></script>
+  <script>
+  (function () {
+    var msg = document.getElementById('ufuq-msg');
+    var text = document.getElementById('ufuq-text');
+    var actions = document.getElementById('ufuq-actions');
+
+    var data = null;
+    try { data = JSON.parse(sessionStorage.getItem('ufuq_zoom') || 'null'); } catch (e) { /* noop */ }
+    // Only a same-site path is accepted as the "back" target (blocks javascript:/data:/external redirects).
+    var back = (data && typeof data.back === 'string' && /^\/(?!\/|\\)/.test(data.back)) ? data.back : '/dashboard';
+
+    function goBack() { location.replace(back); }
+    function log(x) {
+      try {
+        var l = JSON.parse(sessionStorage.getItem('ufuq_zoom_log') || '[]');
+        l.push(new Date().toISOString().slice(11, 19) + ' ' + x);
+        sessionStorage.setItem('ufuq_zoom_log', JSON.stringify(l.slice(-30)));
+      } catch (e) { /* noop */ }
+    }
+    function showInfo(title) {
+      var l = []; try { l = JSON.parse(sessionStorage.getItem('ufuq_zoom_log') || '[]'); } catch (e) { /* noop */ }
+      text.textContent = title;
+      var pre = document.createElement('pre');
+      pre.style.cssText = 'max-width:90vw;max-height:40vh;overflow:auto;text-align:left;font-size:12px;opacity:.8;white-space:pre-wrap';
+      pre.textContent = l.join('\n');
+      actions.innerHTML = '';
+      actions.appendChild(pre);
+      var b = document.createElement('button'); b.textContent = 'Back'; b.onclick = goBack;
+      actions.appendChild(b);
+      msg.className = '';
+    }
+
+    function fail(err) {
+      console.error('Zoom xatosi:', err);
+      var reason = err && (err.reason || err.errorMessage || err.message);
+      var code = err && (err.errorCode || err.code);
+      var raw = '';
+      try { raw = typeof err === 'object' ? JSON.stringify(err) : String(err); } catch (e) { /* noop */ }
+      text.textContent = reason ? reason + (code ? ' (' + code + ')' : '') : ('Could not join the lesson. ' + raw.slice(0, 250));
+      actions.innerHTML = '';
+      var retry = document.createElement('button');
+      retry.textContent = 'Try again';
+      retry.onclick = function () { location.reload(); };
+      var close = document.createElement('button');
+      close.textContent = 'Back';
+      close.onclick = goBack;
+      actions.appendChild(retry);
+      actions.appendChild(document.createTextNode(' '));
+      actions.appendChild(close);
+      if (data && data.fallbackUrl) {
+        var a = document.createElement('a');
+        a.href = data.fallbackUrl; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.textContent = 'Open in Zoom app';
+        actions.appendChild(document.createTextNode(' '));
+        actions.appendChild(a);
+      }
+      msg.className = '';
+      var root = document.getElementById('zmmtg-root');
+      if (root) root.style.display = 'none';
+    }
+
+    // Zoom darsdan chiqarib yuborgan (leaveUrl) — sababi ko'rinsin.
+    if (/[?&]left=1/.test(location.search)) { showInfo('Zoom sizni darsdan chiqardi / dars tugadi. Oxirgi holatlar:'); return; }
+    if (!data || !data.signature) { showInfo('Dars ma\'lumoti topilmadi (sahifa qayta yuklangan bo\'lishi mumkin). Dashboard\'dan Join Class ni qayta bosing.'); return; }
+    if (typeof ZoomMtg === 'undefined') { fail(new Error('Zoom kutubxonasi yuklanmadi. Internetni tekshiring.')); return; }
+
+    // Ma'lumot saqlanadi (signature 2 soat amal qiladi), shunda qayta yuklash ham ishlaydi.
+    try { sessionStorage.removeItem('ufuq_zoom_log'); } catch (e) { /* noop */ }
+    log('sahifa ochildi, SDK ' + (window.ZoomMtg ? 'bor' : 'yoq'));
+
+    var timer = setTimeout(function () { fail(new Error('Zoom javob bermadi (60 soniya).')); }, 60000);
+
+    try {
+      ZoomMtg.preLoadWasm();
+      ZoomMtg.prepareWebSDK();
+      var lng = data.lang === 'RU' ? 'ru-RU' : 'en-US';
+      ZoomMtg.inMeetingServiceListener('onMeetingStatus', function (d) { log('onMeetingStatus ' + JSON.stringify(d)); });
+      ZoomMtg.i18n.load(lng);
+      ZoomMtg.i18n.onLoad(function () {
+        ZoomMtg.init({
+          leaveUrl: '/zoom-meeting.html?left=1',
+          disableCORP: !window.crossOriginIsolated,
+          patchJsMedia: true,
+          success: function () {
+            // SDK tayyor: Zoom'ning o'z oynasi (kamera/mikrofon tekshiruvi va Join tugmasi) ko'rinsin.
+            clearTimeout(timer);
+            log('init OK');
+            msg.className = 'hidden';
+            ZoomMtg.join({
+              signature: data.signature,
+              meetingNumber: data.meetingNumber,
+              passWord: data.password || '',
+              userName: data.userName || 'Student',
+              success: function () { log('join OK'); },
+              error: function (e) { log('join error ' + JSON.stringify(e)); fail(e); }
+            });
+          },
+          error: function (e) { clearTimeout(timer); fail(e); }
+        });
+      });
+    } catch (e) { clearTimeout(timer); fail(e); }
+  })();
+  </script>
+</body>
+</html>

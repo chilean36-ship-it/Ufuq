@@ -1,0 +1,61 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Standard "app" behaviour for text selection and the mouse cursor.
+
+   RULE OF THUMB (same as any desktop app):
+   • Interface (menus, sidebar, buttons, tabs, panel titles, labels, charts, cards)  → cannot be selected/copied,
+     the cursor is a plain arrow (a hand over things that can be clicked).
+   • Content that people write or may want to copy (inputs, textareas, chat messages, AI answers,
+     table cells in the teacher/admin panels, anything marked .selectable)            → selectable, I-beam cursor.
+   • Exams are locked separately by useExamGuard (body.exam-guard-on) and always win.
+   • Public pages (landing, about, legal, checkout) keep their paragraphs selectable; only their buttons/menus are locked.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1) Everywhere: controls are never selectable, never show a text cursor */
+button, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], summary,
+a[data-href], a[role="button"], .btn, nav, .nav-links, .sb-link, .sb-sublink, label:not(.selectable) {
+  -webkit-user-select: none; user-select: none;
+}
+button, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], summary, select,
+a[data-href], label[for], input[type="checkbox"], input[type="radio"], input[type="range"], input[type="file"] {
+  cursor: pointer;
+}
+button:disabled, [aria-disabled="true"], input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; }
+img, svg, canvas { -webkit-user-drag: none; }
+
+/* 2) Signed-in apps (student cabinet, profile, teacher, admin — every page that has a .sidebar):
+      the whole interface is locked by default. user-select / cursor are inherited, so modals, the bell panel and
+      portals (which live outside .main) are covered too. */
+body:has(.sidebar) {
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+  cursor: default;
+}
+
+/* clickable things keep the hand (rules that already set their own cursor are untouched) */
+body:has(.sidebar) :is(button, [role="button"], [role="tab"], [role="switch"], summary, select, a[data-href], label[for],
+  .sb-link, .sb-sublink, .link-name, .home-panel.is-link, .notif-item, [tabindex="0"][role="link"]) {
+  cursor: pointer;
+}
+body:has(.sidebar) :is(button, [role="button"]):disabled, body:has(.sidebar) [aria-disabled="true"] { cursor: not-allowed; }
+body:has(.sidebar) .etc-box { cursor: crosshair; }
+
+/* typing fields: I-beam, selectable */
+body:has(.sidebar):not(.exam-guard-on) :is(input, textarea, [contenteditable="true"]) { -webkit-user-select: text; user-select: text; }
+body:has(.sidebar) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"]), textarea, [contenteditable="true"]) { cursor: text; }
+
+/* content people write or may want to copy: selectable again, I-beam */
+body:has(.sidebar):not(.exam-guard-on) :is(
+  .selectable, .selectable *,
+  .gc-msg-bubble, .gc-msg-bubble *,          /* group chat messages */
+  .uai-bubble, .uai-md, .uai-md *,           /* AI chat: your messages + answers */
+  td, td *,                                  /* tables (students, groups, attendance) in teacher/admin */
+  .notif-text, .notif-title                  /* notification text */
+) { -webkit-user-select: text; user-select: text; }
+body:has(.sidebar):not(.exam-guard-on) :is(.selectable, .gc-msg-bubble, .uai-bubble, .uai-md, td, .notif-text, .notif-title) { cursor: text; }
+
+/* … but buttons and links inside those zones stay controls */
+body:has(.sidebar) :is(td, .gc-msg-bubble, .uai-md, .selectable) :is(button, [role="button"], .link-name) { -webkit-user-select: none; user-select: none; cursor: pointer; }
+body:has(.sidebar) :is(td, .gc-msg-bubble, .uai-md, .selectable) a[data-href] { cursor: pointer; }
+
+/* 3) Selection colour that matches the brand */
+::selection { background: var(--gold-dim, rgba(201,162,75,.28)); color: inherit; }

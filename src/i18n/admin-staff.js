@@ -1,0 +1,44 @@
+// Strings of the Admins page (teachers, admins and their groups). Key = English text.
+const uz = {
+  'All': 'Hammasi', 'Search by name or email…': 'Ism yoki email bo‘yicha qidirish…',
+  'Teacher': 'O‘qituvchi', 'Appoint': 'Tayinlash', 'Account type': 'Hisob turi', 'Groups': 'Guruhlar', 'All groups': 'Barcha guruhlar',
+  'Teachers and admins': 'O‘qituvchilar va adminlar', 'Clear': 'Tozalash', 'Groups updated.': 'Guruhlar yangilandi.',
+  'Teacher appointed.': 'O‘qituvchi tayinlandi.', 'Account type updated.': 'Hisob turi yangilandi.',
+  'Remove teacher rights': 'O‘qituvchi huquqini olib tashlash', 'Teacher rights removed.': 'O‘qituvchi huquqi olib tashlandi.',
+  'will lose teacher access and become a regular student account. Continue?': 'o‘qituvchi huquqini yo‘qotadi va oddiy talaba hisobiga aylanadi. Davom etasizmi?',
+  'Appoint teachers and admins and choose which groups each one works with.': 'O‘qituvchi va adminlarni tayinlang va har biri qaysi guruhlar bilan ishlashini tanlang.',
+  'A main admin works with every group.': 'Asosiy admin barcha guruhlar bilan ishlaydi.',
+  'Choose the groups right after appointing: use "Groups" in the list below.': 'Tayinlagandan so‘ng guruhlarni tanlang: pastdagi ro‘yxatdagi “Guruhlar” tugmasi.',
+  'One of the groups no longer exists. Refresh and try again.': 'Guruhlardan biri endi mavjud emas. Sahifani yangilab qayta urinib ko‘ring.',
+  'Run the latest SQL migration first.': 'Avval oxirgi SQL migratsiyani ishga tushiring.', 'No admins or teachers yet.': 'Hozircha o‘qituvchi va adminlar yo‘q.',
+  'Works in the teacher panel with the groups linked to them: lessons, tasks, exams, attendance and students.': 'O‘qituvchi panelida o‘ziga biriktirilgan guruhlar bilan ishlaydi: darslar, vazifalar, imtihonlar, davomat va talabalar.',
+};
+const ru = {
+  'All': 'Все', 'Search by name or email…': 'Поиск по имени или email…',
+  'Teacher': 'Учитель', 'Appoint': 'Назначить', 'Account type': 'Тип аккаунта', 'Groups': 'Группы', 'All groups': 'Все группы',
+  'Teachers and admins': 'Учителя и админы', 'Clear': 'Очистить', 'Groups updated.': 'Группы обновлены.',
+  'Teacher appointed.': 'Учитель назначен.', 'Account type updated.': 'Тип аккаунта обновлён.',
+  'Remove teacher rights': 'Снять права учителя', 'Teacher rights removed.': 'Права учителя сняты.',
+  'will lose teacher access and become a regular student account. Continue?': 'потеряет доступ учителя и станет обычным аккаунтом студента. Продолжить?',
+  'Appoint teachers and admins and choose which groups each one works with.': 'Назначайте учителей и админов и выбирайте, с какими группами работает каждый.',
+  'A main admin works with every group.': 'Главный админ работает со всеми группами.',
+  'Choose the groups right after appointing: use "Groups" in the list below.': 'Выберите группы сразу после назначения: кнопка «Группы» в списке ниже.',
+  'One of the groups no longer exists. Refresh and try again.': 'Одной из групп больше нет. Обновите страницу и повторите.',
+  'Run the latest SQL migration first.': 'Сначала выполните последнюю SQL-миграцию.', 'No admins or teachers yet.': 'Учителей и админов пока нет.',
+  'Works in the teacher panel with the groups linked to them: lessons, tasks, exams, attendance and students.': 'Работает в панели учителя с привязанными группами: уроки, задания, экзамены, посещаемость и студенты.',
+};
+const ar = {
+  'All': 'الكل', 'Search by name or email…': 'ابحث بالاسم أو البريد…',
+  'Teacher': 'معلّم', 'Appoint': 'تعيين', 'Account type': 'نوع الحساب', 'Groups': 'المجموعات', 'All groups': 'كل المجموعات',
+  'Teachers and admins': 'المعلّمون والمشرفون', 'Clear': 'مسح', 'Groups updated.': 'تم تحديث المجموعات.',
+  'Teacher appointed.': 'تم تعيين المعلّم.', 'Account type updated.': 'تم تحديث نوع الحساب.',
+  'Remove teacher rights': 'إزالة صلاحيات المعلّم', 'Teacher rights removed.': 'تمت إزالة صلاحيات المعلّم.',
+  'will lose teacher access and become a regular student account. Continue?': 'سيفقد صلاحية المعلّم ويصبح حساب طالب عاديًا. هل تتابع؟',
+  'Appoint teachers and admins and choose which groups each one works with.': 'عيّن المعلّمين والمشرفين واختر المجموعات التي يعمل معها كل واحد.',
+  'A main admin works with every group.': 'المشرف الرئيسي يعمل مع كل المجموعات.',
+  'Choose the groups right after appointing: use "Groups" in the list below.': 'اختر المجموعات بعد التعيين مباشرة: زر «المجموعات» في القائمة أدناه.',
+  'One of the groups no longer exists. Refresh and try again.': 'إحدى المجموعات لم تعد موجودة. حدّث الصفحة وأعد المحاولة.',
+  'Run the latest SQL migration first.': 'شغّل أحدث ترحيل SQL أولًا.', 'No admins or teachers yet.': 'لا يوجد معلّمون أو مشرفون بعد.',
+  'Works in the teacher panel with the groups linked to them: lessons, tasks, exams, attendance and students.': 'يعمل في لوحة المعلّم مع المجموعات المرتبطة به: الدروس والمهام والاختبارات والحضور والطلاب.',
+};
+export default { UZ: uz, RU: ru, AR: ar, EN: {} };

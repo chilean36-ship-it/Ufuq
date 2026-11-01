@@ -1,0 +1,38 @@
+/* Landing page — calm, precise effects. Colours come from the theme tokens, so light/dark both work. */
+.fx-progress{position:fixed; top:0; left:0; right:0; height:2px; z-index:130; pointer-events:none;}
+.fx-progress i{display:block; height:100%; transform-origin:0 50%; transform:scaleX(0); background:linear-gradient(90deg,var(--gold),var(--gold-bright));}
+
+/* ---------- hero: sand-grain calligraphy (original look) ---------- */
+.fx-sand{position:absolute; left:-80px; top:-80px; width:calc(100% + 160px); height:calc(100% + 160px); z-index:3; pointer-events:none;}
+.hero-visual .calligraphy{transition:opacity .6s ease;}
+.hero-visual.fx-ready .calligraphy{opacity:0;}
+
+/* dunes under the hero */
+.fx-dunes{position:relative; height:clamp(56px,9vw,120px); overflow:hidden; pointer-events:none; line-height:0;}
+.fx-dunes.in-hero{position:absolute; left:0; right:0; bottom:0; z-index:1;}
+.fx-dunes svg{width:100%; height:100%; display:block; -webkit-mask-image:linear-gradient(to bottom,#000 45%,transparent 100%); mask-image:linear-gradient(to bottom,#000 45%,transparent 100%);}
+.fx-dunes .d path{fill:var(--gold);} .fx-dunes .d1 path{opacity:.07;} .fx-dunes .d2 path{opacity:.10;} .fx-dunes .d3 path{opacity:.15;}
+.fx-dunes .crest{fill:none !important; stroke:var(--gold); stroke-width:1.2; opacity:.55 !important; vector-effect:non-scaling-stroke; filter:drop-shadow(0 0 4px var(--gold));}
+.fx-dunes .d{animation:fxSway 16s ease-in-out infinite alternate;} .fx-dunes .d2{animation-duration:22s; animation-direction:alternate-reverse;} .fx-dunes .d3{animation-duration:28s;}
+@keyframes fxSway{from{transform:translateX(-50px);} to{transform:translateX(50px);}}
+.fx-dunes .g{fill:var(--gold-bright); animation:fxTw 3.2s ease-in-out infinite; transform-box:fill-box; transform-origin:center;}
+@keyframes fxTw{0%,100%{opacity:.1; transform:scale(.6);} 50%{opacity:1; transform:scale(1.6);}}
+@media (max-width:700px){ .fx-dunes{height:56px;} }
+
+/* headline accent: plain gold, no animation */
+.hero h1 .gold{color:var(--gold-bright);}
+
+/* section titles: one short gold rule */
+.section-head h2::after{content:''; display:block; width:44px; height:2px; margin:18px auto 0; background:var(--gold); opacity:.85;}
+.section-head[style*="left"] h2::after, .about-grid h2::after{margin-left:0;}
+
+/* buttons: stay put on hover (no magnetic movement); a soft sheen only on the main call-to-action */
+.btn-primary,.btn-ghost,.nav-cta,.btn-telegram,.btn-apply{transition:background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;}
+.btn-primary:hover, .btn-primary:focus-visible{transform:none; box-shadow:0 8px 22px -10px rgba(201,162,75,.7);}
+.btn-primary{position:relative; overflow:hidden;}
+.btn-primary::after{content:''; position:absolute; top:0; left:-60%; width:40%; height:100%; transform:skewX(-20deg); background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent); animation:fxSheen 6s ease-in-out infinite;}
+@keyframes fxSheen{0%,75%{left:-60%;} 100%{left:130%;}}
+
+@media (prefers-reduced-motion:reduce){
+  .fx-dunes .d, .fx-dunes .g, .btn-primary::after{animation:none !important;}
+}

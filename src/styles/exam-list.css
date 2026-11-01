@@ -1,0 +1,105 @@
+/* Student exam list: compact cards, three in a row on a laptop */
+.wl-grid{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; margin-top:6px;}
+@media (max-width:1100px){ .wl-grid{grid-template-columns:repeat(2, minmax(0, 1fr));} }
+@media (max-width:640px){ .wl-grid{grid-template-columns:1fr; gap:12px;} }
+.wl-card{position:relative; display:flex; flex-direction:column; gap:12px; padding:18px 18px 16px; border:1px solid var(--line); border-radius:16px; background:var(--bg-2); min-width:0; transition:transform .15s, border-color .15s, box-shadow .15s; overflow:hidden;}
+.wl-card::before{content:''; position:absolute; inset:0 0 auto 0; height:4px; background:var(--line);}
+.wl-card.new::before, .wl-card.draft::before{background:var(--gold);} .wl-card.graded::before{background:#2fa36b;} .wl-card.wait::before{background:#d49a2a;}
+.wl-card:hover{transform:translateY(-2px); border-color:var(--gold); box-shadow:0 10px 26px rgba(0,0,0,.14);}
+.wl-top{display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:30px;}
+.wl-badge{display:inline-flex; align-items:center; padding:4px 11px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:.02em; background:var(--gold-dim); color:var(--gold);}
+.wl-badge.graded{background:rgba(47,163,107,.16); color:#2fa36b;} .wl-badge.wait{background:rgba(212,154,42,.16); color:#d49a2a;}
+.wl-score{font-size:26px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums;} .wl-score small{font-size:12px; font-weight:700; color:var(--text-muted); margin-inline-start:2px;}
+.wl-score.good{color:#2fa36b;} .wl-score.mid{color:#d49a2a;} .wl-score.bad{color:#d4574a;}
+.wl-title{margin:0; font-size:18px; line-height:1.45; font-weight:700; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; min-height:2.9em;}
+.wl-meta{display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-muted); font-size:13.5px;}
+.wl-meta span{display:inline-flex; align-items:center; gap:6px;}
+.wl-act{margin-top:auto; padding-top:4px;}
+.wl-btn{width:100%; min-height:44px; border-radius:12px; border:1.5px solid var(--line); background:transparent; color:var(--text); font:inherit; font-weight:700; font-size:15px; cursor:pointer; transition:.15s;}
+.wl-btn:hover{border-color:var(--gold); color:var(--gold);}
+.wl-btn.pri{background:var(--gold); border-color:var(--gold); color:#14110a;} .wl-btn.pri:hover{filter:brightness(1.08); color:#14110a;}
+
+/* ---------- level strip + level sections (student) ---------- */
+.wl-levels{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 12px; margin:4px 0 12px; scrollbar-width:thin;}
+.wl-lvl{flex:0 0 auto; display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 14px; border-radius:999px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); font:600 13.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; transition:border-color .15s, background .15s, color .15s;}
+.wl-lvl:hover:not(:disabled){border-color:var(--gold);}
+.wl-lvl:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+.wl-lvl.on{background:var(--gold-dim); border-color:var(--gold); color:var(--gold);}
+.wl-lvl em{font-style:normal; min-width:20px; padding:1px 6px; border-radius:999px; background:var(--bg-3); border:1px solid var(--line); font-size:11.5px; font-weight:700; color:var(--text-muted); text-align:center;}
+.wl-lvl.zero{opacity:.45; cursor:default;}
+.wl-lvl.done em{background:rgba(47,163,107,.16); border-color:rgba(47,163,107,.4); color:#2fa36b;}
+.wl-sec{margin:6px 0 26px;}
+.wl-sec-head{display:flex; align-items:center; gap:12px; margin:0 0 12px;}
+.wl-sec-badge{flex:0 0 auto; display:grid; place-items:center; width:40px; height:40px; border-radius:12px; background:var(--gold-dim); color:var(--gold); font:800 17px 'Inter',sans-serif; border:1px solid var(--gold);}
+.wl-sec-badge.none{background:var(--bg-3); color:var(--text-muted); border-color:var(--line);}
+.wl-sec-title{margin:0; font-size:18px; font-weight:800; color:var(--text);}
+.wl-sec-sub{margin-top:2px; font-size:13px; color:var(--text-muted);}
+
+/* Level results card (Midterm 50 + Final 100 = 150, pass mark 75) */
+.lvr{margin:0 0 18px;}
+.lvr-h{margin:0 0 10px; font-size:15px; font-weight:800; color:var(--text);}
+.lvr-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px;}
+.lvr-card{padding:14px 16px; border-radius:14px; border:1px solid var(--line); background:var(--bg-2);}
+.lvr-card.pass{border-color:rgba(47,163,107,.5);}
+.lvr-card.fail{border-color:rgba(229,72,77,.5);}
+.lvr-top{display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--text);}
+.lvr-badge{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--bg-3); color:var(--text-muted);}
+.lvr-badge.pass{background:rgba(47,163,107,.16); color:#2fa36b;}
+.lvr-badge.fail{background:rgba(229,72,77,.14); color:#E5484D;}
+.lvr-total{margin:8px 0 6px; color:var(--text);}
+.lvr-total b{font-size:28px; font-weight:800;}
+.lvr-total small{font-size:13px; color:var(--text-muted); margin-left:4px;}
+.lvr-parts{display:flex; flex-direction:column; gap:2px; font-size:13px; color:var(--text-muted);}
+.lvr-parts b{color:var(--text);}
+.lvr-note{margin:8px 0 0; font-size:12px; color:var(--text-muted);}
+.wl-card.locked{opacity:.78;} .wl-card.locked::before{background:var(--muted, #8a8f98);} .wl-badge.locked{background:rgba(138,143,152,.16); color:var(--muted, #8a8f98);} .wl-card.locked .wl-btn{cursor:not-allowed;}
+
+
+/* =====================================================================
+   Exam list v2 — summary tiles, status filter, calmer cards, score ring
+   ===================================================================== */
+.wl-stats{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin:2px 0 16px;}
+@media (max-width:760px){ .wl-stats{grid-template-columns:repeat(2, minmax(0,1fr));} }
+.wl-stat{display:flex; flex-direction:column; gap:4px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; background:var(--bg-2);}
+.wl-stat span{font-size:12.5px; font-weight:600; color:var(--text-muted); letter-spacing:.02em;}
+.wl-stat b{font-size:26px; font-weight:800; line-height:1.1; color:var(--text); font-variant-numeric:tabular-nums;}
+.wl-stat.ok b{color:#2fa36b;} .wl-stat.warn b{color:#d49a2a;}
+
+.wl-filters{display:flex; flex-direction:column; gap:10px; margin:0 0 14px;}
+.wl-seg{display:inline-flex; align-self:flex-start; max-width:100%; overflow-x:auto; gap:4px; padding:4px; border:1px solid var(--line); border-radius:14px; background:var(--bg-2); scrollbar-width:none;}
+.wl-seg::-webkit-scrollbar{display:none;}
+.wl-segb{flex:0 0 auto; display:inline-flex; align-items:center; gap:8px; min-height:38px; padding:0 14px; border:0; border-radius:10px; background:transparent; color:var(--text-muted); font:700 14px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; transition:background .15s, color .15s;}
+.wl-segb:hover{color:var(--text);}
+.wl-segb:focus-visible{outline:2px solid var(--gold); outline-offset:1px;}
+.wl-segb.on{background:var(--gold); color:#14110a;}
+.wl-segb em{font-style:normal; min-width:20px; padding:1px 7px; border-radius:999px; background:rgba(127,127,127,.18); font-size:11.5px; font-weight:800; text-align:center;}
+.wl-segb.on em{background:rgba(20,17,10,.16);}
+.wl-filters .wl-levels{margin:0; padding:2px 2px 6px;}
+
+/* card */
+.wl-card{gap:10px; padding:16px 16px 14px;}
+.wl-card::before{height:3px;}
+.wl-card.timeup::before{background:#d4574a;} .wl-card.closed::before{background:#d4574a; opacity:.6;}
+.wl-badge.draft{background:var(--gold-dim); color:var(--gold);}
+.wl-badge.timeup, .wl-badge.closed{background:rgba(212,87,74,.14); color:#d4574a;}
+.wl-badge.new{background:var(--bg-3); color:var(--text-muted); border:1px solid var(--line);}
+.wl-kind{font-size:12px; font-weight:700; color:var(--text-muted);}
+.wl-body{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+.wl-body .wl-title{flex:1 1 auto; min-width:0; min-height:0;}
+.wl-ring{position:relative; flex:0 0 auto; width:68px; height:68px; display:grid; place-items:center; align-content:center; line-height:1.05;}
+.wl-ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg);}
+.wl-ring circle{fill:none; stroke-width:6;}
+.wl-ring .bg{stroke:var(--line);} .wl-ring .fg{stroke:var(--gold); stroke-linecap:round; transition:stroke-dasharray .6s ease;}
+.wl-ring.good .fg{stroke:#2fa36b;} .wl-ring.mid .fg{stroke:#d49a2a;} .wl-ring.bad .fg{stroke:#d4574a;}
+.wl-ring b{font-size:17px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--text);}
+.wl-ring small{font-size:10.5px; font-weight:700; color:var(--text-muted);}
+.wl-prog{display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--text-muted);}
+.wl-prog-bar{height:6px; border-radius:999px; background:var(--bg-3); overflow:hidden;}
+.wl-prog-bar i{display:block; height:100%; border-radius:inherit; background:var(--gold); transition:width .4s ease;}
+.wl-card.timeup .wl-prog-bar i{background:#d4574a;}
+.wl-when{font-size:12.5px; color:var(--text-muted);}
+.wl-btn{display:inline-flex; align-items:center; justify-content:center; gap:8px;}
+.wl-btn span{transition:transform .15s;} .wl-btn:hover span{transform:translateX(3px);}
+[dir="rtl"] .wl-btn span{transform:scaleX(-1);}
+.wl-card.graded .wl-btn.pri{background:transparent; color:#2fa36b; border-color:#2fa36b;}
+.wl-card.graded .wl-btn.pri:hover{background:#2fa36b; color:#fff;}
