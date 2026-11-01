@@ -4,6 +4,7 @@ import useLiveRefresh from '../lib/liveRefresh';
 import useLiveProfileRow from '../hooks/useLiveRefresh';
 import { getMyAccess } from '../lib/payments';
 import { supabase } from '../lib/supabaseClient';
+import { imageMime } from '../lib/imageCompress';
 import { useLiveAvatar } from '../lib/avatarSync';
 import { useAuth } from './AuthContext';
 
@@ -297,10 +298,12 @@ export function overallFromProgress(data) {
  *  removed automatically by the cleanup-task-files function) and records it. Resolves { ok, error? } — never throws. */
 export async function saveTaskSubmission(userId, taskId, file) {
   if (!userId) return { ok: false, error: 'NOT_SIGNED_IN' };
+  const mime = imageMime(file);                                  // homework is photos only (any image format)
+  if (!mime) return { ok: false, error: 'NOT_AN_IMAGE' };
   try {
-    const safe = String(file.name || 'file').replace(/[^\w.\-]+/g, '_').slice(-80);
+    const safe = String(file.name || 'photo').replace(/[^\w.\-]+/g, '_').slice(-80);
     const path = `${userId}/${taskId}-${Date.now()}-${safe}`;
-    const { error: uploadError } = await supabase.storage.from('task-submissions').upload(path, file, { upsert: true, contentType: file.type || undefined });
+    const { error: uploadError } = await supabase.storage.from('task-submissions').upload(path, file, { upsert: true, contentType: mime });
     if (uploadError) throw uploadError;
     const { error } = await supabase.from('task_submissions').upsert(
       { task_id: taskId, user_id: userId, file_path: path, file_name: file.name, submitted_at: new Date().toISOString() },

@@ -20,7 +20,7 @@ const IC = {
   users: <svg {...svgp}><circle cx="9" cy="8" r="3.2" /><path d="M3 19c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5" /><circle cx="17" cy="9" r="2.4" /><path d="M16.5 14c2.6 0 4.5 1.8 4.5 4.5" /></svg>,
 };
 
-const IMG_RE = /\.(jpe?g|png|webp|gif)$/i;
+const IMG_RE = /\.(jpe?g|jfif|png|webp|gif|avif|bmp)$/i;   // formats every browser can draw; HEIC photos get a picture icon + the download button
 
 export default function TasksPage() {
   const { t, toast, askConfirm, currentGroup: g } = usePanel();
@@ -277,7 +277,7 @@ function SubmissionsModal({ state, onClose, onChanged }) {
                     <div className={'tt-sub' + (s.graded_at ? ' graded' : '')} key={s.id}>
                       <div className="tt-sub-file">
                         {removed ? <span className="tt-fileico off">{IC.file}</span>
-                          : urls[s.file_path] ? <a href={urls[s.file_path]} target="_blank" rel="noopener noreferrer"><img className="tt-thumb" src={urls[s.file_path]} alt="" /></a>
+                          : urls[s.file_path] ? <a href={urls[s.file_path]} target="_blank" rel="noopener noreferrer"><img className="tt-thumb" src={urls[s.file_path]} alt="" onError={(e) => { e.currentTarget.closest('a').replaceWith(Object.assign(document.createElement('span'), { className: 'tt-fileico', textContent: '\u{1F5BC}' })); }} /></a>
                           : <span className="tt-fileico">{IC.file}</span>}
                       </div>
                       <div className="tt-sub-body">

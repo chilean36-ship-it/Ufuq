@@ -3,7 +3,7 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { supabase } from '../../lib/supabaseClient';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
 import { useDashboardData, getTasksForGroup, getTaskSubmissions, saveTaskSubmission } from '../../context/DashboardDataContext';
-import { compressImage, fmtBytes, isImageFile } from '../../lib/imageCompress';
+import { compressImage, fmtBytes, imageMime, IMAGE_ACCEPT } from '../../lib/imageCompress';
 import { fmtDate as fmtDateL, currentLang } from '../../lib/dateLocale';
 import PageStyle from '../../components/PageStyle';
 import Loader from '../../components/Loader';
@@ -19,9 +19,9 @@ const IC = {
   x: <svg {...svgp} strokeWidth="2.4"><path d="M18 6L6 18M6 6l12 12" /></svg>,
   clip: <svg {...svgp} strokeWidth="1.6"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>,
   msg: <svg {...svgp}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>,
+  img: <svg {...svgp}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.6" /><path d="M21 15l-5-5L5 21" /></svg>,
 };
 
-const ACCEPT = 'image/*,.pdf,.doc,.docx,.txt,.ppt,.pptx';
 const MAX_BYTES = 20 * 1024 * 1024;   // bucket limit
 
 const parseDay = (s) => (s ? new Date(s + 'T00:00:00') : null);
@@ -61,15 +61,15 @@ function DueText({ task, t }) {
   return <span className="tk2-due">{IC.cal}<b>{date}</b>{rel && <em>{rel}</em>}</span>;
 }
 
-/** Upload area: click, drop, or take a photo. Big photos are shrunk before upload. */
-function DropZone({ file, preview, onPick, onClear, busy, t }) {
+/** Upload area for PHOTOS ONLY: click, drop, or take a picture. Any image format is accepted; big photos are shrunk before upload. */
+function DropZone({ file, preview, onPreviewError, onPick, onClear, busy, t }) {
   const inp = useRef(null);
   const [over, setOver] = useState(false);
   const take = (f) => { if (f) onPick(f); };
   if (file) {
     return (
       <div className="tk2-picked">
-        {preview ? <img src={preview} alt="" className="tk2-thumb" /> : <span className="tk2-fileico">{IC.file}</span>}
+        {preview ? <img src={preview} alt="" className="tk2-thumb" onError={onPreviewError} /> : <span className="tk2-fileico">{IC.img}</span>}
         <div className="tk2-pickedtxt"><b dir="auto">{file.name}</b><span>{fmtBytes(file.size)}</span></div>
         {!busy && <button type="button" className="tk2-iconbtn" onClick={onClear} aria-label={t('Remove')}>{IC.x}</button>}
       </div>
@@ -82,9 +82,9 @@ function DropZone({ file, preview, onPick, onClear, busy, t }) {
          onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
          onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files && e.dataTransfer.files[0]); }}>
       {IC.upload}
-      <b>{t('Tap to add a photo or file')}</b>
-      <span>{t('Photo, PDF or document · up to 20 MB')}</span>
-      <input ref={inp} type="file" accept={ACCEPT} hidden onChange={(e) => { take(e.target.files && e.target.files[0]); e.target.value = ''; }} />
+      <b>{t('Tap to add a photo')}</b>
+      <span>{t('Photos only (JPG, PNG, HEIC and more) · up to 20 MB')}</span>
+      <input ref={inp} type="file" accept={IMAGE_ACCEPT} hidden onChange={(e) => { take(e.target.files && e.target.files[0]); e.target.value = ''; }} />
     </div>
   );
 }
@@ -96,17 +96,20 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
   const [busy, setBusy] = useState(false);
   const [replacing, setReplacing] = useState(false);
   const [err, setErr] = useState('');
+  const [badPrev, setBadPrev] = useState(false);          // the browser cannot draw this photo (e.g. HEIC outside Safari): show an icon instead
+  const [badSigned, setBadSigned] = useState(false);
 
   const st = stateOf(task, submission);
   const removed = !!submission && !submission.filePath;       // the file was cleaned up after 2 months
-  const isImg = !!submission && /\.(jpe?g|png|webp|gif|heic)$/i.test(submission.fileName || '');
+  const isImg = !!submission && /\.(jpe?g|jfif|png|webp|gif|avif|bmp)$/i.test(submission.fileName || '');   // formats every browser can draw (HEIC shows a picture icon)
   const signed = useSignedUrl(submission && submission.filePath, !!submission && !removed && isImg);
   const late = !!submission && !!task.due && new Date(submission.submittedAt) > new Date(task.due + 'T23:59:59');
   const canChange = !!submission && !submission.gradedAt;
   const showPicker = !submission || replacing;
 
   useEffect(() => {
-    if (!file || !isImageFile(file)) { setPreview(null); return undefined; }
+    setBadPrev(false);
+    if (!file || !imageMime(file)) { setPreview(null); return undefined; }
     const u = URL.createObjectURL(file);
     setPreview(u);
     return () => URL.revokeObjectURL(u);
@@ -114,6 +117,7 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
 
   async function pick(f) {
     setErr('');
+    if (!imageMime(f)) { setErr(t('Only photos can be uploaded. Choose an image file.')); return; }
     if (f.size > MAX_BYTES * 2) { setErr(t('The file is too large (max 20 MB).')); return; }
     const small = await compressImage(f);
     if (small.size > MAX_BYTES) { setErr(t('The file is too large (max 20 MB).')); return; }
@@ -126,7 +130,7 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
     const res = await saveTaskSubmission(user && user.id, task.id, file);
     setBusy(false);
     if (res.ok) { setFile(null); setReplacing(false); toast && toast(t('Your work was submitted.')); onSubmitted(); }
-    else setErr(t('Could not upload. Check your connection and try again.'));
+    else setErr(res.error === 'NOT_AN_IMAGE' || /mime|type/i.test(String(res.error || '')) ? t('Only photos can be uploaded. Choose an image file.') : t('Could not upload. Check your connection and try again.'));
   }
 
   const label = { graded: t('Graded'), submitted: late ? t('Submitted late') : t('Submitted'), overdue: t('Overdue'), soon: t('Due soon'), todo: t('To do') }[st];
@@ -153,7 +157,7 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
             <div className="tk2-removed">{IC.file}<span>{t('The file was removed automatically after 2 months.')}</span></div>
           ) : (
             <div className="tk2-subfile">
-              {signed && isImg ? <a href={signed} target="_blank" rel="noopener noreferrer"><img src={signed} alt="" className="tk2-thumb big" /></a> : <span className="tk2-fileico">{IC.file}</span>}
+              {signed && isImg && !badSigned ? <a href={signed} target="_blank" rel="noopener noreferrer"><img src={signed} alt="" className="tk2-thumb big" onError={() => setBadSigned(true)} /></a> : <span className="tk2-fileico">{IC.img}</span>}
               <div className="tk2-pickedtxt"><b dir="auto">{submission.fileName}</b>
                 <span>{t('Submitted')} · {fmtDateL(submission.submittedAt, currentLang(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div>
             </div>
@@ -170,7 +174,7 @@ function TaskCard({ task, submission, onSubmitted, t, toast }) {
 
       {showPicker && (
         <div className="tk2-upload">
-          <DropZone file={file} preview={preview} onPick={pick} onClear={() => setFile(null)} busy={busy} t={t} />
+          <DropZone file={file} preview={badPrev ? null : preview} onPreviewError={() => setBadPrev(true)} onPick={pick} onClear={() => setFile(null)} busy={busy} t={t} />
           {err ? <p className="tk2-err" role="alert">{err}</p> : null}
           <div className="tk2-actions">
             {replacing && <button type="button" className="tk2-ghost" disabled={busy} onClick={() => { setReplacing(false); setFile(null); setErr(''); }}>{t('Cancel')}</button>}
