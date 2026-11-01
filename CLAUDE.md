@@ -13,6 +13,11 @@ Arabic-learning platform (teacher: Ustaz Ali Hifniy). React 18 + Vite SPA, Supab
 - `supabase/functions/*` — Deno Edge Functions. Browser-facing ones use `_shared/cors.ts` (origin allow-list; add domains via the `SITE_URL` / `ALLOWED_ORIGINS` secrets, not by editing code). `paymob-webhook` must stay `--no-verify-jwt` (it checks the Paymob HMAC instead).
 - `workers/` Cloudflare Workers; `public/zoom-meeting.html` is a standalone page that loads the Zoom SDK from Zoom's CDN (no npm Zoom package).
 
+## Edge Function deploys
+- `.github/workflows/deploy-functions.yml` deploys changed functions to Supabase on every push to `main` that touches `supabase/functions/**` (needs the `SUPABASE_ACCESS_TOKEN` repository secret). `supabase/config.toml` holds the per-function `verify_jwt` setting.
+- It stays inactive until `supabase/functions/.synced` exists. That file comes from `sync-functions.yml` (manual run), which pulls the LIVE functions into branch `sync/live-functions`. Always start from the live code: the repo copies were older than production once already.
+- Never deploy a function from a copy you have not compared with the live one (`get_edge_function` / `supabase functions download`).
+
 ## Rules of thumb
 - Prices, access and grading are decided on the server (RPCs / Edge Functions); the browser is never trusted.
 - Payment enforcement at RLS level is intentionally NOT done yet (`payments_enforced = false`); leave it unless asked.

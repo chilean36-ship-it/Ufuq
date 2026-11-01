@@ -1,0 +1,61 @@
+name: Deploy Edge Functions
+
+# Every push to main that touches supabase/functions/** (or supabase/config.toml) deploys the changed functions to the
+# live Supabase project. A change in _shared/ or config.toml redeploys every function.
+# Safety: it does nothing until supabase/functions/.synced exists (created by sync-functions.yml), so an outdated copy
+# of a function can never overwrite the live one.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
+env:
+  PROJECT_REF: ldbthwpikixtykwmvudy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy changed functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ ! -f supabase/functions/.synced ]; then echo "Skipped: functions were not synced from Supabase yet (run the 'Sync functions from Supabase' workflow)."; exit 0; fi
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::warning::SUPABASE_ACCESS_TOKEN secret is missing, nothing deployed"; exit 0; fi
+
+          all_functions() { for d in supabase/functions/*/; do n=$(basename "$d"); case "$n" in _*) ;; *) echo "$n";; esac; done; }
+
+          if [ "$EVENT" = "workflow_dispatch" ] || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            targets=$(all_functions)
+          else
+            changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" -- supabase/functions supabase/config.toml)
+            echo "$changed"
+            if echo "$changed" | grep -qE '^supabase/(config\.toml|functions/_shared/)'; then
+              targets=$(all_functions)
+            else
+              targets=$(echo "$changed" | grep -E '^supabase/functions/[^/_][^/]*/' | cut -d/ -f3 | sort -u)
+            fi
+          fi
+
+          failed=0
+          for fn in $targets; do
+            if [ ! -d "supabase/functions/$fn" ]; then echo "skip $fn (folder removed)"; continue; fi
+            echo "== deploying $fn"
+            supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --use-api || { echo "::error::deploy of $fn failed"; failed=1; }
+          done
+          exit $failed

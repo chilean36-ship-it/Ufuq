@@ -1,0 +1,13 @@
+# Used by the Supabase CLI (and by .github/workflows/deploy-functions.yml).
+# Functions NOT listed here are deployed with JWT verification ON (the safe default).
+# These three do their own authentication (webhook signature) or are public by design.
+project_id = "ldbthwpikixtykwmvudy"
+
+[functions.paymob-webhook]
+verify_jwt = false
+
+[functions.audio-proxy]
+verify_jwt = false
+
+[functions.board-image]
+verify_jwt = false
