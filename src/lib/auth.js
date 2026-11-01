@@ -110,7 +110,7 @@ export async function getSessionAndRole() {
   for (let attempt = 0; attempt < 2 && !profile; attempt++) {
     const res = await supabase
       .from('profiles')
-      .select('role, full_name, admin_tier')
+      .select('role, full_name, admin_tier, status')
       .eq('id', session.user.id)
       .maybeSingle();
     if (res.data) profile = res.data;
@@ -119,7 +119,7 @@ export async function getSessionAndRole() {
 
   if (profile) {
     writeCachedRole(session.user.id, profile.role, profile.admin_tier);
-    return { user: session.user, role: profile.role, full_name: profile.full_name, admin_tier: profile.admin_tier };
+    return { user: session.user, role: profile.role, full_name: profile.full_name, admin_tier: profile.admin_tier, status: profile.status };
   }
 
   const cached = readCachedRole();

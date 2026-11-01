@@ -88,10 +88,22 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
     }, 'Student removed from the group.'));
   }
 
+  // Out of the platform: the account is blocked first (the teacher still sees the student in the group at that moment, which
+  // the server checks), then the student leaves the group. A main admin can unblock the account on the Students page.
+  function removeFromPlatform(r) {
+    askConfirm(t('Remove from the platform'), t('Block this account and remove the student from the group? They will not be able to use the platform any more. A main admin can unblock the account later (Students page).'), () => run(async () => {
+      const b = await supabase.rpc('admin_update_student', { p_user_id: r.user_id, p_status: 'blocked' });
+      if (b.error) throw b.error;
+      const { error } = await supabase.rpc('staff_remove_missed_student', { p_exam_id: examId, p_user: r.user_id });
+      if (error) throw error;
+    }, 'Student removed from the platform.'));
+  }
+
   const now = Date.now();
   return (
     <Modal open={state.open} onClose={onClose} wide>
       <h3>{t('Students who missed the deadline')} &mdash; <span>{exam ? examTitleFor(exam, lang) : ''}</span></h3>
+      <p className="hint" style={{ margin: '0 0 12px' }}>{t('Decide what happens to every student who did not take this exam: allow a retake, move to the nearest lower group, take out of the group, or remove from the platform.')}</p>
       <div style={{ overflowX: 'auto' }}>
         <table>
           <thead><tr><th>{t('Student')}</th><th>{t('Level')}</th><th>{t('Status')}</th><th>{t('Extended until')}</th><th></th></tr></thead>
@@ -108,7 +120,7 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
                     <td>{t('Level')} {r.level}</td>
                     <td>{r.status === 'draft' ? t('Not submitted') : t('Not started')}</td>
                     <td>{until ? fmtDateTime(until, lang) : '\u2014'}</td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <td style={{ textAlign: 'right' }}>
                       {editing ? (
                         <>
                           <input type="datetime-local" value={ext.value} aria-label={t('Extended until')} min={toLocalInput(new Date())}
@@ -117,12 +129,13 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
                           <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setExt(null)} style={{ marginLeft: 6 }}>{t('Cancel')}</button>
                         </>
                       ) : (
-                        <>
-                          <button type="button" className="btn btn-gold btn-sm" disabled={busy} onClick={() => setExt({ uid: r.user_id, value: tomorrow() })}>{t('Extend')}</button>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
+                          <button type="button" className="btn btn-gold btn-sm" disabled={busy} title={t('Give this student more time to take the exam')} onClick={() => setExt({ uid: r.user_id, value: tomorrow() })}>{t('Allow retake')}</button>
                           <button type="button" className="btn btn-ghost btn-sm" disabled={busy || r.level <= 1} title={r.level <= 1 ? t('This student is already on the lowest level.') : t('Move to the nearest lower group')}
-                                  onClick={() => demote(r)} style={{ marginLeft: 6 }}>{t('Lower level')}</button>
-                          <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => remove(r)} style={{ marginLeft: 6 }}>{t('Remove from group')}</button>
-                        </>
+                                  onClick={() => demote(r)}>{t('Lower level')}</button>
+                          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} title={t('Take the student out of the group; they wait for a new one')} onClick={() => remove(r)}>{t('Remove from group')}</button>
+                          <button type="button" className="btn btn-danger btn-sm" disabled={busy} title={t('Block the account and take the student out of the group')} onClick={() => removeFromPlatform(r)}>{t('Remove from platform')}</button>
+                        </div>
                       )}
                     </td>
                   </tr>

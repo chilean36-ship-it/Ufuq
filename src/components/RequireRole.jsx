@@ -4,6 +4,7 @@ import Loader from './Loader';
 import { clearCachedRole, getSessionAndRole, homeRoute, isOAuthCallback, ROLE_PAGES } from '../lib/auth';
 import { AuthContext } from '../context/AuthContext';
 import NameGate from './NameGate';
+import BlockedNotice from './BlockedNotice';
 
 /**
  * Unified Supabase Auth + RBAC guard (port of auth-guard.js).
@@ -31,6 +32,8 @@ export default function RequireRole({ role: requiredRole, children }) {
       if (cancelled) return;
       if (!result) { clearCachedRole(); return setState({ status: 'redirect', auth: null, redirect: ROLE_PAGES.login }); }
       const auth = { user: result.user, role: result.role, fullName: result.full_name };
+      // A student that a teacher / admin removed from the platform (status "blocked") gets a notice instead of the cabinet.
+      if (result.role === 'student' && result.status === 'blocked') return setState({ status: 'blocked', auth, redirect: null });
       // Super admin (main admin) never lands in the student panel: /dashboard sends them to the teacher panel.
       // admin_tier undefined = tier unknown (cached-role fallback) -> keep the old behaviour.
       const isSuperAdmin = result.role === 'admin' && result.admin_tier !== undefined && result.admin_tier !== 'standard';
@@ -52,5 +55,6 @@ export default function RequireRole({ role: requiredRole, children }) {
 
   if (state.status === 'checking') return <Loader />;
   if (state.status === 'redirect') return <Navigate to={state.redirect} replace />;
+  if (state.status === 'blocked') return <BlockedNotice />;
   return <AuthContext.Provider value={state.auth}><NameGate>{children}</NameGate></AuthContext.Provider>;
 }

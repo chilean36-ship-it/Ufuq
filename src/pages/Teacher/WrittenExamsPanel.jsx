@@ -24,19 +24,17 @@ export default function WrittenExamsPanel() {
   const { t, lang, toast, askConfirm, currentGroup: g, myGroups } = usePanel();
   const code = g ? g.code : null;
   const [exams, setExams] = useState(null);
-  const [prevExams, setPrevExams] = useState([]);   // exams of this level that are stored under another group of the same series
   const [meta, setMeta] = useState({ qCount: {}, subCount: {} });
 
-  // Groups of one series (same letter: A7, A8 ...) share their exams: the level exams are stored under whichever group of the
-  // series was created first (e.g. Group A8's code), while the students who have not passed yet stay in the old group (A7).
-  // So while a group is open, the exams of ITS level kept under a sibling group — and every sibling exam somebody already
-  // took — are listed here too, with the results of the students who passed and moved up. A closed group shows nothing extra.
-  const prevGroups = useMemo(() => {
-    if (!g || g.type === 'individual' || !g.letter || g.is_active === false) return [];
-    return (myGroups || []).filter((x) => x.code !== g.code && x.type !== 'individual' && x.letter === g.letter)
-      .sort((a, b) => (b.level || 0) - (a.level || 0));
+  // Groups of one series (same letter: A7, A8 ...) share their level exams: the exam rows are stored under whichever group of
+  // the series was created first (e.g. Group A8's code) while the students who have not passed yet stay in the old group (A7).
+  // So the Level-N midterm / final kept under a sibling group appear in the ordinary list of the group of level N, exactly as if
+  // they belonged to it. They stay there after the group is closed: that is when the students who missed the deadline are managed.
+  const siblingCodes = useMemo(() => {
+    if (!g || g.type === 'individual' || !g.letter) return [];
+    return (myGroups || []).filter((x) => x.code !== g.code && x.type !== 'individual' && x.letter === g.letter).map((x) => x.code);
   }, [g, myGroups]);
-  const prevKey = prevGroups.map((x) => x.code).join(',');
+  const prevKey = siblingCodes.join(',');
   const [builder, setBuilder] = useState({ open: false, exam: null, level: null });
   const [lvl, setLvl] = useState('all');           // level filter: 'all' | 1..MAX_LEVEL | 0 (exams without a level)
   const [results, setResults] = useState({ open: false, exam: null });
@@ -45,27 +43,25 @@ export default function WrittenExamsPanel() {
 
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
-    if (!code) { setExams(null); setPrevExams([]); return; }
+    if (!code) { setExams(null); return; }
     if (!silent) setExams(null);
     try {
       const codes = [code, ...(prevKey ? prevKey.split(',') : [])];
       const { data, error } = await supabase.from('written_exams').select('*').in('group_code', codes).order('level', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
       if (error) throw error;
       const all = data || [];
-      const list = all.filter((e) => e.group_code === code);
-      const sibling = all.filter((e) => e.group_code !== code);
-      if (all.length === 0) { setPrevExams([]); setExams([]); return; }
-      const ids = all.map((e) => e.id);
+      // this group's own exams + the midterm / final of THIS group's level that sit under a sibling group of the series
+      const list = all.filter((e) => e.group_code === code || (e.exam_kind && g && e.level === g.level));
+      if (list.length === 0) { setExams([]); return; }
+      const ids = list.map((e) => e.id);
       const [qs, subs] = await Promise.all([
         supabase.from('written_exam_questions').select('exam_id').in('exam_id', ids),
         supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', ids),
       ]);
-      const qc = {}, sc = {}, any = {};
+      const qc = {}, sc = {};
       (qs.data || []).forEach((q) => { qc[q.exam_id] = (qc[q.exam_id] || 0) + 1; });
-      (subs.data || []).forEach((s) => { any[s.exam_id] = true; if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; });
+      (subs.data || []).forEach((s) => { if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; });
       setMeta({ qCount: qc, subCount: sc });
-      // sibling exams worth showing: the ones of THIS group's level, and any that already has a paper
-      setPrevExams(sibling.filter((e) => (e.exam_kind && g && e.level === g.level) || any[e.id]));
       setExams(list);
     } catch (e) { if (!silent) setExams({ error: e.message || String(e) }); }
   }, [code, prevKey]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -140,26 +136,6 @@ export default function WrittenExamsPanel() {
     </article>
   );
 
-  // Exams of this level that are stored under a sibling group of the series (A7 <-> A8): the results of the students who
-  // already passed and moved up stay reachable from here while this group is open.
-  const prevBlock = prevGroups.map((pg) => {
-    const list = prevExams.filter((e) => e.group_code === pg.code)
-      .sort((a, b) => (Number(b.level === g.level) - Number(a.level === g.level)) || ((b.level || 0) - (a.level || 0)));
-    if (!list.length) return null;
-    return (
-      <section className="xl-sec xl-sec-prev" key={pg.code}>
-        <div className="xl-sec-head">
-          <span className="xl-sec-badge">{g.level != null ? g.level : '·'}</span>
-          <div>
-            <h4 className="xl-sec-title">{t('Exams of this level')} <span className="xl-prev-tag">{pg.name}</span></h4>
-            <div className="xl-sec-sub">{t('These exams are stored in {name}. Results include students who already passed and moved up.').replace('{name}', pg.name)}</div>
-          </div>
-        </div>
-        <div className="xl-list">{list.map(card)}</div>
-      </section>
-    );
-  });
-
   return (
     <div className="we-panel active" id="examsWrittenPanel">
       <PageStyle css={listCss} />
@@ -186,18 +162,10 @@ export default function WrittenExamsPanel() {
         {!code ? <div className="xl-empty"><p>{t('Select a group')}</p></div>
           : exams === null ? <div className="xl-empty"><p>{t('Loading…')}</p></div>
           : exams.error ? <div className="xl-empty"><p>{exams.error}</p></div>
-          : exams.length === 0 && prevExams.length === 0 ? (
+          : exams.length === 0 ? (
             <div className="xl-empty">
               <p>{t('No written exams yet.')}</p>
               <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
-            </div>
-          ) : exams.length === 0 ? (
-            <div>
-              <div className="xl-empty xl-empty-soft">
-                <p>{t('This group has no exams of its own yet. The exams of this level are listed below.')}</p>
-                <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
-              </div>
-              {prevBlock}
             </div>
           ) : sections.length === 0 || (lvl !== 'all' && !(byLevel[lvl] || []).length) ? (
             <div className="xl-empty">
@@ -222,7 +190,6 @@ export default function WrittenExamsPanel() {
                   </section>
                 );
               })}
-              {prevBlock}
             </div>
           )}
       </div>
@@ -230,6 +197,7 @@ export default function WrittenExamsPanel() {
       <ExamEditor state={builder} onClose={() => setBuilder((s) => ({ ...s, open: false }))} onSaved={load} />
       <MissedStudentsModal state={missed} onClose={() => setMissed((s) => ({ ...s, open: false }))} onChanged={load} />
       <ResultsModal state={results} onClose={() => setResults((s) => ({ ...s, open: false }))}
+        onManage={(exam) => { setResults((s) => ({ ...s, open: false })); setMissed({ open: true, exam }); }}
         onGrade={(submissionId, name) => setGrade({ open: true, submissionId, name, kind: results.exam ? results.exam.exam_kind : null })} />
       <GradeModal state={grade} onClose={() => setGrade((s) => ({ ...s, open: false }))}
         examTitle={results.exam ? examTitleFor(results.exam, lang) : ''}
@@ -238,7 +206,7 @@ export default function WrittenExamsPanel() {
   );
 }
 
-function ResultsModal({ state, onClose, onGrade }) {
+function ResultsModal({ state, onClose, onGrade, onManage }) {
   const { t, lang, toast, currentGroup: g } = usePanel();
   // (results title below uses the panel language)
   const [rows, setRows] = useState(null);
@@ -361,6 +329,21 @@ function ResultsModal({ state, onClose, onGrade }) {
   return (
     <Modal open={state.open} onClose={onClose} wide>
       <h3>{t('Results')} &mdash; <span>{state.exam ? examTitleFor(state.exam, lang) : ''}</span></h3>
+      {Array.isArray(rows) && rows.length > 0 && (() => {
+        const done = rows.filter((r) => r.sub && r.sub.status !== 'draft').length;
+        const open = rows.length - done;
+        const passed = rows.filter((r) => r.member.in_group === false && r.sub).length;
+        return (
+          <div className="pb-addrow" style={{ margin: '0 0 12px', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <span className="u-pill gold"><b>{done}</b> {t('submitted')}</span>
+            <span className={'u-pill' + (open ? ' amber' : '')}><b>{open}</b> {t('not submitted')}</span>
+            {passed > 0 && <span className="u-pill"><b>{passed}</b> {t('moved up')}</span>}
+            {open > 0 && onManage && state.exam && (
+              <button type="button" className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={() => onManage(state.exam)}>{t('Manage students who did not submit')}</button>
+            )}
+          </div>
+        );
+      })()}
       {pending.length > 0 && (
         <div className="pb-addrow" style={{ margin: '0 0 12px', alignItems: 'center' }}>
           <span className="u-pill gold">{'\u2728'} {pending.length} {t('Needs approval')}</span>
