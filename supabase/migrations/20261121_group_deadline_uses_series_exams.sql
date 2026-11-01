@@ -1,4 +1,4 @@
--- NOT YET APPLIED (needs the owner's go-ahead: it changes when groups are closed).
+﻿-- APPLIED to live on 2026-11-01 (with the owner's go-ahead; it changes when groups are closed).
 -- The sweep that switches a group off when the deadline of ITS final exam passes (ufuq_sweep_group_deadlines -> ufuq_group_final_deadline)
 -- only looked at final exams stored under the group's OWN code. A series keeps its level exams under the code of the group that was
 -- created first (Group A8's code holds the level-7 final), so Group A7 never saw the deadline and would stay active for ever,
