@@ -24,16 +24,17 @@ export default function WrittenExamsPanel() {
   const { t, lang, toast, askConfirm, currentGroup: g, myGroups } = usePanel();
   const code = g ? g.code : null;
   const [exams, setExams] = useState(null);
-  const [prevExams, setPrevExams] = useState([]);   // exams of the earlier-level groups of the same series that are still active
+  const [prevExams, setPrevExams] = useState([]);   // exams of this level that are stored under another group of the same series
   const [meta, setMeta] = useState({ qCount: {}, subCount: {} });
 
-  // Group A8 is the continuation of Group A7: while A7 is still active, its exams (and the results of the students who
-  // already passed and moved up) stay reachable from A8's Exams page instead of an empty "No written exams yet".
+  // Groups of one series (same letter: A7, A8 ...) share their exams: the level exams are stored under whichever group of the
+  // series was created first (e.g. Group A8's code), while the students who have not passed yet stay in the old group (A7).
+  // So while a group is open, the exams of ITS level kept under a sibling group — and every sibling exam somebody already
+  // took — are listed here too, with the results of the students who passed and moved up. A closed group shows nothing extra.
   const prevGroups = useMemo(() => {
-    if (!g || g.type === 'individual' || !g.letter || g.level == null) return [];
-    return (myGroups || []).filter((x) => x.code !== g.code && x.type !== 'individual' && x.letter === g.letter
-      && x.level != null && x.level < g.level && x.is_active)
-      .sort((a, b) => b.level - a.level);
+    if (!g || g.type === 'individual' || !g.letter || g.is_active === false) return [];
+    return (myGroups || []).filter((x) => x.code !== g.code && x.type !== 'individual' && x.letter === g.letter)
+      .sort((a, b) => (b.level || 0) - (a.level || 0));
   }, [g, myGroups]);
   const prevKey = prevGroups.map((x) => x.code).join(',');
   const [builder, setBuilder] = useState({ open: false, exam: null, level: null });
@@ -52,21 +53,22 @@ export default function WrittenExamsPanel() {
       if (error) throw error;
       const all = data || [];
       const list = all.filter((e) => e.group_code === code);
-      const older = all.filter((e) => e.group_code !== code);
-      setPrevExams(older);
-      if (all.length === 0) { setExams([]); return; }
+      const sibling = all.filter((e) => e.group_code !== code);
+      if (all.length === 0) { setPrevExams([]); setExams([]); return; }
       const ids = all.map((e) => e.id);
       const [qs, subs] = await Promise.all([
         supabase.from('written_exam_questions').select('exam_id').in('exam_id', ids),
         supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', ids),
       ]);
-      const qc = {}, sc = {};
+      const qc = {}, sc = {}, any = {};
       (qs.data || []).forEach((q) => { qc[q.exam_id] = (qc[q.exam_id] || 0) + 1; });
-      (subs.data || []).forEach((s) => { if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; });
+      (subs.data || []).forEach((s) => { any[s.exam_id] = true; if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; });
       setMeta({ qCount: qc, subCount: sc });
+      // sibling exams worth showing: the ones of THIS group's level, and any that already has a paper
+      setPrevExams(sibling.filter((e) => (e.exam_kind && g && e.level === g.level) || any[e.id]));
       setExams(list);
     } catch (e) { if (!silent) setExams({ error: e.message || String(e) }); }
-  }, [code, prevKey]);
+  }, [code, prevKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load(); }, [load]);
   useLiveRefresh(load);
@@ -138,17 +140,19 @@ export default function WrittenExamsPanel() {
     </article>
   );
 
-  // Earlier-level groups of the same series that are still open: their exams + results stay reachable here.
+  // Exams of this level that are stored under a sibling group of the series (A7 <-> A8): the results of the students who
+  // already passed and moved up stay reachable from here while this group is open.
   const prevBlock = prevGroups.map((pg) => {
-    const list = prevExams.filter((e) => e.group_code === pg.code);
+    const list = prevExams.filter((e) => e.group_code === pg.code)
+      .sort((a, b) => (Number(b.level === g.level) - Number(a.level === g.level)) || ((b.level || 0) - (a.level || 0)));
     if (!list.length) return null;
     return (
       <section className="xl-sec xl-sec-prev" key={pg.code}>
         <div className="xl-sec-head">
-          <span className="xl-sec-badge">{pg.level}</span>
+          <span className="xl-sec-badge">{g.level != null ? g.level : '·'}</span>
           <div>
-            <h4 className="xl-sec-title">{pg.name} <span className="xl-prev-tag">{t('still active')}</span></h4>
-            <div className="xl-sec-sub">{t('Students who already passed and moved up stay in these results until this group is closed.')}</div>
+            <h4 className="xl-sec-title">{t('Exams of this level')} <span className="xl-prev-tag">{pg.name}</span></h4>
+            <div className="xl-sec-sub">{t('These exams are stored in {name}. Results include students who already passed and moved up.').replace('{name}', pg.name)}</div>
           </div>
         </div>
         <div className="xl-list">{list.map(card)}</div>
@@ -190,7 +194,7 @@ export default function WrittenExamsPanel() {
           ) : exams.length === 0 ? (
             <div>
               <div className="xl-empty xl-empty-soft">
-                <p>{t('This group has no exams of its own yet. The exams of the earlier level are below.')}</p>
+                <p>{t('This group has no exams of its own yet. The exams of this level are listed below.')}</p>
                 <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
               </div>
               {prevBlock}
@@ -235,7 +239,7 @@ export default function WrittenExamsPanel() {
 }
 
 function ResultsModal({ state, onClose, onGrade }) {
-  const { t, lang, toast } = usePanel();
+  const { t, lang, toast, currentGroup: g } = usePanel();
   // (results title below uses the panel language)
   const [rows, setRows] = useState(null);
   const examId = state.exam ? state.exam.id : null;
@@ -249,23 +253,39 @@ function ResultsModal({ state, onClose, onGrade }) {
       if (subRes.error) throw subRes.error;
       // Roster = the students of the exam's own group + everybody who has a paper for it, even if they have already
       // passed and moved up to the next group (they used to vanish from this table).
-      let members = null;
+      // The exam row may be stored under a sibling group (level exams of Group A7 sit under Group A8's code), so the roster is
+      // built around the group that is OPEN in the panel: its students (took it or not) + everybody who has a paper.
+      const viewCode = g ? g.code : exam.group_code;
+      const ownView = viewCode === exam.group_code;
+      const viewRes = await supabase.from('group_members').select('user_id, name').eq('group_code', viewCode);
+      const viewMembers = viewRes.data || [];
+      const viewSet = new Set(viewMembers.map((m) => m.user_id));
+      const submitters = new Set((subRes.data || []).map((s) => s.user_id));
+      const byId = new Map();
+      const put = (id, name, cg) => { const cur = byId.get(id); if (!cur) byId.set(id, { user_id: id, name: name || '', current_group: cg || null }); else { if (!cur.name && name) cur.name = name; if (!cur.current_group && cg) cur.current_group = cg; } };
+      let haveRpc = false;
       try {
-        const rr = await supabase.rpc('staff_exam_roster', { p_exam_id: examId });   // migration 20261120 (names + "moved to Group A8")
-        if (!rr.error && Array.isArray(rr.data)) members = rr.data.map((r) => ({ user_id: r.user_id, name: r.name, in_group: r.in_group, current_group: r.current_group }));
-      } catch (e) { /* not applied yet: the fallback below does the same with the tables */ }
-      if (!members) {
-        const memRes = await supabase.from('group_members').select('user_id, name').eq('group_code', exam.group_code).order('name');
-        if (memRes.error) throw memRes.error;
-        const known = new Map((memRes.data || []).map((m) => [m.user_id, { user_id: m.user_id, name: m.name, in_group: true, current_group: null }]));
-        const extra = (subRes.data || []).map((s) => s.user_id).filter((id) => !known.has(id));
-        if (extra.length) {
-          const pr = await supabase.from('profiles').select('id, full_name').in('id', extra);
-          const nm = new Map((pr.data || []).map((p) => [p.id, p.full_name]));
-          extra.forEach((id) => known.set(id, { user_id: id, name: nm.get(id) || '', in_group: false, current_group: null }));
+        const rr = await supabase.rpc('staff_exam_roster', { p_exam_id: examId });   // migration 20261120 (names + "now in Group A8")
+        if (!rr.error && Array.isArray(rr.data)) {
+          haveRpc = true;
+          // viewed from a sibling group, the exam group's students who did not take it are not part of this table
+          rr.data.forEach((r) => { if (ownView || submitters.has(r.user_id) || viewSet.has(r.user_id)) put(r.user_id, r.name, r.current_group); });
         }
-        members = [...known.values()].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      } catch (e) { /* not applied yet: the tables below give the same answer */ }
+      if (!haveRpc && ownView) {
+        const memRes = await supabase.from('group_members').select('user_id, name').eq('group_code', exam.group_code);
+        (memRes.data || []).forEach((m) => put(m.user_id, m.name, null));
       }
+      viewMembers.forEach((m) => put(m.user_id, m.name, null));
+      const unnamed = [...submitters].filter((id) => !byId.has(id) || !byId.get(id).name);
+      if (unnamed.length) {
+        const pr = await supabase.from('profiles').select('id, full_name').in('id', unnamed);
+        const nm = new Map((pr.data || []).map((p) => [p.id, p.full_name]));
+        unnamed.forEach((id) => put(id, nm.get(id) || '', null));
+      }
+      const members = [...byId.values()]
+        .map((m) => ({ ...m, in_group: viewSet.has(m.user_id) }))
+        .sort((a, b) => Number(b.in_group) - Number(a.in_group) || String(a.name || '').localeCompare(String(b.name || '')));
       if (members.length === 0) { setRows([]); return; }
       const subMap = {}; (subRes.data || []).forEach((s) => { subMap[s.user_id] = s; });
       const aiDone = {};
@@ -281,7 +301,7 @@ function ResultsModal({ state, onClose, onGrade }) {
       } catch (e) { /* migration not applied yet */ }
       setRows(members.map((m) => { const sb = subMap[m.user_id] || null; return { member: m, sub: sb, viol: viol[m.user_id] || { total: 0, technical: 0 }, ai: !!(sb && aiDone[sb.id]) }; }));
     } catch (e) { setRows({ error: e.message || String(e) }); }
-  }, [examId, state.exam]);
+  }, [examId, state.exam, g]);
 
   useEffect(() => { if (state.open) refresh(); }, [state.open, refresh]);
 

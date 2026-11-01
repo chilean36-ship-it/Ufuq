@@ -2,6 +2,7 @@
 // Keys are the English source text (same convention as cabinet-*.js); EN needs no entries.
 // Merged through fill-missing.js, so a translation defined elsewhere for the same key still wins.
 const uz = {
+  "Exams of this level": "Shu daraja imtihonlari", "These exams are stored in {name}. Results include students who already passed and moved up.": "Bu imtihonlar {name} guruhida saqlanadi. Natijalarda o'tib, yuqoriga ko'chgan o'quvchilar ham ko'rinadi.", "This group has no exams of its own yet. The exams of this level are listed below.": "Bu guruhning o'z imtihonlari hali yo'q. Shu daraja imtihonlari pastda.",
   // tasks (student + teacher)
   "Due today": "Bugun topshiriladi", "Due tomorrow": "Ertaga topshiriladi", "{n} days left": "{n} kun qoldi", "{n} days overdue": "{n} kun kechikdi",
   "Remove": "Olib tashlash", "Tap to add a photo or file": "Rasm yoki fayl qo'shish uchun bosing",
@@ -24,9 +25,6 @@ const uz = {
   "You have no exams to take right now.": "Hozir topshiradigan imtihoningiz yo'q.",
   "Last 3 months": "Oxirgi 3 oy", "No exams": "Imtihon yo'q",
   "Moved to": "Ko'chirildi:", "Moved up": "Yuqoriga o'tgan", "Passed and moved up; the result stays here": "O'tib, yuqori guruhga o'tgan; natijasi shu yerda qoladi",
-  "still active": "hali faol",
-  "Students who already passed and moved up stay in these results until this group is closed.": "O'tib, yuqoriga ko'chgan o'quvchilar natijasi bu guruh yopilgunicha shu yerda ko'rinadi.",
-  "This group has no exams of its own yet. The exams of the earlier level are below.": "Bu guruhning o'z imtihonlari hali yo'q. Oldingi daraja imtihonlari pastda.",
   // settings
   "Email address": "Elektron pochta", "Verified": "Tasdiqlangan", "Not verified": "Tasdiqlanmagan",
   "Theme, text size and accessibility.": "Mavzu, matn o'lchami va qulaylik.",
@@ -42,6 +40,7 @@ const uz = {
 };
 
 const ru = {
+  "Exams of this level": "Экзамены этого уровня", "These exams are stored in {name}. Results include students who already passed and moved up.": "Эти экзамены хранятся в группе {name}. В результатах видны и ученики, уже сдавшие и переведённые выше.", "This group has no exams of its own yet. The exams of this level are listed below.": "У этой группы пока нет собственных экзаменов. Экзамены этого уровня ниже.",
   "Due today": "Сдать сегодня", "Due tomorrow": "Сдать завтра", "{n} days left": "Осталось дней: {n}", "{n} days overdue": "Просрочено дней: {n}",
   "Remove": "Убрать", "Tap to add a photo or file": "Нажмите, чтобы добавить фото или файл",
   "Photo, PDF or document · up to 20 MB": "Фото, PDF или документ · до 20 МБ",
@@ -62,9 +61,6 @@ const ru = {
   "You have no exams to take right now.": "Сейчас у вас нет экзаменов для сдачи.",
   "Last 3 months": "Последние 3 месяца", "No exams": "Нет экзаменов",
   "Moved to": "Переведён в", "Moved up": "Переведён выше", "Passed and moved up; the result stays here": "Сдал и переведён выше; результат остаётся здесь",
-  "still active": "ещё активна",
-  "Students who already passed and moved up stay in these results until this group is closed.": "Ученики, сдавшие экзамен и переведённые выше, остаются в этих результатах, пока группа не закрыта.",
-  "This group has no exams of its own yet. The exams of the earlier level are below.": "У этой группы пока нет собственных экзаменов. Экзамены предыдущего уровня ниже.",
   "Email address": "Адрес электронной почты", "Verified": "Подтверждён", "Not verified": "Не подтверждён",
   "Theme, text size and accessibility.": "Тема, размер текста и доступность.",
   "High contrast": "Высокая контрастность", "Stronger text and borders for easier reading.": "Более чёткий текст и границы для удобного чтения.",
@@ -78,6 +74,7 @@ const ru = {
 };
 
 const ar = {
+  "Exams of this level": "امتحانات هذا المستوى", "These exams are stored in {name}. Results include students who already passed and moved up.": "هذه الامتحانات محفوظة في {name}. تشمل النتائج الطلاب الذين نجحوا وانتقلوا.", "This group has no exams of its own yet. The exams of this level are listed below.": "ليس لهذه المجموعة امتحانات خاصة بعد. امتحانات هذا المستوى أدناه.",
   "Due today": "التسليم اليوم", "Due tomorrow": "التسليم غدًا", "{n} days left": "متبقٍ {n} يوم", "{n} days overdue": "متأخر {n} يوم",
   "Remove": "إزالة", "Tap to add a photo or file": "اضغط لإضافة صورة أو ملف",
   "Photo, PDF or document · up to 20 MB": "صورة أو PDF أو مستند · حتى 20 ميغابايت",
@@ -98,9 +95,6 @@ const ar = {
   "You have no exams to take right now.": "ليس لديك امتحانات لأدائها الآن.",
   "Last 3 months": "آخر 3 أشهر", "No exams": "لا امتحانات",
   "Moved to": "نُقل إلى", "Moved up": "انتقل إلى مستوى أعلى", "Passed and moved up; the result stays here": "نجح وانتقل؛ تبقى نتيجته هنا",
-  "still active": "ما زالت نشطة",
-  "Students who already passed and moved up stay in these results until this group is closed.": "يبقى الطلاب الذين نجحوا وانتقلوا في هذه النتائج حتى تُغلق هذه المجموعة.",
-  "This group has no exams of its own yet. The exams of the earlier level are below.": "ليس لهذه المجموعة امتحانات خاصة بعد. امتحانات المستوى السابق أدناه.",
   "Email address": "البريد الإلكتروني", "Verified": "موثّق", "Not verified": "غير موثّق",
   "Theme, text size and accessibility.": "المظهر وحجم النص وإمكانية الوصول.",
   "High contrast": "تباين عالٍ", "Stronger text and borders for easier reading.": "نص وحدود أوضح لقراءة أسهل.",
