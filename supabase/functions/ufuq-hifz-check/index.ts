@@ -1,4 +1,4 @@
-// Supabase Edge Function: ufuq-hifz-check   (this file mirrors what is deployed on project ldbthwpikixtykwmvudy)
+// Supabase Edge Function: ufuq-hifz-check
 // Student sends { assignment_id, audio (base64 16 kHz mono WAV) }.
 // 1) loads the expected words of the assigned ayahs, 2) speech -> Arabic text, 3) aligns word by word,
 // 4) stores the attempt (service role, so scores cannot be forged) and returns the colour-coded result.
@@ -7,13 +7,10 @@
 //   a) Quran-tuned Whisper service, only if the ASR_URL (+ ASR_TOKEN) secrets are set  (see asr-space/)
 //   b) Gemini, using the same GEMINI_API_KEY secret as ai-chat / ufuq-stt
 // Optional secrets: QURAN_BASE_URL (default: the site's /quran folder), HIFZ_GEMINI_MODEL.
-//
-// NOTE: the shared aligner lives in ../_shared/hifz-align.js. The Supabase dashboard / MCP deploy needs it next to
-// index.ts, so deploy with the CLI (`supabase functions deploy ufuq-hifz-check`), which bundles ../_shared automatically.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { alignRecitation, splitWords, normalizeArabic } from "../_shared/hifz-align.js";
+import { alignRecitation, splitWords, normalizeArabic } from "./hifz-align.js";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -24,7 +21,24 @@ const QURAN_BASE_URL = (Deno.env.get("QURAN_BASE_URL") ?? `${SITE}/quran`).repla
 const PRIMARY_MODEL = Deno.env.get("HIFZ_GEMINI_MODEL") ?? "gemini-3-flash-preview";
 const FALLBACK_MODEL = "gemini-3.1-flash-lite";
 
-import { corsHeadersFor } from "../_shared/cors.ts";
+const ALLOWED_ORIGINS = new Set([
+  "https://ufuq-com.vercel.app",
+  "https://ufuq-com.netlify.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+]);
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : SITE;
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...corsHeadersFor(req) } });
 }

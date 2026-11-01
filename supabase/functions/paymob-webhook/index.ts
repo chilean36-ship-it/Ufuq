@@ -1,15 +1,13 @@
-// ============================================================
-// Ufuq — paymob-webhook   (Paymob "transaction processed callback")
-// Paymob POSTs the result of every payment here. We trust nothing until the HMAC (SHA-512, your HMAC secret) matches,
-// then call finalize_order_paid(), which re-checks amount + currency against the order and is idempotent (Paymob retries).
-// MUST be deployed WITHOUT JWT verification:  supabase functions deploy paymob-webhook --no-verify-jwt
-// Secret: PAYMOB_HMAC_SECRET (Paymob dashboard → Settings → Account info → HMAC)
-// In Paymob set "Transaction processed callback" to  https://<project>.supabase.co/functions/v1/paymob-webhook
-// ============================================================
+// Ufuq — paymob-webhook (Paymob "transaction processed callback"), v2 (hardened).
+// Trusts nothing until the HMAC (SHA-512, PAYMOB_HMAC_SECRET) matches. Then calls finalize_order_paid(), which re-checks
+// amount + currency against the order, is idempotent (Paymob retries), logs every outcome to payment_events and alerts the
+// admins when money arrived that could not be matched (amount mismatch, duplicate payment, closed order, unknown order).
+// Deployed WITHOUT JWT verification: it authenticates by HMAC only.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "Content-Type": "application/json" } });
+const MAX_BODY = 64 * 1024;
 
 // The 20 values Paymob concatenates, in this exact order (docs: "HMAC Transaction Callback").
 function hmacString(o: any): string {
@@ -33,6 +31,7 @@ function safeEqual(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return d === 0;
 }
+const isTrue = (x: unknown) => x === true || x === "true";
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "POST expected" }, 405);
@@ -40,39 +39,79 @@ Deno.serve(async (req: Request) => {
   if (!HMAC_SECRET) return json({ error: "PAYMENTS_NOT_CONFIGURED" }, 503);
 
   const given = (new URL(req.url).searchParams.get("hmac") || "").toLowerCase();
+  if (!/^[0-9a-f]{128}$/.test(given)) return json({ error: "bad signature" }, 401);
+  if (Number(req.headers.get("content-length") || 0) > MAX_BODY) return json({ error: "too large" }, 413);
+
   let body: any;
-  try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+  try {
+    const raw = await req.text();
+    if (raw.length > MAX_BODY) return json({ error: "too large" }, 413);
+    body = JSON.parse(raw);
+  } catch { return json({ error: "bad json" }, 400); }
   if (body?.type && body.type !== "TRANSACTION") return json({ ok: true, ignored: body.type });
   const o = body?.obj;
-  if (!o || !given) return json({ error: "bad payload" }, 400);
+  if (!o || typeof o !== "object") return json({ error: "bad payload" }, 400);
 
   const expected = await sha512hex(HMAC_SECRET, hmacString(o));
   if (!safeEqual(expected, given)) { console.error("paymob webhook: bad HMAC"); return json({ error: "bad signature" }, 401); }
 
-  const orderId = String(o.order?.merchant_order_id || "");
-  if (!/^[0-9a-f-]{36}$/i.test(orderId)) { console.error("paymob webhook: no merchant_order_id", o.order?.id); return json({ ok: true, ignored: "no reference" }); }
-
+  // ---- from here on the message is authentic (signed by Paymob) ----
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const txn = String(o.id ?? "");
+  const log = (order: string | null, kind: string, detail: Record<string, unknown>, alert = false) =>
+    db.rpc("log_payment_event", { p_order: order, p_txn: txn, p_kind: kind, p_detail: detail, p_alert: alert });
 
-  const pending = o.pending === true || o.pending === "true";
-  const success = o.success === true || o.success === "true";
+  const orderId = String(o.order?.merchant_order_id || "");
+  const validRef = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+  const pending = isTrue(o.pending);
+  const success = isTrue(o.success) && !isTrue(o.error_occured);
+
+  // the callback must come from OUR card integration
+  const INTEGRATION = Deno.env.get("PAYMOB_INTEGRATION_ID");
+  if (INTEGRATION && String(o.integration_id) !== String(INTEGRATION)) {
+    console.error("paymob webhook: foreign integration", o.integration_id);
+    if (success) await log(validRef ? orderId : null, "wrong_integration", { integration_id: o.integration_id, amount_cents: o.amount_cents, currency: o.currency }, true);
+    return json({ ok: true, ignored: "other integration" });
+  }
+
+  if (!validRef) {
+    console.error("paymob webhook: no merchant_order_id", o.order?.id);
+    if (success) await log(null, "no_reference", { paymob_order: o.order?.id ?? null, amount_cents: o.amount_cents, currency: o.currency }, true);
+    return json({ ok: true, ignored: "no reference" });
+  }
+
   if (pending) return json({ ok: true, pending: true });
-  if (o.is_refunded === true || o.is_voided === true) return json({ ok: true, ignored: "refund/void is recorded by an admin" });
+  if (isTrue(o.is_refunded) || isTrue(o.is_voided)) {
+    await log(orderId, "refund_or_void", { refunded: isTrue(o.is_refunded), voided: isTrue(o.is_voided), amount_cents: o.amount_cents }, true);
+    return json({ ok: true, ignored: "refund/void is recorded by an admin" });
+  }
+  // an authorisation that was never captured is not money
+  if (isTrue(o.is_auth) && !isTrue(o.is_capture)) {
+    await log(orderId, "auth_only", { amount_cents: o.amount_cents }, false);
+    return json({ ok: true, ignored: "authorisation only" });
+  }
 
-  if (success && !(o.error_occured === true)) {
+  if (success) {
+    const amount = Number(o.amount_cents);
+    if (!Number.isSafeInteger(amount) || amount <= 0 || typeof o.currency !== "string") {
+      await log(orderId, "bad_amount", { amount_cents: o.amount_cents, currency: o.currency }, true);
+      return json({ ok: false, error: "BAD_AMOUNT" });
+    }
     const { data, error } = await db.rpc("finalize_order_paid", {
-      p_order: orderId, p_txn: String(o.id), p_provider_order: String(o.order?.id ?? ""), p_amount_cents: Number(o.amount_cents), p_currency: String(o.currency),
+      p_order: orderId, p_txn: txn, p_provider_order: String(o.order?.id ?? ""), p_amount_cents: amount, p_currency: String(o.currency),
     });
     if (error) {
-      const msg = String(error.message || "");
-      // data problems will never fix themselves: answer 200 so Paymob stops retrying, but leave a loud trace
-      if (/AMOUNT_MISMATCH|WRONG_METHOD|ORDER_NOT_FOUND|ORDER_CLOSED|USER_GONE/.test(msg)) { console.error("paymob webhook REJECTED:", msg, orderId, o.amount_cents, o.currency); return json({ ok: false, error: msg }); }
-      console.error("paymob webhook db error (will be retried):", msg);
-      return json({ error: "temporary" }, 500);
+      console.error("paymob webhook db error (will be retried):", String(error.message || ""));
+      return json({ error: "temporary" }, 500);   // Paymob retries
+    }
+    if (data && data.ok === false) {
+      console.error("paymob webhook REJECTED:", data.reason, orderId);
+      return json({ ok: false, error: data.reason });   // already logged + admins alerted inside the database
     }
     return json({ ok: true, result: data });
   }
 
-  await db.rpc("mark_order_failed", { p_order: orderId, p_txn: String(o.id) });
+  await db.rpc("mark_order_failed", { p_order: orderId, p_txn: txn });
+  await log(orderId, "failed", { amount_cents: o.amount_cents }, false);
   return json({ ok: true, failed: true });
 });

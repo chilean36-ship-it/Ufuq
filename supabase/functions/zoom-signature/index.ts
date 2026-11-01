@@ -1,10 +1,4 @@
-// Zoom Meeting SDK signature (JWT) beruvchi Edge Function.
-//
-// Oqim: o'quvchi "Join Class" bosadi -> brauzer shu funksiyani chaqiradi ->
-// funksiya (1) foydalanuvchini tekshiradi, (2) o'quvchi a'zo bo'lgan guruhni topadi,
-// (3) shu guruhning `zoom_link` manzilidan meeting raqami va parolini ajratadi,
-// (4) SDK Secret bilan imzolangan qisqa muddatli JWT qaytaradi.
-// SDK Secret hech qachon brauzerga tushmaydi.
+// Zoom Meeting SDK signature (JWT) beruvchi Edge Function. (v2: to'lov tekshiruvi qo'shildi)
 //
 // Sirlar (Supabase -> Edge Functions -> Secrets):
 //   ZOOM_SDK_KEY      = Meeting SDK ilovasining Client ID
@@ -12,13 +6,16 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { SignJWT } from "npm:jose@5";
 
-// Shared origin allow-list (_shared/cors.ts). The Authorization check below still decides who gets a signature.
-import { corsHeadersFor as corsFor } from "../_shared/cors.ts";
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
-const json = (req: Request, body: unknown, status = 200) =>
+const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsFor(req), "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: { ...cors, "Content-Type": "application/json" },
   });
 
 /** https://us02web.zoom.us/j/81234567890?pwd=abc  ->  { meetingNumber, password } */
@@ -35,17 +32,17 @@ function parseZoomLink(link: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsFor(req) });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    const sdkKey = Deno.env.get("ZOOM_SDK_KEY");
-    const sdkSecret = Deno.env.get("ZOOM_SDK_SECRET");
+    const sdkKey = Deno.env.get("ZOOM_SDK_KEY")?.trim().replace(/^['"]|['"]$/g, "");
+    const sdkSecret = Deno.env.get("ZOOM_SDK_SECRET")?.trim().replace(/^['"]|['"]$/g, "");
     if (!sdkKey || !sdkSecret) {
-      return json(req, { error: "Zoom sozlanmagan (ZOOM_SDK_KEY / ZOOM_SDK_SECRET)" }, 500);
+      return json({ error: "Zoom sozlanmagan (ZOOM_SDK_KEY / ZOOM_SDK_SECRET)" }, 500);
     }
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json(req, { error: "Kirish talab qilinadi" }, 401);
+    if (!authHeader) return json({ error: "Kirish talab qilinadi" }, 401);
 
     // Foydalanuvchi nomidan ishlaydigan klient: RLS amal qiladi
     const supabase = createClient(
@@ -56,7 +53,11 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace(/^Bearer\s+/i, "");
     const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) return json(req, { error: "Kirish talab qilinadi" }, 401);
+    if (!user) return json({ error: "Kirish talab qilinadi" }, 401);
+
+    // To'lov (obuna) tekshiruvi — server tomonda. payments_enforced o'chiq bo'lsa hamma uchun true.
+    const { data: hasAccess } = await supabase.rpc("ufuq_has_access");
+    if (hasAccess !== true) return json({ error: "PAYMENT_REQUIRED" }, 402);
 
     // O'quvchi qaysi guruhda? (client ham shu jadvaldan o'qiydi)
     const { data: membership } = await supabase
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
       .select("group_code")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (!membership?.group_code) return json(req, { error: "Siz hech qaysi guruhda emassiz" }, 403);
+    if (!membership?.group_code) return json({ error: "Siz hech qaysi guruhda emassiz" }, 403);
 
     const { data: group } = await supabase
       .from("groups")
@@ -72,12 +73,12 @@ Deno.serve(async (req) => {
       .eq("code", membership.group_code)
       .eq("is_active", true)
       .maybeSingle();
-    if (!group) return json(req, { error: "Guruh topilmadi" }, 404);
-    if (!group.zoom_link) return json(req, { error: "Bu guruh uchun Zoom havolasi qo'yilmagan" }, 400);
+    if (!group) return json({ error: "Guruh topilmadi" }, 404);
+    if (!group.zoom_link) return json({ error: "Bu guruh uchun Zoom havolasi qo'yilmagan" }, 400);
 
     const parsed = parseZoomLink(group.zoom_link);
     if (!parsed) {
-      return json(req, { error: "Zoom havolasidan meeting raqamini o'qib bo'lmadi (…/j/123456789 ko'rinishida bo'lishi kerak)" }, 400);
+      return json({ error: "Zoom havolasidan meeting raqamini o'qib bo'lmadi (…/j/123456789 ko'rinishida bo'lishi kerak)" }, 400);
     }
 
     const { data: profile } = await supabase
@@ -88,12 +89,11 @@ Deno.serve(async (req) => {
     const userName = profile?.full_name || user.user_metadata?.full_name ||
       user.email?.split("@")[0] || "Student";
 
-    // Meeting SDK JWT. 5.0 dan beri `appKey` majburiy; role 0 = ishtirokchi.
+    // Meeting SDK JWT (5.x): appKey, mn, role, iat, exp, tokenExp. role 0 = ishtirokchi.
     const now = Math.floor(Date.now() / 1000);
     const exp = now + 60 * 60 * 2;
     const signature = await new SignJWT({
       appKey: sdkKey,
-      sdkKey,
       mn: parsed.meetingNumber,
       role: 0,
       tokenExp: exp,
@@ -103,15 +103,15 @@ Deno.serve(async (req) => {
       .setExpirationTime(exp)
       .sign(new TextEncoder().encode(sdkSecret));
 
-    return json(req, {
+    return json({
       signature,
+      sdkKey,
       meetingNumber: parsed.meetingNumber,
       password: parsed.password,
       userName,
       groupName: group.name,
     });
   } catch (e) {
-    console.error("zoom-signature failed:", e); // details stay in the server log, never in the response
-    return json(req, { error: "Server error" }, 500);
+    return json({ error: String(e) }, 500);
   }
 });

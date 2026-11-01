@@ -24,7 +24,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { callLLM, llmConfigured, parseJsonAnswer } from "../_shared/llm.ts";
-import { withCors } from "../_shared/cors.ts";
 
 const MAX_ITEMS_PER_CALL = 30;   // a normal paper (≈24 items) is checked in a single request
 const LOCK_SECONDS = 150;        // a crashed run frees its paper again after this long
@@ -101,9 +100,13 @@ function readFeedback(v: unknown): { text: string; fb: Fb } {
 }
 const hasAllLangs = (fb: Fb) => LANGS.every((l) => !!fb[l]);
 
-// CORS headers (origin allow-list) are added by withCors() around the handler below.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
 
 type Result = { question_id: string; score: number; feedback?: string; fb?: Fb };
@@ -164,7 +167,8 @@ async function askJSON(system: string, payload: unknown, deadline: number): Prom
 }
 
 // ---------------------------------------------------------------- handler
-Deno.serve(withCors(async (req: Request) => {
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST expected" }, 405);
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -387,4 +391,4 @@ Deno.serve(withCors(async (req: Request) => {
   } finally {
     await release();
   }
-}));
+});

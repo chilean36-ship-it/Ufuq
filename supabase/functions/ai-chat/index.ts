@@ -1,4 +1,4 @@
-// Supabase Edge Function: ai-chat  (v38)
+// Supabase Edge Function: ai-chat  (v40)
 //
 // Securely proxies the "Ufuq AI" widget (students, teachers, admins) to Claude Haiku 5.5, with Gemini 3.1 Flash-Lite as backup
 // (_shared/llm.ts). The API keys live only in the function environment (ANTHROPIC_API_KEY, GEMINI_API_KEY). Verifies the caller's login token, rate-limits per user and
@@ -6,8 +6,15 @@
 //
 // Modes (chosen on the SERVER, never trusted from the browser):
 //   student  - default. Arabic tutor + platform helper.
-//   teacher  - only when the client asks for it AND ufuq_is_staff() is true (teachers / admins).
+//   teacher  - only when the client asks for it AND the caller is a teacher or admin (from profiles).
 //   voice    - payload.voice === true: short spoken answers.
+//
+// Limits (decided on the SERVER from the caller's profile and payment, never from the browser):
+//   main admin (role admin, admin_tier super)  - no per-user limit, not affected by the site-wide cap
+//   regular admin (role admin, admin_tier standard) - 15 messages/day
+//   teacher                                    - 35 messages/day
+//   paid student                               - 15 messages/day
+//   not paid (trial)                           - 5 messages/day
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -17,19 +24,35 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-import { corsHeadersFor } from "../_shared/cors.ts";
+const ALLOWED_ORIGINS = new Set([
+  "https://ufuq-com.vercel.app",
+  "https://ufuq-com.netlify.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+]);
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : "https://ufuq-com.vercel.app";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
-const MEMBER_RATE_LIMIT_MAX_MESSAGES = 15;
-const STAFF_RATE_LIMIT_MAX_MESSAGES = 25;
-const NON_MEMBER_RATE_LIMIT_MAX_MESSAGES = 3;
+// Per-minute and per-day caps by account type.
+const LIMIT_STUDENT = { perMinute: 15, perDay: 15 };
+const LIMIT_TRIAL = { perMinute: 3, perDay: 5 };
+const LIMIT_TEACHER = { perMinute: 25, perDay: 35 };
+const LIMIT_ADMIN = { perMinute: 25, perDay: 15 };
+
 const USER_RATE_LIMIT_WINDOW_SECONDS = 60;
-const GLOBAL_RATE_LIMIT_MAX_MESSAGES = 90;
+// Site-wide cap per minute (all users together). Main admin is exempt from it.
+const GLOBAL_RATE_LIMIT_MAX_MESSAGES = 100;
 const GLOBAL_RATE_LIMIT_WINDOW_SECONDS = 60;
-
-// Daily caps per account (rolling 24 hours) — protects the AI bill (Claude / Gemini) from one account or a script.
-const MEMBER_DAILY_MAX_MESSAGES = 15;   // per student per day (was 200); raise here if needed
-const STAFF_DAILY_MAX_MESSAGES = 400;
-const NON_MEMBER_DAILY_MAX_MESSAGES = 10;
 const DAILY_WINDOW_SECONDS = 24 * 60 * 60;
 
 const HISTORY_CONTEXT_MESSAGES = 12;
@@ -43,7 +66,7 @@ const PLATFORM_FACTS = `ABOUT UFUQ (you may talk about this freely and naturally
   Al-Najah Center in Uzbekistan. Still teaching today.
 - Platform sections: My Group (class, schedule, classmates, group chat), Tasks (homework with file upload), Exams
   (written exams only, in a full-screen exam mode with anti-cheating checks, checked by AI),
-  Attendance, Progress (exam results over time and class ranking), Library (video lessons), levels 1-14.`;
+  Attendance, Progress (exam results over time and class ranking), Library (video lessons), levels 1-12.`;
 
 const STUDENT_PROMPT = `You are Ufuq AI, the personal Arabic tutor and assistant of the Ufuq Arabic-learning platform. You behave like a
 patient, expert Arabic teacher: accurate, clear, encouraging, never condescending.
@@ -114,7 +137,7 @@ ${PLATFORM_FACTS}
 WHAT YOU HELP WITH
 - Lesson plans (warm-up, presentation, practice, homework) for a given level and time.
 - Exam material: multiple-choice questions with answer key and a one-line explanation per answer, matching the
-  student's level (1-14); reading texts; vocabulary lists with vowel marks.
+  student's level (1-12); reading texts; vocabulary lists with vowel marks.
 - Short, encouraging feedback for students; announcements and reminders for a group; messages to parents or students.
 - Grammar explanations designed for teaching: rule, examples, common mistakes, quick exercises.
 - How to use the panel: Groups, Students, Tasks (homework, grading), Attendance, Calendar, Slots (individual lessons),
@@ -146,9 +169,6 @@ function json(req: Request, body: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json", ...corsHeadersFor(req) },
   });
-}
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 type GeminiTurn = { role: "user" | "model"; parts: { text: string }[] };
@@ -215,34 +235,46 @@ Deno.serve(async (req: Request) => {
     const globalWindowStart = new Date(Date.now() - GLOBAL_RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
     const dayWindowStart = new Date(Date.now() - DAILY_WINDOW_SECONDS * 1000).toISOString();
 
-    const [membershipRes, staffRes, userCountRes, globalCountRes, pastRowsRes, dayCountRes] = await Promise.all([
-      supabase.from("group_members").select("group_code").eq("user_id", userId).limit(1),
-      supabase.rpc("ufuq_is_staff"),
+    const [profileRes, paidRes, userCountRes, globalCountRes, pastRowsRes, dayCountRes] = await Promise.all([
+      adminSupabase.from("profiles").select("role, admin_tier").eq("id", userId).maybeSingle(),
+      supabase.rpc("ufuq_has_access"),
       supabase.from("ai_chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("role", "user").gte("created_at", userWindowStart),
       adminSupabase.from("ai_chat_messages").select("id", { count: "exact", head: true }).eq("role", "user").gte("created_at", globalWindowStart),
       supabase.from("ai_chat_messages").select("role, content").eq("user_id", userId).order("created_at", { ascending: false }).limit(HISTORY_CONTEXT_MESSAGES),
       supabase.from("ai_chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("role", "user").gte("created_at", dayWindowStart),
     ]);
 
-    const isStaff = staffRes.data === true;
+    // Account type comes from the profile row (by user id), never from the browser.
+    const role = profileRes.data?.role ?? null;
+    const isAdmin = role === "admin";
+    const isSuper = isAdmin && (profileRes.data?.admin_tier ?? "super") === "super";
+    const isTeacher = role === "teacher";
+    const isStaff = isAdmin || isTeacher;
+    const paid = paidRes.data === true;
     const teacherMode = payload.mode === "teacher" && isStaff;
-    const isGroupMember = (membershipRes.data?.length ?? 0) > 0;
-    const userRateLimitMax = isStaff ? STAFF_RATE_LIMIT_MAX_MESSAGES : isGroupMember ? MEMBER_RATE_LIMIT_MAX_MESSAGES : NON_MEMBER_RATE_LIMIT_MAX_MESSAGES;
-    const dailyMax = isStaff ? STAFF_DAILY_MAX_MESSAGES : isGroupMember ? MEMBER_DAILY_MAX_MESSAGES : NON_MEMBER_DAILY_MAX_MESSAGES;
 
-    if (!userCountRes.error && (userCountRes.count ?? 0) >= userRateLimitMax) {
-      const msg = isStaff || isGroupMember
-        ? "You're sending messages a little too fast — please slow down and try again shortly."
-        : "You've reached the trial message limit for accounts not yet in a group. Join a group to unlock full access to Ufuq AI.";
+    // Pick the limits for this caller. Main admin: no per-user limit at all.
+    const limits = isSuper
+      ? { perMinute: null, perDay: null, kind: "main-admin" }
+      : isAdmin
+        ? { ...LIMIT_ADMIN, kind: "admin" }
+        : isTeacher
+          ? { ...LIMIT_TEACHER, kind: "teacher" }
+          : paid
+            ? { ...LIMIT_STUDENT, kind: "student" }
+            : { ...LIMIT_TRIAL, kind: "trial" };
+
+    if (limits.perMinute !== null && !userCountRes.error && (userCountRes.count ?? 0) >= limits.perMinute) {
+      return json(req, { error: "You're sending messages a little too fast — please slow down and try again shortly." }, 429);
+    }
+    if (limits.perDay !== null && !dayCountRes.error && (dayCountRes.count ?? 0) >= limits.perDay) {
+      const msg = limits.kind === "trial"
+        ? `You've used your ${limits.perDay} free Ufuq AI messages for today. Subscribe to unlock full access to Ufuq AI.`
+        : `You've reached today's Ufuq AI message limit (${limits.perDay}). It resets within 24 hours — see you tomorrow!`;
       return json(req, { error: msg }, 429);
     }
-    if (!dayCountRes.error && (dayCountRes.count ?? 0) >= dailyMax) {
-      const msg = isStaff || isGroupMember
-        ? "You've reached today's Ufuq AI message limit. It resets within 24 hours — see you tomorrow!"
-        : "You've reached the daily trial limit for accounts not yet in a group. Join a group to unlock full access to Ufuq AI.";
-      return json(req, { error: msg }, 429);
-    }
-    if (!globalCountRes.error && (globalCountRes.count ?? 0) >= GLOBAL_RATE_LIMIT_MAX_MESSAGES) {
+    // Site-wide per-minute cap: applies to everyone except the main admin.
+    if (!isSuper && !globalCountRes.error && (globalCountRes.count ?? 0) >= GLOBAL_RATE_LIMIT_MAX_MESSAGES) {
       return json(req, { error: "Ufuq AI is helping a lot of people right now — please try again in a moment." }, 429);
     }
 
