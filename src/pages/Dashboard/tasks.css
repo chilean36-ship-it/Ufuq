@@ -1,0 +1,106 @@
+/* Student Tasks (homework) — status cards, upload zone, grade block. Prefix tk2- */
+.tk2{ --tk-ok:#4FB477; --tk-warn:#E0A53A; --tk-bad:#E0675C; position:relative; }
+html[data-theme="light"] .tk2{ --tk-ok:#2C8F55; --tk-warn:#B9791A; --tk-bad:#C24B40; }
+
+.tk2-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin:4px 0 18px; }
+.tk2-tab{ display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:99px; border:1px solid var(--line); background:var(--bg-2); color:var(--text-muted); font:600 14px/1 inherit; cursor:pointer; transition:border-color .15s, color .15s, background .15s; }
+.tk2-tab i{ font-style:normal; min-width:22px; padding:3px 7px; border-radius:99px; background:var(--bg-3); color:var(--text); font-size:12px; text-align:center; }
+.tk2-tab:hover{ color:var(--text); border-color:var(--gold); }
+.tk2-tab.on{ color:var(--gold-bright); border-color:var(--gold); background:var(--gold-dim); }
+.tk2-tab.on i{ background:var(--gold); color:#121212; }
+.tk2-tab.alert i{ background:var(--tk-bad); color:#fff; }
+.tk2-tab:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; }
+
+.tk2-list{ display:grid; gap:14px; }
+.tk2-card{ background:var(--bg-2); border:1px solid var(--line); border-inline-start:4px solid var(--line); border-radius:14px; padding:18px 20px; display:grid; gap:14px; transition:border-color .2s, box-shadow .2s; }
+.tk2-card:hover{ box-shadow:0 8px 28px rgba(0,0,0,.18); }
+.tk2-card.is-overdue{ border-inline-start-color:var(--tk-bad); }
+.tk2-card.is-soon{ border-inline-start-color:var(--tk-warn); }
+.tk2-card.is-todo{ border-inline-start-color:var(--gold); }
+.tk2-card.is-submitted{ border-inline-start-color:var(--tk-ok); }
+.tk2-card.is-graded{ border-inline-start-color:var(--gold-bright); }
+
+.tk2-top{ display:flex; align-items:flex-start; gap:14px; }
+.tk2-date{ flex:none; width:54px; padding:8px 0; border-radius:12px; background:var(--bg-3); text-align:center; line-height:1.1; }
+.tk2-date b{ display:block; font-size:22px; color:var(--text); }
+.tk2-date span{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); }
+.tk2-head{ flex:1; min-width:0; }
+.tk2-head h3{ margin:0 0 6px; font-size:17px; line-height:1.3; color:var(--text); overflow-wrap:anywhere; }
+.tk2-due{ display:inline-flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:13px; color:var(--text-muted); }
+.tk2-due svg{ width:15px; height:15px; }
+.tk2-due b{ color:var(--text); font-weight:600; }
+.tk2-due em{ font-style:normal; padding:2px 8px; border-radius:99px; background:var(--bg-3); }
+.is-overdue .tk2-due em{ background:rgba(224,103,92,.16); color:var(--tk-bad); }
+.is-soon .tk2-due em{ background:rgba(224,165,58,.16); color:var(--tk-warn); }
+
+.tk2-chip{ flex:none; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:99px; font-size:12.5px; font-weight:700; background:var(--bg-3); color:var(--text-muted); white-space:nowrap; }
+.tk2-chip svg{ width:14px; height:14px; }
+.tk2-chip.todo{ background:var(--gold-dim); color:var(--gold-bright); }
+.tk2-chip.soon{ background:rgba(224,165,58,.16); color:var(--tk-warn); }
+.tk2-chip.overdue{ background:rgba(224,103,92,.16); color:var(--tk-bad); }
+.tk2-chip.submitted{ background:rgba(79,180,119,.16); color:var(--tk-ok); }
+.tk2-chip.graded{ background:var(--gold); color:#121212; }
+
+.tk2-desc{ margin:0; color:var(--text-muted); font-size:14.5px; line-height:1.6; white-space:pre-line; overflow-wrap:anywhere; }
+
+.tk2-drop{ display:grid; justify-items:center; gap:4px; padding:22px 16px; text-align:center; border:2px dashed var(--line); border-radius:12px; color:var(--text-muted); cursor:pointer; transition:border-color .15s, background .15s; }
+.tk2-drop svg{ width:30px; height:30px; color:var(--gold); margin-bottom:4px; }
+.tk2-drop b{ color:var(--text); font-size:15px; }
+.tk2-drop span{ font-size:12.5px; }
+.tk2-drop:hover, .tk2-drop.over, .tk2-drop:focus-visible{ border-color:var(--gold); background:var(--gold-dim); outline:none; }
+
+.tk2-picked, .tk2-subfile{ display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg-3); }
+.tk2-pickedtxt{ flex:1; min-width:0; display:grid; gap:2px; }
+.tk2-pickedtxt b{ font-size:14px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tk2-pickedtxt span{ font-size:12.5px; color:var(--text-muted); }
+.tk2-thumb{ width:56px; height:56px; object-fit:cover; border-radius:10px; flex:none; background:var(--bg-2); }
+.tk2-thumb.big{ width:72px; height:72px; }
+.tk2-fileico{ flex:none; width:44px; height:44px; display:grid; place-items:center; border-radius:10px; background:var(--bg-2); color:var(--gold); }
+.tk2-fileico svg{ width:22px; height:22px; }
+.tk2-iconbtn{ flex:none; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; border:1px solid var(--line); background:var(--bg-2); color:var(--text-muted); cursor:pointer; }
+.tk2-iconbtn:hover{ color:var(--tk-bad); border-color:var(--tk-bad); }
+.tk2-iconbtn svg{ width:16px; height:16px; }
+
+.tk2-upload{ display:grid; gap:12px; }
+.tk2-actions{ display:flex; justify-content:flex-end; gap:10px; }
+.tk2-primary, .tk2-ghost{ padding:11px 22px; border-radius:10px; font:700 14px/1 inherit; cursor:pointer; border:1px solid transparent; transition:opacity .15s, transform .1s; }
+.tk2-primary{ background:var(--gold); color:#121212; }
+.tk2-primary:hover:not(:disabled){ background:var(--gold-bright); }
+.tk2-primary:active:not(:disabled){ transform:translateY(1px); }
+.tk2-primary:disabled{ opacity:.45; cursor:not-allowed; }
+.tk2-ghost{ background:transparent; color:var(--text-muted); border-color:var(--line); }
+.tk2-ghost:hover:not(:disabled){ color:var(--text); border-color:var(--text-muted); }
+.tk2-link{ justify-self:start; background:none; border:0; padding:0; color:var(--gold-bright); font:600 13.5px/1 inherit; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.tk2-err{ margin:0; color:var(--tk-bad); font-size:13.5px; }
+
+.tk2-sub{ display:grid; gap:12px; }
+.tk2-removed{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; border:1px dashed var(--line); color:var(--text-muted); font-size:13.5px; }
+.tk2-removed svg{ width:18px; height:18px; flex:none; }
+.tk2-grade{ display:flex; align-items:flex-start; gap:14px; padding:14px; border-radius:12px; background:var(--gold-dim); border:1px solid rgba(201,162,75,.35); }
+.tk2-gradebadge{ flex:none; min-width:68px; padding:8px 12px; border-radius:10px; background:var(--bg-2); text-align:center; }
+.tk2-gradebadge span{ display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); }
+.tk2-gradebadge b{ font-size:22px; color:var(--gold-bright); }
+.tk2-fb{ display:flex; gap:10px; min-width:0; color:var(--text); }
+.tk2-fb svg{ width:18px; height:18px; flex:none; margin-top:2px; color:var(--gold); }
+.tk2-fb p{ margin:0; font-size:14.5px; line-height:1.55; white-space:pre-line; overflow-wrap:anywhere; }
+
+.tk2-empty{ display:grid; justify-items:center; gap:8px; padding:46px 18px; text-align:center; border:1.5px dashed var(--line); border-radius:14px; color:var(--text-muted); }
+.tk2-empty svg{ width:38px; height:38px; color:var(--gold); }
+.tk2-empty h3{ margin:0; color:var(--text); }
+.tk2-empty p{ margin:0; }
+.tk2-empty.small{ padding:24px 16px; }
+.tk2-keep{ margin:16px 2px 0; font-size:12.5px; color:var(--text-muted); text-align:center; }
+
+.tk2-toast{ position:fixed; inset-inline:16px; bottom:22px; margin:0 auto; max-width:360px; display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:12px; background:var(--bg-2); border:1px solid var(--tk-ok); color:var(--text); box-shadow:0 14px 36px rgba(0,0,0,.35); z-index:60; font-weight:600; }
+.tk2-toast svg{ width:18px; height:18px; color:var(--tk-ok); flex:none; }
+
+@media (max-width:560px){
+  .tk2-card{ padding:14px; }
+  .tk2-top{ flex-wrap:wrap; }
+  .tk2-chip{ order:3; }
+  .tk2-head h3{ font-size:16px; }
+  .tk2-actions{ justify-content:stretch; }
+  .tk2-actions .tk2-primary, .tk2-actions .tk2-ghost{ flex:1; }
+  .tk2-grade{ flex-direction:column; }
+}
+@media (prefers-reduced-motion:reduce){ .tk2-card, .tk2-tab, .tk2-drop, .tk2-primary{ transition:none; } }

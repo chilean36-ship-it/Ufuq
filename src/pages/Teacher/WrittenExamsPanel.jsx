@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import useLiveRefresh from '../../lib/liveRefresh';
 import { usePanel } from '../../components/panel/PanelContext';
@@ -21,10 +21,21 @@ import { examMax, examPoints, fmtPts } from '../../lib/scoring';
  *  a results table per student, and a grading view that shows the AI score/feedback alongside a teacher-score
  *  override, with a "Re-run AI check" button that calls the `grade-exam` edge function. */
 export default function WrittenExamsPanel() {
-  const { t, lang, toast, askConfirm, currentGroup: g } = usePanel();
+  const { t, lang, toast, askConfirm, currentGroup: g, myGroups } = usePanel();
   const code = g ? g.code : null;
   const [exams, setExams] = useState(null);
+  const [prevExams, setPrevExams] = useState([]);   // exams of the earlier-level groups of the same series that are still active
   const [meta, setMeta] = useState({ qCount: {}, subCount: {} });
+
+  // Group A8 is the continuation of Group A7: while A7 is still active, its exams (and the results of the students who
+  // already passed and moved up) stay reachable from A8's Exams page instead of an empty "No written exams yet".
+  const prevGroups = useMemo(() => {
+    if (!g || g.type === 'individual' || !g.letter || g.level == null) return [];
+    return (myGroups || []).filter((x) => x.code !== g.code && x.type !== 'individual' && x.letter === g.letter
+      && x.level != null && x.level < g.level && x.is_active)
+      .sort((a, b) => b.level - a.level);
+  }, [g, myGroups]);
+  const prevKey = prevGroups.map((x) => x.code).join(',');
   const [builder, setBuilder] = useState({ open: false, exam: null, level: null });
   const [lvl, setLvl] = useState('all');           // level filter: 'all' | 1..MAX_LEVEL | 0 (exams without a level)
   const [results, setResults] = useState({ open: false, exam: null });
@@ -33,14 +44,18 @@ export default function WrittenExamsPanel() {
 
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
-    if (!code) { setExams(null); return; }
+    if (!code) { setExams(null); setPrevExams([]); return; }
     if (!silent) setExams(null);
     try {
-      const { data, error } = await supabase.from('written_exams').select('*').eq('group_code', code).order('level', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+      const codes = [code, ...(prevKey ? prevKey.split(',') : [])];
+      const { data, error } = await supabase.from('written_exams').select('*').in('group_code', codes).order('level', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
       if (error) throw error;
-      const list = data || [];
-      if (list.length === 0) { setExams([]); return; }
-      const ids = list.map((e) => e.id);
+      const all = data || [];
+      const list = all.filter((e) => e.group_code === code);
+      const older = all.filter((e) => e.group_code !== code);
+      setPrevExams(older);
+      if (all.length === 0) { setExams([]); return; }
+      const ids = all.map((e) => e.id);
       const [qs, subs] = await Promise.all([
         supabase.from('written_exam_questions').select('exam_id').in('exam_id', ids),
         supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', ids),
@@ -51,7 +66,7 @@ export default function WrittenExamsPanel() {
       setMeta({ qCount: qc, subCount: sc });
       setExams(list);
     } catch (e) { if (!silent) setExams({ error: e.message || String(e) }); }
-  }, [code]);
+  }, [code, prevKey]);
 
   useEffect(() => { load(); }, [load]);
   useLiveRefresh(load);
@@ -123,6 +138,24 @@ export default function WrittenExamsPanel() {
     </article>
   );
 
+  // Earlier-level groups of the same series that are still open: their exams + results stay reachable here.
+  const prevBlock = prevGroups.map((pg) => {
+    const list = prevExams.filter((e) => e.group_code === pg.code);
+    if (!list.length) return null;
+    return (
+      <section className="xl-sec xl-sec-prev" key={pg.code}>
+        <div className="xl-sec-head">
+          <span className="xl-sec-badge">{pg.level}</span>
+          <div>
+            <h4 className="xl-sec-title">{pg.name} <span className="xl-prev-tag">{t('still active')}</span></h4>
+            <div className="xl-sec-sub">{t('Students who already passed and moved up stay in these results until this group is closed.')}</div>
+          </div>
+        </div>
+        <div className="xl-list">{list.map(card)}</div>
+      </section>
+    );
+  });
+
   return (
     <div className="we-panel active" id="examsWrittenPanel">
       <PageStyle css={listCss} />
@@ -149,10 +182,18 @@ export default function WrittenExamsPanel() {
         {!code ? <div className="xl-empty"><p>{t('Select a group')}</p></div>
           : exams === null ? <div className="xl-empty"><p>{t('Loading…')}</p></div>
           : exams.error ? <div className="xl-empty"><p>{exams.error}</p></div>
-          : exams.length === 0 ? (
+          : exams.length === 0 && prevExams.length === 0 ? (
             <div className="xl-empty">
               <p>{t('No written exams yet.')}</p>
               <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
+            </div>
+          ) : exams.length === 0 ? (
+            <div>
+              <div className="xl-empty xl-empty-soft">
+                <p>{t('This group has no exams of its own yet. The exams of the earlier level are below.')}</p>
+                <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
+              </div>
+              {prevBlock}
             </div>
           ) : sections.length === 0 || (lvl !== 'all' && !(byLevel[lvl] || []).length) ? (
             <div className="xl-empty">
@@ -177,6 +218,7 @@ export default function WrittenExamsPanel() {
                   </section>
                 );
               })}
+              {prevBlock}
             </div>
           )}
       </div>
@@ -193,22 +235,37 @@ export default function WrittenExamsPanel() {
 }
 
 function ResultsModal({ state, onClose, onGrade }) {
-  const { t, lang, toast, currentGroup: g } = usePanel();
+  const { t, lang, toast } = usePanel();
   // (results title below uses the panel language)
   const [rows, setRows] = useState(null);
   const examId = state.exam ? state.exam.id : null;
 
   const refresh = useCallback(async () => {
-    if (!examId || !g) return;
+    const exam = state.exam;
+    if (!examId || !exam) return;
     setRows(null);
     try {
-      const [memRes, subRes] = await Promise.all([
-        supabase.from('group_members').select('user_id, name').eq('group_code', g.code).order('name'),
-        supabase.from('written_exam_submissions').select('*').eq('exam_id', examId),
-      ]);
-      if (memRes.error) throw memRes.error;
+      const subRes = await supabase.from('written_exam_submissions').select('*').eq('exam_id', examId);
       if (subRes.error) throw subRes.error;
-      const members = memRes.data || [];
+      // Roster = the students of the exam's own group + everybody who has a paper for it, even if they have already
+      // passed and moved up to the next group (they used to vanish from this table).
+      let members = null;
+      try {
+        const rr = await supabase.rpc('staff_exam_roster', { p_exam_id: examId });   // migration 20261120 (names + "moved to Group A8")
+        if (!rr.error && Array.isArray(rr.data)) members = rr.data.map((r) => ({ user_id: r.user_id, name: r.name, in_group: r.in_group, current_group: r.current_group }));
+      } catch (e) { /* not applied yet: the fallback below does the same with the tables */ }
+      if (!members) {
+        const memRes = await supabase.from('group_members').select('user_id, name').eq('group_code', exam.group_code).order('name');
+        if (memRes.error) throw memRes.error;
+        const known = new Map((memRes.data || []).map((m) => [m.user_id, { user_id: m.user_id, name: m.name, in_group: true, current_group: null }]));
+        const extra = (subRes.data || []).map((s) => s.user_id).filter((id) => !known.has(id));
+        if (extra.length) {
+          const pr = await supabase.from('profiles').select('id, full_name').in('id', extra);
+          const nm = new Map((pr.data || []).map((p) => [p.id, p.full_name]));
+          extra.forEach((id) => known.set(id, { user_id: id, name: nm.get(id) || '', in_group: false, current_group: null }));
+        }
+        members = [...known.values()].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      }
       if (members.length === 0) { setRows([]); return; }
       const subMap = {}; (subRes.data || []).forEach((s) => { subMap[s.user_id] = s; });
       const aiDone = {};
@@ -224,7 +281,7 @@ function ResultsModal({ state, onClose, onGrade }) {
       } catch (e) { /* migration not applied yet */ }
       setRows(members.map((m) => { const sb = subMap[m.user_id] || null; return { member: m, sub: sb, viol: viol[m.user_id] || { total: 0, technical: 0 }, ai: !!(sb && aiDone[sb.id]) }; }));
     } catch (e) { setRows({ error: e.message || String(e) }); }
-  }, [examId, g]);
+  }, [examId, state.exam]);
 
   useEffect(() => { if (state.open) refresh(); }, [state.open, refresh]);
 
@@ -301,7 +358,9 @@ function ResultsModal({ state, onClose, onGrade }) {
               const label = s ? (s.status === 'submitted' && ai ? 'AI checked' : labels[s.status]) : 'Not submitted';
               return (
                 <tr key={m.user_id}>
-                  <td><b>{m.name || t('Student')}</b></td>
+                  <td><b>{m.name || t('Student')}</b>
+                    {m.in_group === false && <span className="u-pill gold" style={{ marginLeft: 8 }} title={t('Passed and moved up; the result stays here')}>{m.current_group ? t('Moved to') + ' ' + m.current_group : t('Moved up')}</span>}
+                  </td>
                   <td><span className={'we-status ' + status}>{t(label)}</span></td>
                   <td>{s && s.total_score !== null && s.total_score !== undefined ? <>{fmtPts(examPoints(s.total_score, state.exam && state.exam.exam_kind))}<small className="muted"> / {examMax(state.exam && state.exam.exam_kind)}</small></> : '\u2014'}</td>
                   <td>{viol.total > 0 ? <span className="u-pill amber" title={t('Times the student left the exam page')}>{'\u26A0'} {viol.total}</span> : <span className="muted">{'\u2713'}</span>}{viol.technical > 0 && <span className="muted" title={t('Interruptions with no internet connection (not counted against the student)')}> {' '}+{viol.technical} {t('technical')}</span>}</td>

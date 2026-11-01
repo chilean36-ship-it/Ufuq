@@ -218,3 +218,9 @@ a.st-btn{display:inline-block; text-decoration:none;}
 .st-card-danger .st-card-head h2{color:#E07A5F;}
 .st-btn.st-solid{background:#D9534F; border-color:#D9534F; color:#fff;}
 .st-btn.st-solid:hover{background:#E0625E; border-color:#E0625E; color:#fff; box-shadow:0 8px 20px -8px #D9534F;}
+
+/* small status chips (email verified, time zone) */
+.st-chip{display:inline-flex; align-items:center; padding:6px 12px; border-radius:99px; background:var(--bg-3); color:var(--text-muted); font-size:13px; font-weight:600; white-space:nowrap;}
+.st-chip.ok{background:rgba(79,180,119,.16); color:#4FB477;}
+.st-chip.warn{background:rgba(224,165,58,.16); color:#E0A53A;}
+html[data-theme="light"] .st-chip.ok{color:#2C8F55;} html[data-theme="light"] .st-chip.warn{color:#B9791A;}

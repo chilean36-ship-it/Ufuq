@@ -116,3 +116,8 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
   The DB also refuses a class group without letter / level. The name ("Group A8") is made by the server.
 - Removed: `ufuq_try_advance_group`, the `group_members_left_advance` trigger.
 - NOT verified in this environment: `npm run build` (no network). Run it once before deploying to Vercel.
+
+## Nov 2026 redesign: Tasks, Exams, Progress, Settings, Notifications (branch feature/tasks-exams-settings)
+- NOT YET APPLIED: `supabase/migrations/20261120_exam_roster_keeps_moved_students.sql` (new function `staff_exam_roster`). Run it in the SQL editor. Until then the results table of an exam still lists students who moved up (it falls back to the tables), only without "Moved to Group A8" names from the server.
+- Tasks are live for students (the "coming soon" flag is off). Photos / files go to the private `task-submissions` bucket.
+- `cleanup-task-files` (Edge Function, deployed by the pipeline) + `.github/workflows/cleanup-task-files.yml`: every Monday files older than 2 months are deleted from that bucket (grades stay). Run the workflow once by hand with "dry run" to see the counts.

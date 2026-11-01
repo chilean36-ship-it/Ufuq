@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 /** Per-device interface preferences (Settings → Appearance). Applied as data-attributes on <html>; see styles/ui-prefs.css. */
 const KEY = 'ufuq-ui-prefs';
-export const DEFAULT_PREFS = { accent: 'gold', density: 'comfortable', motion: 'full', text: 'normal' };
+export const DEFAULT_PREFS = { accent: 'gold', density: 'comfortable', motion: 'full', text: 'normal', contrast: 'normal' };
 export const ACCENTS = ['gold', 'emerald', 'sky', 'violet', 'rose'];
 
 export function getUiPrefs() {
@@ -15,6 +15,7 @@ export function applyUiPrefs(p = getUiPrefs()) {
   h.setAttribute('data-accent', p.accent);
   h.setAttribute('data-density', p.density);
   h.setAttribute('data-text', p.text);
+  h.setAttribute('data-contrast', p.contrast === 'high' ? 'high' : 'normal');
   h.setAttribute('data-motion', p.motion === 'reduced' || (p.motion === 'system' && reduceOS) ? 'reduce' : 'full');
 }
 

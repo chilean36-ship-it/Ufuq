@@ -7,7 +7,7 @@ import { useDashboardData } from '../../context/DashboardDataContext';
 import { supabase } from '../../lib/supabaseClient';
 import { ufuqSignOut } from '../../lib/auth';
 import { LANGS } from '../../i18n';
-import { ACCENTS, useUiPrefs } from '../../lib/uiPrefs';
+import { useUiPrefs } from '../../lib/uiPrefs';
 import SettingsProfile from './SettingsProfile';
 import PasswordModal from '../Profile/PasswordModal';
 import settingsCss from './settings.css?inline';
@@ -72,9 +72,8 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
   const { prefs, setPref, reset, isDefault } = useUiPrefs();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
-  const [confirmSO, setConfirmSO] = useState(null); // 'others' | 'global'
+  const [confirmSO, setConfirmSO] = useState(null); // 'others'
   const [soBusy, setSoBusy] = useState(false);
-  const [confirmClear, setConfirmClear] = useState(false);
   const [toast, setToast] = useState(null);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState('profile');
@@ -147,25 +146,23 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     flashToast(t('Your data was downloaded'));
   };
-  // Removes cached/convenience data only (listening positions, cached photo, drafts) — never the account or sign-in.
-  const clearLocal = () => {
-    try {
-      Object.keys(localStorage).filter((k) => /^ufuq\.audio|^ufuq-avatar:|draft|cache/i.test(k)).forEach((k) => localStorage.removeItem(k));
-    } catch (e) { /* ignore */ }
-    setConfirmClear(false);
-    flashToast(t('Local data cleared'));
-  };
   const runSignOut = async (scope) => {
     setSoBusy(true);
     try {
       await ufuqSignOut(scope);
-      if (scope === 'global') { navigate('/index', { replace: true }); return; }
       flashToast(t('Signed out of other devices'));
     } catch (e) { flashToast(t('Something went wrong. Please try again.')); }
     setSoBusy(false); setConfirmSO(null);
   };
 
-  const ACCENT_LABELS = { gold: 'Gold', emerald: 'Emerald', sky: 'Sky', violet: 'Violet', rose: 'Rose' };
+  // Time zone of this device (shown for information: class times follow it)
+  let tz = '';
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const off = -new Date().getTimezoneOffset();
+    tz = zone + ' (UTC' + (off >= 0 ? '+' : '−') + String(Math.floor(Math.abs(off) / 60)).padStart(2, '0') + ':' + String(Math.abs(off) % 60).padStart(2, '0') + ')';
+  } catch (e) { tz = ''; }
+  const verified = !!(user && user.email_confirmed_at);
 
   // ---- Sections are data, so search and navigation work for every item automatically ----
   const sections = [
@@ -173,10 +170,11 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
       id: 'profile', icon: I.user, title: t('Profile'), desc: t('Your name, email and photo.'),
       items: [
         { key: 'prof', block: true, bare: true, label: t('Personal information'), desc: t('Your account details.'), kw: 'name email photo avatar first last', render: () => <SettingsProfile onToast={flashToast} onOpenProfile={() => (onNavigate ? onNavigate('profile') : navigate('/profile'))} /> },
+        { key: 'email', label: t('Email address'), desc: email || '—', kw: 'email mail verified', render: () => <span className={'st-chip ' + (verified ? 'ok' : 'warn')}>{verified ? t('Verified') : t('Not verified')}</span> },
       ],
     },
     {
-      id: 'appearance', icon: I.appearance, title: t('Appearance'), desc: t('Theme, colours, text size and motion.'),
+      id: 'appearance', icon: I.appearance, title: t('Appearance'), desc: t('Theme, text size and accessibility.'),
       items: [
         {
           key: 'theme', block: true, label: t('Theme'), desc: t('Choose how Ufuq looks on this device.'), kw: 'dark light night mode',
@@ -192,32 +190,21 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
           ),
         },
         {
-          key: 'accent', label: t('Accent colour'), desc: t('Colour used for buttons, highlights and progress.'), kw: 'color colour gold green blue',
-          render: () => (
-            <div className="st-swatches" role="radiogroup" aria-label={t('Accent colour')}>
-              {ACCENTS.map((a) => (
-                <button type="button" role="radio" aria-checked={prefs.accent === a} key={a} title={t(ACCENT_LABELS[a])} aria-label={t(ACCENT_LABELS[a])}
-                        className={'st-swatch st-sw-' + a + (prefs.accent === a ? ' on' : '')} onClick={() => pick('accent', a)}>{I.check}</button>
-              ))}
-            </div>
-          ),
-        },
-        {
           key: 'text', label: t('Text size'), desc: t('Make text easier to read.'), kw: 'font zoom bigger',
           render: () => <Segmented label={t('Text size')} value={prefs.text} onChange={(v) => pick('text', v)} options={[{ value: 'small', label: t('Small') }, { value: 'normal', label: t('Default') }, { value: 'large', label: t('Large') }]} />,
         },
         {
-          key: 'density', label: t('Density'), desc: t('Fit more on screen.'), kw: 'compact spacing',
-          render: () => <Segmented label={t('Density')} value={prefs.density} onChange={(v) => pick('density', v)} options={[{ value: 'comfortable', label: t('Comfortable') }, { value: 'compact', label: t('Compact') }]} />,
+          key: 'contrast', label: t('High contrast'), desc: t('Stronger text and borders for easier reading.'), kw: 'accessibility contrast wcag vision',
+          render: () => <Switch id="settingsContrast" on={prefs.contrast === 'high'} label={t('High contrast')} onClick={() => pick('contrast', prefs.contrast === 'high' ? 'normal' : 'high')} />,
         },
         {
-          key: 'motion', label: t('Motion'), desc: t('Animations and transitions.'), kw: 'animation reduce accessibility',
-          render: () => <Segmented label={t('Motion')} value={prefs.motion} onChange={(v) => pick('motion', v)} options={[{ value: 'full', label: t('Full') }, { value: 'reduced', label: t('Reduced') }, { value: 'system', label: t('Follow system') }]} />,
+          key: 'motion', label: t('Reduce motion'), desc: t('Fewer animations and transitions.'), kw: 'animation reduce accessibility',
+          render: () => <Segmented label={t('Reduce motion')} value={prefs.motion} onChange={(v) => pick('motion', v)} options={[{ value: 'full', label: t('Off') }, { value: 'system', label: t('Follow system') }, { value: 'reduced', label: t('On') }]} />,
         },
       ],
     },
     {
-      id: 'language', icon: I.language, title: t('Language'), desc: t('Interface language.'),
+      id: 'language', icon: I.language, title: t('Language & region'), desc: t('Interface language and time zone.'),
       items: [
         {
           key: 'lang', block: true, label: t('Dashboard language'), desc: t('Choose your preferred language for the dashboard.'), kw: 'english uzbek russian arabic til язык',
@@ -231,6 +218,7 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
             </div>
           ),
         },
+        ...(tz ? [{ key: 'tz', label: t('Time zone'), desc: t('Detected from your device. Class times are shown in it.'), kw: 'timezone clock region utc', render: () => <span className="st-chip">{tz}</span> }] : []),
       ],
     },
     {
@@ -261,33 +249,21 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
           confirmSO === 'others'
             ? <div className="st-confirm"><span>{t('Are you sure?')}</span><button type="button" className="st-btn st-danger" disabled={soBusy} onClick={() => runSignOut('others')}>{t('Yes')}</button><button type="button" className="st-btn" onClick={() => setConfirmSO(null)}>{t('No')}</button></div>
             : <button type="button" className="st-btn" onClick={() => setConfirmSO('others')}>{t('Sign out others')}</button>) },
-        { key: 's4', label: t('Sign out everywhere'), desc: t('Sign out of Ufuq on every device, including this one.'), kw: 'logout all global', render: () => (
-          confirmSO === 'global'
-            ? <div className="st-confirm"><span>{t('Are you sure?')}</span><button type="button" className="st-btn st-danger" disabled={soBusy} onClick={() => runSignOut('global')}>{t('Yes')}</button><button type="button" className="st-btn" onClick={() => setConfirmSO(null)}>{t('No')}</button></div>
-            : <button type="button" className="st-btn st-danger" onClick={() => setConfirmSO('global')}>{t('Sign out all')}</button>) },
       ],
     },
     {
-      id: 'privacy', icon: I.data, title: t('Privacy & data'), desc: t('Your data and what is stored on this device.'),
+      id: 'privacy', icon: I.data, title: t('Privacy & data'), desc: t('Your data belongs to you.'),
       items: [
         { key: 'p1', label: t('Download my data'), desc: t('Get a copy of your account details and settings as a file.'), kw: 'export json gdpr', render: () => <button type="button" className="st-btn" onClick={downloadData}>{t('Download')}</button> },
-        { key: 'p2', label: t('Clear local data'), desc: t('Remove saved listening positions and cached photos from this device. You stay signed in.'), kw: 'cache storage reset', render: () => (
-          confirmClear
-            ? <div className="st-confirm"><span>{t('Are you sure?')}</span><button type="button" className="st-btn st-danger" onClick={clearLocal}>{t('Yes')}</button><button type="button" className="st-btn" onClick={() => setConfirmClear(false)}>{t('No')}</button></div>
-            : <button type="button" className="st-btn" onClick={() => setConfirmClear(true)}>{t('Clear')}</button>) },
       ],
     },
     {
-      id: 'about', icon: I.info, title: t('Help & legal'), desc: t('Policies and shortcuts.'),
+      id: 'about', icon: I.info, title: t('Help & legal'), desc: t('Support and policies.'),
       items: [
+        { key: 'h0', label: t('Contact support'), desc: t('Questions about payments, lessons or your account.'), kw: 'help telegram contact support', render: () => <a className="st-btn" href="https://t.me/ufuq_support" target="_blank" rel="noopener noreferrer">{t('Open Telegram')}</a> },
         { key: 'h1', label: t('Terms of Service'), desc: t('The rules for using Ufuq.'), kw: 'legal terms', render: () => <a className="st-btn" href="/terms" target="_blank" rel="noopener">{t('Open')}</a> },
         { key: 'h2', label: t('Privacy Policy'), desc: t('How we handle your information.'), kw: 'legal privacy data', render: () => <a className="st-btn" href="/privacy" target="_blank" rel="noopener">{t('Open')}</a> },
         { key: 'h3', label: t('Cookies'), desc: t('What we store in your browser.'), kw: 'legal cookies', render: () => <a className="st-btn" href="/cookies" target="_blank" rel="noopener">{t('Open')}</a> },
-        { key: 'h4', block: true, label: t('Audio player shortcuts'), desc: t('Handy keys while listening to a lesson.'), kw: 'keyboard keys space',
-          render: () => (
-            <ul className="st-keys">
-              {[['Space', 'Play / pause'], ['← →', '±5 s'], ['J  L', '±10 s'], ['↑ ↓', 'Volume'], ['M', 'Mute']].map(([k, d]) => <li key={k}><kbd>{k}</kbd><span>{t(d)}</span></li>)}
-            </ul>) },
       ],
     },
     {
@@ -308,7 +284,7 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
       return { ...s, items };
     }).filter((s) => s.items.length);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, lang, mode, prefs, notif, confirmSO, soBusy, user, confirmClear]);
+  }, [q, lang, mode, prefs, notif, confirmSO, soBusy, user]);
 
   // Scroll-spy: highlight the section currently in view.
   useEffect(() => {

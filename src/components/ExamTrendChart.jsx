@@ -66,6 +66,16 @@ export const CHART_CSS = `
 .etc.lg .etc-empty{ font-size:15px; padding:70px 0; }
 .etc.lg .etc-legend{ font-size:13px; margin-top:14px; gap:20px; }
 .etc-kpi{ transition:transform .15s ease, border-color .15s ease; } .etc-kpi:hover{ transform:translateY(-2px); border-color:var(--gold); }
+.etc-sep{ stroke-dasharray:3 4; opacity:.9; }
+.etc-months{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
+.etc-mo{ display:grid; gap:2px; padding:10px 12px; border-radius:12px; background:var(--bg-3); border:1px solid var(--line); border-top:3px solid var(--gold); text-align:center; }
+.etc-mo.none{ border-top-color:var(--line); opacity:.75; }
+.etc-mo-name{ font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:capitalize; color:var(--text-muted); }
+.etc-mo b{ font-family:'Fraunces',serif; font-size:22px; line-height:1.15; color:var(--gold-bright); }
+.etc-mo-sub{ font-size:11.5px; color:var(--text-muted); }
+.etc-mo-sub i{ display:inline-block; font-style:normal; font-size:10.5px; font-weight:700; margin-left:5px; padding:1px 6px; border-radius:99px; }
+.etc.lg .etc-mo{ padding:16px 14px; border-radius:14px; } .etc.lg .etc-mo b{ font-size:30px; } .etc.lg .etc-mo-name{ font-size:13.5px; } .etc.lg .etc-mo-sub{ font-size:13px; }
+@media (max-width:420px){ .etc-mo b{ font-size:18px; } .etc-mo-sub i{ display:block; margin:3px auto 0; width:max-content; } }
 .etc-dot{ cursor:pointer; }
 @keyframes etcDraw{ to{ stroke-dashoffset:0; } } @keyframes etcFade{ to{ opacity:1; } }
 @media (prefers-reduced-motion:reduce){ .etc-line,.etc-area,.etc-dot{ animation:none; stroke-dashoffset:0; opacity:1; } }
@@ -122,15 +132,23 @@ export default function ExamTrendChart({ items, size = 'sm' }) {
 
   // ---- what is on the chart for the chosen period ----
   const view = useMemo(() => {
-    let pts = [], from, to, prev = [], xMax, xTicks = [];
+    let pts = [], prev = [], xMax, xTicks = [], seps = [], months = [];
     if (mode === 'month') {
-      const start = new Date(cursor.y, cursor.m, 1).getTime(), end = new Date(cursor.y, cursor.m + 1, 1).getTime();
-      const dim = new Date(cursor.y, cursor.m + 1, 0).getDate();
-      pts = data.filter((d) => d.ts >= start && d.ts < end).map((d) => ({ ...d, x: (d.ts - start) / DAY, label: new Date(d.ts).toLocaleDateString(locale, { day: 'numeric', month: 'long' }) }));
-      const ps = new Date(cursor.y, cursor.m - 1, 1).getTime();
-      prev = data.filter((d) => d.ts >= ps && d.ts < start);
-      xMax = dim;
-      xTicks = [1, 5, 10, 15, 20, 25, dim].filter((v, i, a) => a.indexOf(v) === i).map((v) => ({ v: v - 1, text: String(v) }));
+      // "Monthly" = a window of THREE months ending at the chosen month (default: the last 3 months, today included)
+      const start = new Date(cursor.y, cursor.m - 2, 1).getTime(), end = new Date(cursor.y, cursor.m + 1, 1).getTime();
+      const span = Math.round((end - start) / DAY);
+      pts = data.filter((d) => d.ts >= start && d.ts < end).map((d) => ({ ...d, x: (d.ts - start) / DAY, label: new Date(d.ts).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) }));
+      prev = data.filter((d) => d.ts >= new Date(cursor.y, cursor.m - 5, 1).getTime() && d.ts < start);
+      xMax = span;
+      for (let k = 0; k < 3; k++) {
+        const ms = new Date(cursor.y, cursor.m - 2 + k, 1), me = new Date(cursor.y, cursor.m - 1 + k, 1);
+        const inM = data.filter((d) => d.ts >= ms.getTime() && d.ts < me.getTime());
+        const x0 = Math.round((ms.getTime() - start) / DAY), x1 = Math.round((me.getTime() - start) / DAY);
+        xTicks.push({ v: (x0 + x1) / 2, text: ms.toLocaleDateString(locale, { month: 'short' }) });
+        if (k > 0) seps.push(x0);
+        months.push({ key: k, label: ms.toLocaleDateString(locale, { month: 'long' }), count: inM.length, avg: inM.length ? Math.round(mean(inM.map((d) => d.pct))) : null, best: inM.length ? Math.max(...inM.map((d) => d.pct)) : null });
+      }
+      months.forEach((mo, i) => { mo.delta = i > 0 && mo.avg != null && months[i - 1].avg != null ? mo.avg - months[i - 1].avg : null; });
     } else {
       const start = new Date(cursor.y, 0, 1).getTime(), end = new Date(cursor.y + 1, 0, 1).getTime();
       const inYear = data.filter((d) => d.ts >= start && d.ts < end);
@@ -149,7 +167,7 @@ export default function ExamTrendChart({ items, size = 'sm' }) {
     const pcts = periodItems.map((p) => p.pct);
     const avg = pcts.length ? Math.round(mean(pcts)) : null;
     const pAvg = prev.length ? Math.round(mean(prev.map((d) => d.pct))) : null;
-    return { pts, xMax, xTicks, count: pcts.length, avg, best: pcts.length ? Math.max(...pcts) : null, delta: avg != null && pAvg != null ? avg - pAvg : null };
+    return { pts, xMax, xTicks, seps, months, count: pcts.length, avg, best: pcts.length ? Math.max(...pcts) : null, delta: avg != null && pAvg != null ? avg - pAvg : null };
   }, [data, mode, cursor, locale, t]);
 
   // reset the crosshair whenever the period changes
@@ -187,9 +205,15 @@ export default function ExamTrendChart({ items, size = 'sm' }) {
 
   // ---- period navigation ----
   const atNow = mode === 'month' ? (cursor.y === now.getFullYear() && cursor.m === now.getMonth()) : cursor.y === now.getFullYear();
-  const atStart = mode === 'month' ? (cursor.y < earliest.getFullYear() || (cursor.y === earliest.getFullYear() && cursor.m <= earliest.getMonth())) : cursor.y <= earliest.getFullYear();
+  const atStart = mode === 'month' ? new Date(cursor.y, cursor.m - 2, 1).getTime() <= new Date(earliest.getFullYear(), earliest.getMonth(), 1).getTime() : cursor.y <= earliest.getFullYear();
   const step = (d) => setCursor((c) => (mode === 'month' ? (() => { const dt = new Date(c.y, c.m + d, 1); return { y: dt.getFullYear(), m: dt.getMonth() }; })() : { y: c.y + d, m: c.m }));
-  const periodLabel = mode === 'month' ? new Date(cursor.y, cursor.m, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' }) : String(cursor.y);
+  const periodLabel = (() => {
+    if (mode !== 'month') return String(cursor.y);
+    const a = new Date(cursor.y, cursor.m - 2, 1), b = new Date(cursor.y, cursor.m, 1);
+    return a.getFullYear() === b.getFullYear()
+      ? a.toLocaleDateString(locale, { month: 'short' }) + ' – ' + b.toLocaleDateString(locale, { month: 'short', year: 'numeric' })
+      : a.toLocaleDateString(locale, { month: 'short', year: 'numeric' }) + ' – ' + b.toLocaleDateString(locale, { month: 'short', year: 'numeric' });
+  })();
   const Delta = ({ v }) => (v == null ? null : <i className={v > 0 ? 'etc-up' : v < 0 ? 'etc-down' : 'etc-flat'}>{v > 0 ? '▲ +' : v < 0 ? '▼ ' : '▬ '}{v}%</i>);
   const dotClass = (d) => (d.pct >= 80 ? ' good' : d.pct < 50 ? ' low' : '');
 
@@ -198,7 +222,7 @@ export default function ExamTrendChart({ items, size = 'sm' }) {
       {(
         <div className="etc-bar">
           <div className="etc-pills" role="tablist" aria-label={t('Period')}>
-            <button type="button" role="tab" aria-selected={mode === 'month'} className={mode === 'month' ? 'on' : ''} onClick={() => setMode('month')}>{t('Monthly')}</button>
+            <button type="button" role="tab" aria-selected={mode === 'month'} className={mode === 'month' ? 'on' : ''} onClick={() => setMode('month')}>{t('Last 3 months')}</button>
             <button type="button" role="tab" aria-selected={mode === 'year'} className={mode === 'year' ? 'on' : ''} onClick={() => setMode('year')}>{t('Yearly')}</button>
           </div>
           <div className="etc-nav">
@@ -215,6 +239,18 @@ export default function ExamTrendChart({ items, size = 'sm' }) {
         <div className="etc-kpi"><b>{view.best != null ? view.best + '%' : '—'}</b><span>{t('Best result')}</span></div>
       </div>
 
+      {mode === 'month' && (
+        <div className="etc-months" role="list">
+          {view.months.map((mo) => (
+            <div className={'etc-mo' + (mo.count ? '' : ' none')} role="listitem" key={mo.key}>
+              <span className="etc-mo-name">{mo.label}</span>
+              <b>{mo.avg != null ? mo.avg + '%' : '—'}</b>
+              <span className="etc-mo-sub">{mo.count ? mo.count + ' ' + t('exams') : t('No exams')}{mo.delta != null ? <Delta v={mo.delta} /> : null}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {n === 0 ? (
         <div className="etc-empty">{t('No exams in this period.')}</div>
       ) : (
@@ -228,6 +264,7 @@ export default function ExamTrendChart({ items, size = 'sm' }) {
           <svg key={mode + cursor.y + '-' + cursor.m + size} className="etc-svg" viewBox={`0 0 ${W} ${H}`}>
             <defs><linearGradient id={'etcFill' + size} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--gold)" stopOpacity=".35" /><stop offset="100%" stopColor="var(--gold)" stopOpacity="0" /></linearGradient></defs>
             {[0, 25, 50, 75, 100].map((g) => <g key={g}><line className="etc-grid" x1={L} x2={W - R} y1={yp(g)} y2={yp(g)} /><text className="etc-axis" x={L - 6} y={yp(g) + 3} textAnchor="end">{g}</text></g>)}
+            {view.seps.map((sx) => <line key={'s' + sx} className="etc-grid etc-sep" x1={xp(sx)} x2={xp(sx)} y1={T} y2={H - B} />)}
             {view.xTicks.map((tk) => <text key={tk.v} className="etc-axis" x={xp(tk.v)} y={H - 8} textAnchor="middle">{tk.text}</text>)}
             {view.avg != null && <><line className="etc-avg" x1={L} x2={W - R} y1={yp(view.avg)} y2={yp(view.avg)} /><text className="etc-axis" x={W - R} y={yp(view.avg) - 4} textAnchor="end">{t('Average')} {view.avg}%</text></>}
             {n > 1 && <path className="etc-area" d={area} fill={`url(#etcFill${size})`} />}

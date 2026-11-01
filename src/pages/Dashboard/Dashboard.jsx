@@ -46,13 +46,13 @@ const CRUMB_TITLES = {
   progress: 'Progress', library: 'Library', profile: 'Profile', settings: 'Settings', billing: 'Billing',
 };
 
-// Temporarily re-enabled per request — set a flag to false to make that tab live again
-// (its real view component is already fully built; see MIGRATION.md).
-const SECTIONS_COMING_SOON = { tasks: 'tasksLink' };
+// A section listed here shows the "coming soon" window instead of opening (e.g. { tasks: 'tasksLink' }).
+// Tasks is live now (Nov 2026).
+const SECTIONS_COMING_SOON = {};
 
 // Yangilashdan (F5) keyin qaytib ochilishi mumkin bo'lgan bo'limlar (#hash orqali). "Tez orada" bo'limlari kirmaydi.
 const LEARNING_VIEWS = ['myGroup', 'hifzLive', 'tasks', 'exam', 'attendance', 'progress'];
-const RESTORABLE_VIEWS = ['home', 'myGroup', 'hifzLive', 'attendance', 'progress', 'library', 'settings', 'profile', 'billing'];
+const RESTORABLE_VIEWS = ['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'settings', 'profile', 'billing'];
 // Sections that need a paid plan. Home, Billing, Settings and Profile stay open; My Group (and joining a group) needs a plan.
 const NO_AI_VIEWS = ['myGroup', 'billing', 'settings']; // Ufuq AI is not offered on these sections
 const PAID_VIEWS = ['tasks', 'hifzLive', 'attendance', 'progress', 'library', 'exam'];

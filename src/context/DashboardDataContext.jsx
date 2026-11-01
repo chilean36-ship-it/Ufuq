@@ -229,10 +229,12 @@ export async function getTaskSubmissions(userId) {
   if (!userId) return {};
   try {
     const { data, error } = await supabase
-      .from('task_submissions').select('task_id, file_name, file_path, submitted_at').eq('user_id', userId);
+      .from('task_submissions').select('task_id, file_name, file_path, submitted_at, grade, feedback, graded_at').eq('user_id', userId);
     if (error) throw error;
     const map = {};
-    (data || []).forEach((s) => { map[s.task_id] = { fileName: s.file_name, filePath: s.file_path, submittedAt: s.submitted_at }; });
+    (data || []).forEach((s) => {
+      map[s.task_id] = { fileName: s.file_name, filePath: s.file_path, submittedAt: s.submitted_at, grade: s.grade || '', feedback: s.feedback || '', gradedAt: s.graded_at || null };
+    });
     return map;
   } catch (err) {
     console.error('Topshirilgan vazifalarni olishda xatolik:', err.message);
@@ -291,20 +293,23 @@ export function overallFromProgress(data) {
   return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
 }
 
+/** Uploads the file to the private "task-submissions" bucket (folder = the student's id; files older than 2 months are
+ *  removed automatically by the cleanup-task-files function) and records it. Resolves { ok, error? } — never throws. */
 export async function saveTaskSubmission(userId, taskId, file) {
-  if (!userId) return false;
+  if (!userId) return { ok: false, error: 'NOT_SIGNED_IN' };
   try {
-    const path = `${userId}/${taskId}-${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from('task-submissions').upload(path, file, { upsert: true });
+    const safe = String(file.name || 'file').replace(/[^\w.\-]+/g, '_').slice(-80);
+    const path = `${userId}/${taskId}-${Date.now()}-${safe}`;
+    const { error: uploadError } = await supabase.storage.from('task-submissions').upload(path, file, { upsert: true, contentType: file.type || undefined });
     if (uploadError) throw uploadError;
     const { error } = await supabase.from('task_submissions').upsert(
       { task_id: taskId, user_id: userId, file_path: path, file_name: file.name, submitted_at: new Date().toISOString() },
       { onConflict: 'task_id,user_id' }
     );
     if (error) throw error;
-    return true;
+    return { ok: true, path };
   } catch (err) {
     console.error('Vazifani topshirishda xatolik:', err.message);
-    return false;
+    return { ok: false, error: (err && err.message) || String(err) };
   }
 }

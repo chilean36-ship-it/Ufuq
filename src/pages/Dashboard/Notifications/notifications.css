@@ -1,0 +1,59 @@
+/* Notification bell panel (student). Outer .notif-scrim / .notif-panel positioning stays in dashboard.css; this restyles the inside. */
+.notif-panel.nf{ width:420px; padding:0; overflow:hidden; border-radius:18px; }
+.nf-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px 16px 12px 20px; }
+.nf-title{ display:flex; align-items:center; gap:10px; min-width:0; }
+.nf-title h3{ margin:0; font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--text); }
+.nf-count{ min-width:22px; height:22px; padding:0 7px; display:inline-grid; place-items:center; border-radius:99px; background:var(--gold); color:#121212; font-size:12px; font-weight:800; }
+.nf-head-act{ display:flex; align-items:center; gap:4px; }
+.nf-ghost{ display:inline-flex; align-items:center; gap:7px; padding:7px 11px; border-radius:10px; border:0; background:transparent; color:var(--gold-bright); font:600 12.5px/1 inherit; cursor:pointer; }
+.nf-ghost svg{ width:16px; height:16px; flex:none; }
+.nf-ghost:hover:not(:disabled){ background:var(--gold-dim); }
+.nf-ghost:disabled{ opacity:.4; cursor:default; }
+.nf-x{ width:34px; height:34px; display:grid; place-items:center; border:0; border-radius:50%; background:transparent; color:var(--text-muted); cursor:pointer; }
+.nf-x svg{ width:17px; height:17px; }
+.nf-x:hover{ background:var(--bg-3); color:var(--text); }
+
+.nf-tabs{ display:flex; gap:6px; padding:0 16px 12px; border-bottom:1px solid var(--line); }
+.nf-tab{ display:inline-flex; align-items:center; gap:7px; padding:7px 14px; border-radius:99px; border:1px solid var(--line); background:transparent; color:var(--text-muted); font:600 12.5px/1 inherit; cursor:pointer; transition:color .15s, background .15s, border-color .15s; }
+.nf-tab i{ font-style:normal; min-width:18px; padding:2px 6px; border-radius:99px; background:var(--bg-3); color:var(--text); font-size:11px; text-align:center; }
+.nf-tab:hover{ color:var(--text); }
+.nf-tab.on{ background:var(--gold-dim); border-color:var(--gold); color:var(--gold-bright); }
+.nf-tab.on i{ background:var(--gold); color:#121212; }
+
+.nf-list{ overflow-y:auto; flex:1; padding:6px 8px 10px; overscroll-behavior:contain; }
+.nf-group h4{ margin:12px 12px 6px; font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--text-muted); }
+.nf-item{ width:100%; display:flex; align-items:flex-start; gap:13px; padding:12px; border:0; border-radius:14px; background:transparent; color:inherit; text-align:start; font:inherit; cursor:pointer; position:relative; transition:background .15s; }
+.nf-item:hover{ background:var(--bg-3); }
+.nf-item:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:-2px; }
+.nf-item.unread{ background:var(--gold-dim); }
+.nf-item.unread:hover{ background:rgba(201,162,75,.2); }
+.nf-ico{ flex:none; width:40px; height:40px; display:grid; place-items:center; border-radius:12px; background:var(--bg-3); color:var(--gold-bright); }
+.nf-ico svg{ width:19px; height:19px; }
+.t-group .nf-ico{ background:rgba(79,180,119,.16); color:#4FB477; }
+.t-task .nf-ico{ background:var(--gold-dim); color:var(--gold-bright); }
+.t-exam .nf-ico{ background:rgba(90,150,230,.16); color:#6FA6F0; }
+.t-lesson .nf-ico{ background:rgba(150,120,230,.16); color:#A892EE; }
+.t-schedule .nf-ico{ background:rgba(224,165,58,.16); color:#E0A53A; }
+html[data-theme="light"] .t-group .nf-ico{ color:#2C8F55; } html[data-theme="light"] .t-exam .nf-ico{ color:#2F6FB5; } html[data-theme="light"] .t-lesson .nf-ico{ color:#6F55C9; } html[data-theme="light"] .t-schedule .nf-ico{ color:#B9791A; }
+.nf-body{ flex:1; min-width:0; display:grid; gap:3px; }
+.nf-t{ font-size:14.5px; font-weight:600; line-height:1.4; color:var(--text); }
+.nf-item:not(.unread) .nf-t{ font-weight:500; }
+.nf-x2{ font-size:13.5px; line-height:1.55; color:var(--text-muted); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+.nf-time{ font-size:12px; color:var(--text-muted); opacity:.85; margin-top:2px; }
+.nf-dot{ flex:none; width:9px; height:9px; margin-top:6px; border-radius:50%; background:var(--gold-bright); box-shadow:0 0 0 3px var(--gold-dim); }
+.nf-chev{ flex:none; align-self:center; width:16px; height:16px; color:var(--text-muted); opacity:.6; }
+.nf-chev svg{ width:16px; height:16px; }
+[dir="rtl"] .nf-chev svg{ transform:scaleX(-1); }
+
+.nf-empty{ display:grid; justify-items:center; gap:8px; padding:46px 24px; text-align:center; color:var(--text-muted); font-size:13.5px; }
+.nf-empty b{ color:var(--text); font-size:15px; }
+.nf-empty-ico{ width:58px; height:58px; display:grid; place-items:center; border-radius:50%; background:var(--bg-3); color:var(--gold); margin-bottom:4px; }
+.nf-empty-ico svg{ width:28px; height:28px; }
+.nf-foot{ display:flex; justify-content:center; padding:8px; border-top:1px solid var(--line); background:var(--bg-2); }
+
+@media (max-width:480px){
+  .notif-panel.nf{ width:auto; top:62px; }
+  .nf-ghost span{ display:none; }
+  .nf-foot .nf-ghost span{ display:inline; }
+}
+@media (prefers-reduced-motion:reduce){ .nf-item, .nf-tab{ transition:none; } }

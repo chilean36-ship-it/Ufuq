@@ -45,12 +45,24 @@ jobs:
           else
             changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" -- supabase/functions supabase/config.toml)
             echo "$changed"
-            if echo "$changed" | grep -qE '^supabase/(config\.toml|functions/_shared/)'; then
-              targets=$(all_functions)
-            else
-              targets=$(echo "$changed" | grep -E '^supabase/functions/[^/_][^/]*/' | cut -d/ -f3 | sort -u)
+            # 1) functions whose own folder changed
+            targets=$(echo "$changed" | grep -E '^supabase/functions/[^/_][^/]*/' | cut -d/ -f3 | sort -u)
+            # 2) functions that import a changed _shared file
+            for f in $(echo "$changed" | grep -E '^supabase/functions/_shared/' | xargs -r -n1 basename); do
+              for d in $(all_functions); do
+                if grep -rqs "_shared/$f" "supabase/functions/$d"; then targets="$targets
+          $d"; fi
+              done
+            done
+            # 3) functions whose [functions.NAME] block in config.toml was touched (e.g. verify_jwt)
+            if echo "$changed" | grep -q '^supabase/config.toml$'; then
+              cfg=$(git diff -U0 "$BEFORE" "$GITHUB_SHA" -- supabase/config.toml | grep -E '^[+-]\[functions\.' | sed -E 's/^[+-]\[functions\.([^]]+)\].*/\1/')
+              targets="$targets
+          $cfg"
             fi
+            targets=$(echo "$targets" | tr ' ' '\n' | sed '/^$/d' | sort -u)
           fi
+          echo "Functions to deploy: $(echo $targets)"
 
           failed=0
           for fn in $targets; do

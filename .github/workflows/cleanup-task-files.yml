@@ -1,0 +1,46 @@
+name: Cleanup old task files
+
+# Every Monday: homework photos / files older than 2 months are deleted from the Supabase "task-submissions" bucket
+# (grades and comments stay). Run it by hand with "dry run" ticked to see the counts without deleting anything.
+# Uses the same SUPABASE_ACCESS_TOKEN secret as deploy-functions.yml: it sets a fresh random CRON_SECRET for the
+# function and calls it with that value, so no secret has to be created or kept by hand.
+# Note: GitHub pauses scheduled workflows in a repository with no activity for 60 days; any push re-enables them.
+on:
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only count, delete nothing'
+        type: boolean
+        default: false
+
+env:
+  PROJECT_REF: ldbthwpikixtykwmvudy
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Run cleanup-task-files
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::error::SUPABASE_ACCESS_TOKEN secret is missing"; exit 1; fi
+          SECRET=$(openssl rand -hex 32)
+          echo "::add-mask::$SECRET"
+          supabase secrets set "CRON_SECRET=$SECRET" --project-ref "$PROJECT_REF"
+          URL="https://$PROJECT_REF.supabase.co/functions/v1/cleanup-task-files"
+          if [ "$DRY" = "true" ]; then URL="$URL?dry=1"; fi
+          # the new secret needs a few seconds to reach the function: retry on 401
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o out.json -w '%{http_code}' -X POST "$URL" -H "x-cron-secret: $SECRET")
+            echo "attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then cat out.json; echo; exit 0; fi
+            sleep 10
+          done
+          cat out.json; echo; exit 1

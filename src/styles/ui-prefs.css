@@ -15,3 +15,8 @@ html[data-text="small"] .main .content{zoom:.93;}
 html[data-text="large"] .main .content{zoom:1.1;}
 html[data-density="compact"] .main .content{--density-gap:.82;}
 html[data-density="compact"] .panel, html[data-density="compact"] .settings-row, html[data-density="compact"] .st-row{padding-top:11px; padding-bottom:11px;}
+
+/* High contrast (WCAG): stronger text and borders, always-visible focus ring. Settings -> Appearance -> High contrast. */
+html[data-contrast="high"][data-theme="dark"]{--text:#FFFFFF; --text-muted:#DAD6CE; --line:rgba(255,255,255,.38);}
+html[data-contrast="high"][data-theme="light"]{--text:#000000; --text-muted:#2E2A22; --line:rgba(0,0,0,.45);}
+html[data-contrast="high"] :focus-visible{outline:3px solid var(--gold-bright) !important; outline-offset:2px;}

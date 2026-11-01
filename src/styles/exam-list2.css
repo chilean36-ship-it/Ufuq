@@ -1,0 +1,103 @@
+/* Student Exams page (simple version). Prefix ex2- */
+.ex2{ --ex-ok:#4FB477; --ex-warn:#E0A53A; --ex-bad:#E0675C; display:grid; gap:18px; }
+html[data-theme="light"] .ex2{ --ex-ok:#2C8F55; --ex-warn:#B9791A; --ex-bad:#C24B40; }
+
+/* ---- next exam ---- */
+.ex2-hero{ display:grid; gap:12px; padding:22px 24px; border-radius:18px; border:1px solid rgba(201,162,75,.45); background:linear-gradient(135deg, var(--gold-dim), transparent 70%), var(--bg-2); }
+.ex2-hero-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.ex2-hero-lbl{ font-size:12px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-bright); }
+.ex2-hero h2{ margin:0; font-family:'Fraunces',serif; font-size:26px; line-height:1.25; color:var(--text); overflow-wrap:anywhere; }
+.ex2-hero-act{ display:flex; margin-top:4px; }
+
+/* ---- level progress ---- */
+.ex2-lvl{ display:grid; gap:10px; }
+.ex2-lvlcard{ padding:18px 20px; border-radius:16px; border:1px solid var(--line); background:var(--bg-2); display:grid; gap:12px; }
+.ex2-lvlcard.pass{ border-color:rgba(79,180,119,.55); }
+.ex2-lvlcard.fail{ border-color:rgba(224,103,92,.55); }
+.ex2-lvl-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; color:var(--text); }
+.ex2-lvl-top b{ font-size:16px; }
+.ex2-lvl-badge{ font-size:12px; font-weight:700; padding:4px 11px; border-radius:99px; background:var(--bg-3); color:var(--text-muted); }
+.ex2-lvl-badge.pass{ background:rgba(79,180,119,.16); color:var(--ex-ok); }
+.ex2-lvl-badge.fail{ background:rgba(224,103,92,.16); color:var(--ex-bad); }
+.ex2-lvl-total{ display:flex; align-items:baseline; gap:6px; }
+.ex2-lvl-total b{ font-family:'Fraunces',serif; font-size:38px; line-height:1; color:var(--gold-bright); }
+.ex2-lvl-total small{ font-size:16px; color:var(--text-muted); }
+.ex2-meter{ position:relative; height:10px; border-radius:99px; background:var(--bg-3); margin:6px 0 18px; }
+.ex2-meter > i{ position:absolute; inset:0 auto 0 0; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); transition:width .5s ease; }
+.ex2-meter .mark{ position:absolute; top:-5px; bottom:-5px; width:2px; background:var(--text); opacity:.8; }
+.ex2-meter .mark em{ position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; font-style:normal; font-size:11.5px; color:var(--text-muted); white-space:nowrap; }
+.ex2-parts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ex2-parts > div{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; padding:10px 12px; border-radius:12px; background:var(--bg-3); color:var(--text-muted); font-size:13px; }
+.ex2-parts > div span{ flex:1 1 100%; font-weight:600; }
+.ex2-parts > div b{ font-size:20px; color:var(--text); }
+.ex2-parts > div.done b{ color:var(--gold-bright); }
+.ex2-lvl-note{ margin:0; font-size:13px; color:var(--text-muted); }
+.ex2-older{ border:1px solid var(--line); border-radius:14px; background:var(--bg-2); }
+.ex2-older summary{ cursor:pointer; padding:12px 16px; font-weight:600; font-size:14px; color:var(--text-muted); list-style:none; }
+.ex2-older summary::-webkit-details-marker{ display:none; }
+.ex2-older summary i{ font-style:normal; margin-inline-start:6px; padding:1px 8px; border-radius:99px; background:var(--bg-3); font-size:12px; }
+.ex2-older[open] summary{ color:var(--text); }
+.ex2-older-list{ display:grid; gap:6px; padding:0 16px 14px; }
+.ex2-older-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13.5px; color:var(--text-muted); }
+.ex2-older-row b{ color:var(--text); min-width:70px; }
+.ex2-older-row em{ font-style:normal; margin-inline-start:auto; }
+
+/* ---- tabs ---- */
+.ex2-tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+.ex2-tab{ display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:99px; border:1px solid var(--line); background:var(--bg-2); color:var(--text-muted); font:600 14px/1 inherit; cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
+.ex2-tab i{ font-style:normal; min-width:22px; padding:3px 7px; border-radius:99px; background:var(--bg-3); color:var(--text); font-size:12px; text-align:center; }
+.ex2-tab:hover{ color:var(--text); border-color:var(--gold); }
+.ex2-tab.on{ color:var(--gold-bright); border-color:var(--gold); background:var(--gold-dim); }
+.ex2-tab.on i{ background:var(--gold); color:#121212; }
+.ex2-tab:focus-visible, .ex2-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; }
+
+/* ---- list ---- */
+.ex2-list{ display:grid; gap:12px; }
+.ex2-row{ display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; padding:16px 18px; border-radius:16px; border:1px solid var(--line); background:var(--bg-2); border-inline-start:4px solid var(--line); }
+.ex2-row.new, .ex2-row.draft{ border-inline-start-color:var(--gold); }
+.ex2-row.timeup, .ex2-row.closed{ border-inline-start-color:var(--ex-bad); }
+.ex2-row.graded{ border-inline-start-color:var(--ex-ok); }
+.ex2-row.locked, .ex2-row.wait{ border-inline-start-color:var(--line); opacity:.92; }
+.ex2-ico{ width:46px; height:46px; display:grid; place-items:center; border-radius:13px; background:var(--bg-3); color:var(--gold); }
+.ex2-ico svg{ width:22px; height:22px; }
+.ex2-ico.final{ background:var(--gold-dim); color:var(--gold-bright); }
+.ex2-main{ min-width:0; display:grid; gap:6px; }
+.ex2-tags{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.ex2-badge{ font-size:11.5px; font-weight:800; padding:3px 10px; border-radius:99px; background:var(--bg-3); color:var(--text-muted); }
+.ex2-badge.new, .ex2-badge.draft{ background:var(--gold-dim); color:var(--gold-bright); }
+.ex2-badge.graded{ background:rgba(79,180,119,.16); color:var(--ex-ok); }
+.ex2-badge.timeup, .ex2-badge.closed{ background:rgba(224,103,92,.16); color:var(--ex-bad); }
+.ex2-tag{ font-size:12px; font-weight:600; color:var(--text-muted); }
+.ex2-title{ margin:0; font-size:17px; line-height:1.3; color:var(--text); overflow-wrap:anywhere; }
+.ex2-meta{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:var(--text-muted); }
+.ex2-meta span{ display:inline-flex; align-items:center; gap:6px; }
+.ex2-meta em{ font-style:normal; padding:1px 8px; border-radius:99px; background:var(--bg-3); }
+.ex2-meta .dl.soon{ color:var(--ex-warn); }
+.ex2-meta .dl.soon em{ background:rgba(224,165,58,.16); }
+.ex2-when{ font-size:12.5px; color:var(--text-muted); }
+.ex2-prog{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-muted); }
+.ex2-prog-bar{ flex:1; max-width:220px; height:6px; border-radius:99px; background:var(--bg-3); overflow:hidden; }
+.ex2-prog-bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); }
+.ex2-side{ display:flex; align-items:center; gap:14px; }
+.ex2-score{ text-align:center; line-height:1.1; }
+.ex2-score b{ display:block; font-family:'Fraunces',serif; font-size:26px; color:var(--text); }
+.ex2-score small{ font-size:12px; color:var(--text-muted); }
+.ex2-score.good b{ color:var(--ex-ok); } .ex2-score.mid b{ color:var(--ex-warn); } .ex2-score.bad b{ color:var(--ex-bad); }
+
+.ex2-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 20px; border-radius:11px; border:1px solid var(--line); background:var(--bg-3); color:var(--text); font:700 14px/1 inherit; cursor:pointer; white-space:nowrap; transition:transform .1s, background .15s, border-color .15s; }
+.ex2-btn:hover:not(:disabled){ border-color:var(--gold); }
+.ex2-btn:active:not(:disabled){ transform:translateY(1px); }
+.ex2-btn:disabled{ opacity:.55; cursor:not-allowed; }
+.ex2-btn.pri{ background:var(--gold); border-color:var(--gold); color:#121212; }
+.ex2-btn.pri:hover:not(:disabled){ background:var(--gold-bright); border-color:var(--gold-bright); }
+.ex2-btn.big{ padding:15px 30px; font-size:16px; border-radius:13px; }
+
+@media (max-width:720px){
+  .ex2-hero{ padding:18px 16px; } .ex2-hero h2{ font-size:21px; }
+  .ex2-hero-act .ex2-btn{ flex:1; }
+  .ex2-row{ grid-template-columns:auto 1fr; padding:14px; }
+  .ex2-side{ grid-column:1 / -1; justify-content:space-between; }
+  .ex2-side .ex2-btn{ flex:1; }
+  .ex2-parts{ grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion:reduce){ .ex2-meter > i, .ex2-btn, .ex2-tab{ transition:none; } }
