@@ -1,4 +1,4 @@
--- NOT YET APPLIED (changes who may create tasks: needs the owner's go-ahead).
+-- APPLIED to live on 2026-11-01 (with the owner's go-ahead).
 -- Creating / editing / deleting a task failed for the teachers' accounts with
 --   new row violates row-level security policy "no_std_admin_ins" for table "tasks"
 -- because three RESTRICTIVE policies (no_std_admin_ins / _upd / _del) refuse every "standard" admin, while the teachers work with

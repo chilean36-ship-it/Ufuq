@@ -1,4 +1,4 @@
--- NOT YET APPLIED (adds data: needs the owner's go-ahead).
+-- APPLIED to live on 2026-11-01 (with the owner's go-ahead).
 -- The Level 7 midterm existed only under Group A8; every other group already holds its own (empty draft) Level 7 final but had no
 -- Level 7 midterm. This copies A8's midterm (exam row + questions + answer keys) as an UNPUBLISHED draft into the class / individual
 -- groups that miss it, so every group lists the same exams. Nothing is published and no student sees these copies.
