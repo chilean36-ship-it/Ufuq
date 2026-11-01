@@ -19,7 +19,7 @@ import ResultReview from './runner/ResultReview';
 import ExamIntro from './runner/ExamIntro';
 import ConfirmFinish from './runner/ConfirmFinish';
 import QuestionCard from './runner/QuestionCard';
-import ListeningField from './runner/ListeningField';
+import ListeningField, { clearListenPlays } from './runner/ListeningField';
 
 const AUTOSAVE_MS = 15000;   // safety net; typing also saves ~2.5 s after the last keystroke
 const DEBOUNCE_MS = 2500;
@@ -84,6 +84,9 @@ export default function WrittenRunner({ exam, existingSub, userId, onSubChange, 
     (async () => {
       try {
         const current = await startExam(exam.id);   // resumes the draft / returns the result; server checks group + published
+        // Listens are counted per attempt. A paper that is handed in, or a draft whose clock has not started yet (first start, or
+        // reopened for a retake), begins with all its listens again; a draft that is already running keeps its count.
+        if (current.status !== 'draft' || !current.clock_started_at) clearListenPlays(current.id);
         const [qs, ans, cnt] = await Promise.all([
           fetchRunnerQuestions(exam.id), fetchAnswers(current.id), fetchQuestionCounts([exam.id]).catch(() => ({})),
         ]);

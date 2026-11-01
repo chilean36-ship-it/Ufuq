@@ -9,6 +9,13 @@ const arNum = (n) => String(n).replace(/\d/g, (d) => AR_DIGITS[d]);
 
 const storeKey = (subId, qid) => 'ufuq-listen:' + subId + ':' + qid;
 function readPlays(key) { try { return Number(localStorage.getItem(key)) || 0; } catch (e) { return 0; } }
+/** Forgets every listen of one paper (a new attempt starts with a full set of listens). */
+export function clearListenPlays(subId) {
+  try {
+    const prefix = 'ufuq-listen:' + subId + ':';
+    Object.keys(localStorage).filter((k) => k.startsWith(prefix)).forEach((k) => localStorage.removeItem(k));
+  } catch (e) { /* private mode: nothing was stored */ }
+}
 function writePlays(key, n) { try { localStorage.setItem(key, String(n)); } catch (e) { /* private mode: the in-memory count still applies */ } }
 
 export default function ListeningField({ subId, qid, audio, opts, value, readOnly, onPick }) {
