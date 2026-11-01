@@ -96,3 +96,9 @@
 .xl-opt .xl-l{ flex:none; min-width:1.6em; text-align:center; color:var(--text-muted); font-weight:700; }
 .xl-opt.on{ border-color:var(--gold); background:var(--gold-dim); font-weight:700; }
 @media (prefers-reduced-motion:reduce){ .xl-play.on{ animation:none; } }
+/* the listening item uses the plain Naskh of the printed textbooks (Amiri's calligraphic forms are hard for beginners) */
+.xq-text-ar, .xl, .xl-opt, .xl-play, .xl-left, .xl-err{ font-family:'Noto Naskh Arabic','Traditional Arabic','Simplified Arabic','Droid Arabic Naskh',serif; }
+.xq-text-ar{ font-size:1.35em; line-height:2.05; font-weight:600; }
+.xl-opt{ font-size:1.5em; line-height:2.1; font-weight:500; }
+.xl-opt.on{ font-weight:700; }
+.xl-play{ font-size:1.05em; font-weight:700; }

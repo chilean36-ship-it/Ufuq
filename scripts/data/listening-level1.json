@@ -3,9 +3,9 @@
   "book": "العربية بين يديك — الكتاب الأول",
   "voices": {
     "m1": "ar-SA-HamedNeural",
-    "m2": "ar-AE-HamdanNeural",
+    "m2": "ar-QA-MoazNeural",
     "f1": "ar-SA-ZariyahNeural",
-    "f2": "ar-AE-FatimaNeural"
+    "f2": "ar-QA-AmalNeural"
   },
   "section": {
     "title": "الاستماع: استمع إلى الصوت ثم اختر الإجابة الصحيحة",
