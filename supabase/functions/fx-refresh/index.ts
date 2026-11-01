@@ -2,6 +2,7 @@
 // free daily feed (open.er-api.com). v2: a rate that jumps by more than 40% versus the stored one is NOT applied (a broken
 // feed must never be able to set a 1-dollar price), and the response lists what was skipped.
 // v3: CORS limited to the site's own origins (_shared/cors.ts) instead of "*".
+// Deployed automatically by .github/workflows/deploy-functions.yml on every push to main.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { withCors } from "../_shared/cors.ts";
