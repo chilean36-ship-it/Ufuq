@@ -1,0 +1,65 @@
+/* =====================================================================
+   Davomat — darslar tarixi (talaba va o'qituvchi panellari uchun umumiy).
+   Har bir dars alohida "karta" qatori: chap tomonda holat rangi chizig'i,
+   sana/vaqt aniq ajratilgan, holat belgisi yagona uslubda.
+   ===================================================================== */
+.ah-list{ display:flex; flex-direction:column; gap:8px; padding:4px 0 6px; }
+
+.ah-row{
+  position:relative; display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:12px 14px 12px 18px; border-radius:12px;
+  background:var(--bg-3, #212121); border:1px solid var(--line, rgba(237,234,227,.09));
+  transition:border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.ah-row::before{
+  content:''; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:0 3px 3px 0;
+  background:var(--ah-accent, var(--line));
+}
+.ah-row.present{ --ah-accent:#6FCF97; }
+.ah-row.absent { --ah-accent:#E07A5F; }
+.ah-row:hover{ border-color:rgba(201,162,75,.3); transform:translateY(-1px); }
+
+.ah-main{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.ah-date{ font:600 14px/1.3 'Inter', sans-serif; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ah-time{
+  display:inline-flex; align-items:center; gap:5px;
+  font:500 12px/1.3 'Inter', sans-serif; color:var(--text-muted); font-variant-numeric:tabular-nums;
+}
+.ah-time svg{ width:12px; height:12px; flex:0 0 auto; }
+
+.ah-pill{
+  display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
+  padding:5px 12px; border-radius:999px; font:700 11px/1 'Inter', sans-serif;
+  text-transform:uppercase; letter-spacing:.05em; white-space:nowrap;
+}
+.ah-pill::before{ content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.ah-pill.present{ background:rgba(111,207,151,.14); color:#6FCF97; }
+.ah-pill.absent { background:rgba(224,122,95,.14); color:#E07A5F; }
+.ah-pill-loss{ font-weight:600; text-transform:none; letter-spacing:0; opacity:.9; margin-left:2px; }
+
+.ah-empty{ padding:22px 8px; text-align:center; color:var(--text-muted); font-size:13px; }
+
+/* Ro'yxat ostidagi xulosa: nechta dars, qancha qatnashgan */
+.ah-summary{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  margin:4px 0 10px; font-size:12.5px; color:var(--text-muted);
+}
+.ah-summary b{ color:var(--text); font-weight:600; }
+
+@media (max-width:520px){
+  .ah-row{ padding:11px 12px 11px 16px; gap:10px; }
+  .ah-date{ font-size:13.5px; white-space:normal; }
+  .ah-pill{ font-size:10.5px; padding:5px 10px; }
+}
+@media (prefers-reduced-motion:reduce){ .ah-row{ transition:none; } .ah-row:hover{ transform:none; } }
+
+/* ---- o'qituvchi paneli: "Recent attendance sessions" jadvali ---- */
+#page-attendance .att-recent table{ width:100%; border-collapse:separate; border-spacing:0; }
+#page-attendance .att-recent thead th{
+  font:600 11px/1 'Inter', sans-serif; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text-muted); padding:10px 14px; border-bottom:1px solid var(--line); text-align:start;
+}
+#page-attendance .att-recent tbody td{ padding:12px 14px; border-bottom:1px solid var(--line); font-size:13.5px; color:var(--text); }
+#page-attendance .att-recent tbody tr:last-child td{ border-bottom:none; }
+#page-attendance .att-recent tbody tr:hover td{ background:rgba(201,162,75,.05); }
+#page-attendance .att-recent tbody td:last-child{ text-align:end; font-variant-numeric:tabular-nums; font-weight:600; }

@@ -1,0 +1,84 @@
+/* Shared Admin / Teacher sidebar (see PanelSidebar.jsx). Loaded AFTER teacher.css / teacher-v2.css so it wins. */
+.sidebar.psb{ width:var(--sidebar-w); background:var(--bg-2); border-right:1px solid var(--line); }
+.sidebar.psb .sb-brand{ display:flex; align-items:center; gap:12px; padding:20px 18px; border-bottom:1px solid var(--line); position:relative; flex-direction:row; }
+.sidebar.psb .sb-emblem{ width:36px; height:36px; object-fit:contain; flex-shrink:0; }
+.sidebar.psb .sb-brand-text{ min-width:0; display:block; }
+.sidebar.psb .sb-name{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--text); white-space:nowrap; line-height:1.15; }
+.sidebar.psb .sb-name span{ color:var(--gold-bright); }
+.sidebar.psb .sb-tag{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); margin-top:3px; white-space:nowrap; }
+
+/* edge button that collapses / expands the bar (same as the student dashboard) */
+.sidebar.psb .sb-collapse-btn{
+  position:absolute; right:-13px; top:26px; width:26px; height:26px; padding:0; margin:0; border-radius:50%;
+  background:var(--bg-3); border:1px solid var(--line); color:var(--text);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:20; box-shadow:0 2px 8px rgba(0,0,0,.35);
+  transition:color .2s ease, border-color .2s ease, transform .2s ease;
+}
+.sidebar.psb .sb-collapse-btn:hover{ color:var(--gold-bright); border-color:rgba(201,162,75,.45); }
+.sidebar.psb .sb-collapse-btn:active{ transform:scale(.94); }
+.sidebar.psb .sb-collapse-btn svg{ width:13px; height:13px; display:block; transition:transform .25s ease; }
+.sidebar.psb.collapsed .sb-collapse-btn svg{ transform:rotate(180deg); }
+
+/* nav list: scrolls by itself, slim scrollbar that only shows while hovering */
+.sidebar.psb .sb-nav{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding:14px 12px; scrollbar-width:thin; scrollbar-color:transparent transparent; }
+.sidebar.psb .sb-nav:hover{ scrollbar-color:rgba(168,162,155,.35) transparent; }
+.sidebar.psb .sb-nav::-webkit-scrollbar{ width:6px; }
+.sidebar.psb .sb-nav::-webkit-scrollbar-track{ background:transparent; }
+.sidebar.psb .sb-nav::-webkit-scrollbar-thumb{ background:transparent; border-radius:6px; }
+.sidebar.psb .sb-nav:hover::-webkit-scrollbar-thumb{ background:rgba(168,162,155,.35); }
+.sidebar.psb .sb-nav::-webkit-scrollbar-thumb:hover{ background:rgba(168,162,155,.6); }
+
+.sidebar.psb .sb-item{ margin-bottom:2px; }
+.sidebar.psb .sb-link{
+  display:flex; align-items:center; gap:13px; padding:11px 12px; margin:0; border-radius:var(--radius);
+  color:var(--text-muted); font-size:14.5px; font-weight:500; cursor:pointer; white-space:nowrap; text-decoration:none;
+  transition:background .16s ease, color .16s ease;
+}
+.sidebar.psb .sb-link::before{ display:none; }
+.sidebar.psb .sb-link::after{ display:none !important; }
+.sidebar.psb .sb-link:hover{ background:rgba(237,234,227,.05); color:var(--text); }
+.sidebar.psb .sb-link.active{ background:var(--gold-dim); color:var(--gold-bright); }
+.sidebar.psb .sb-icon{ width:19px; height:19px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.sidebar.psb .sb-icon svg{ width:100%; height:100%; }
+.sidebar.psb .sb-label{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.sidebar.psb .sb-chevron{ width:14px; height:14px; flex-shrink:0; opacity:.7; transition:transform .2s ease; }
+.sidebar.psb .sb-item.open > .sb-link .sb-chevron{ transform:rotate(180deg); }
+
+.sidebar.psb .sb-submenu{ max-height:0; overflow:hidden; transition:max-height .25s ease; padding-left:20px; border-left:1px solid var(--line); margin-left:31px; }
+.sidebar.psb .sb-item.open .sb-submenu{ max-height:400px; margin-top:2px; margin-bottom:4px; }
+.sidebar.psb .sb-sublink{ display:block; padding:9px 14px; font-size:13.5px; color:var(--text-muted); border-radius:var(--radius); text-decoration:none; transition:color .16s ease, background .16s ease; }
+.sidebar.psb .sb-sublink:hover{ color:var(--gold-bright); background:rgba(237,234,227,.04); }
+.sidebar.psb .sb-sublink.active{ color:var(--gold-bright); font-weight:600; }
+
+.sidebar.psb .sb-foot{ margin-top:auto; border-top:1px solid var(--line); padding:12px; display:flex; flex-direction:column; gap:2px; }
+.sidebar.psb .sb-signout{ color:#D98B78; }
+.sidebar.psb .sb-signout:hover{ background:rgba(217,139,120,.1); color:#E8A995; }
+.sidebar.psb .sb-link:focus-visible, .sidebar.psb .sb-sublink:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:-2px; }
+
+html[data-theme="light"] .sidebar.psb .sb-emblem{ filter:brightness(0); }
+html[data-theme="light"] .sidebar.psb .sb-link:hover{ background:rgba(0,0,0,.05); }
+html[data-theme="light"] .sidebar.psb .sb-sublink:hover{ background:rgba(0,0,0,.04); }
+
+/* icon-only mode (desktop) */
+@media (min-width:861px){
+  .sidebar.psb.collapsed{ width:var(--sidebar-w-collapsed); }
+  .sidebar.psb.collapsed .sb-brand{ justify-content:center; padding:20px 0; }
+  .sidebar.psb.collapsed .sb-brand-text, .sidebar.psb.collapsed .sb-label, .sidebar.psb.collapsed .sb-chevron, .sidebar.psb.collapsed .sb-submenu{ display:none; }
+  .sidebar.psb.collapsed .sb-link{ justify-content:center; padding:11px 0; }
+  .sidebar.psb.collapsed .sb-nav{ padding:14px 8px; }
+  .sidebar.psb.collapsed .sb-foot{ padding:12px 8px; }
+}
+@media (max-width:860px){
+  .sidebar.psb .sb-collapse-btn{ display:none; }
+}
+
+/* review counters (tasks / exams waiting for a grade) */
+.sidebar.psb .sb-badge{ margin-left:auto; min-width:20px; padding:1px 7px; border-radius:99px; background:var(--gold); color:#1A1405; font-size:11px; font-weight:800; text-align:center; line-height:1.5; flex-shrink:0; }
+.sidebar.psb .sb-link .sb-badge{ margin-left:0; }
+.sidebar.psb .sb-sublink{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+
+/* Teacher and admin panels share the site's gold: the word after the brand is the only difference */
+.sidebar.psb-teacher .sb-name span, .sidebar.psb-admin .sb-name span{ color:var(--gold-bright); }
+
+/* nav scrolls on its own and never hands the wheel to the page behind it */
+.sidebar.psb .sb-nav{ overscroll-behavior:contain; }

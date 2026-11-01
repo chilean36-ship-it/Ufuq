@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ufuq — Learn Arabic</title>
+<meta name="description" content="Learn Arabic with Ufuq — audio lessons with native teachers, an AI practice assistant, and a personalized learning path from beginner to fluent.">
+<meta property="og:title" content="Ufuq — Learn Arabic">
+<meta property="og:description" content="Learn Arabic with a modern, guided approach: audio lessons, an AI assistant, and a personal level assessment.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/webp" href="/assets/images/img-01.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Cabinet pages (profile / dashboard / teacher / admin) are laid out as body{display:flex} with the sidebar and .main
+     as direct children. React mounts them inside #root, so #root must not create its own box - otherwise .main
+     drops below the sidebar. */
+  #root{display:contents}
+  /* Stable scrolling on every page: no rubber-band bounce / pull-to-refresh wobble when the end is reached.
+     Pages still scroll normally; nothing is blocked. */
+  html, body{overscroll-behavior-y:none}
+  /* First-paint loader (before React mounts): the Ufuq emblem in gold with a light sweep. Removed by main.jsx. */
+  #boot{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;background:radial-gradient(520px 320px at 50% 46%,rgba(201,162,75,.13),transparent 72%),#121212;transition:opacity .35s ease}
+  #boot.out{opacity:0;pointer-events:none}
+  #boot .s{position:relative;width:132px;height:132px;display:grid;place-items:center}
+  #boot .r{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(201,162,75,.2);border-top-color:#E5C878;animation:bs 1.6s linear infinite;filter:drop-shadow(0 0 4px rgba(201,162,75,.6))}
+  #boot .l{position:relative;width:56%;height:56%;overflow:hidden;background:linear-gradient(180deg,#E5C878,#C9A24B);-webkit-mask:url(/assets/images/logo-mark.png) center/contain no-repeat;mask:url(/assets/images/logo-mark.png) center/contain no-repeat;animation:bp 2.4s ease-in-out infinite}
+  #boot .l i{position:absolute;inset:-10% -60%;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%);animation:bh 2.2s ease-in-out infinite}
+  @keyframes bs{to{transform:rotate(360deg)}}
+  @keyframes bp{0%,100%{transform:scale(.94);opacity:.88}50%{transform:scale(1.04);opacity:1}}
+  @keyframes bh{0%{transform:translateX(-70%)}60%,100%{transform:translateX(70%)}}
+  @media (prefers-reduced-motion:reduce){#boot .r,#boot .l,#boot .l i{animation:none}}
+</style>
+</head>
+<body>
+<div id="boot" aria-hidden="true"><div class="s"><span class="r"></span><span class="l"><i></i></span></div></div>
+<div id="root"></div>
+<script src="/boot-guard.js"></script>
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

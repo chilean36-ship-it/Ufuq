@@ -1,0 +1,58 @@
+/* Teacher/Admin "My Group" — schedule card shares the student look (my-group.css, `.gp2`); this adds the editor
+   and keeps the panel chrome identical to the student page. */
+.group-page.gp2 .panel{background:var(--bg-2); border-radius:24px;}
+.group-page.gp2 .group-main-card{border:1px solid var(--line);}
+.gp2 .gp-code{margin-top:14px;}
+.gp2 .gp-code .code-row{background:var(--bg-3); border:1px solid var(--line); border-radius:16px; padding:10px 14px;}
+
+/* ---------- Editor ---------- */
+.gp2 .gp-edit{display:flex; flex-direction:column; gap:14px;}
+.gp2 .gp-edit-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px;}
+.gp2 .gp-edit-title{font:500 18px/1.2 'Fraunces',serif; color:var(--text);}
+.gp2 .gp-edit-sub{font-size:12px; font-weight:600; color:var(--text-muted);}
+.gp2 .gp-edit-list{display:flex; flex-direction:column; gap:6px;}
+.gp2 .gp-edit-row{
+  display:flex; align-items:center; gap:12px; min-height:48px; padding:6px 12px 6px 10px; border-radius:14px;
+  background:var(--bg-3); border:1px solid transparent; transition:border-color .18s ease, background .18s ease;
+}
+.gp2 .gp-edit-row.on{border-color:color-mix(in srgb, var(--gold) 40%, transparent); background:color-mix(in srgb, var(--gold) 8%, var(--bg-3));}
+.gp2 .gp-edit-day{flex:1 1 auto; min-width:0; font-size:14px; font-weight:600; color:var(--text);}
+.gp2 .gp-edit-row:not(.on) .gp-edit-day{color:var(--text-muted); font-weight:500;}
+.gp2 .gp-edit-off{font-size:12.5px; color:var(--text-muted); opacity:.8;}
+
+.gp2 .gp-sw{
+  position:relative; flex:none; width:40px; height:24px; padding:0; border-radius:999px; cursor:pointer;
+  background:var(--bg-2); border:1px solid var(--line); transition:background .2s ease, border-color .2s ease;
+}
+.gp2 .gp-sw-dot{position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:var(--text-muted); transition:transform .25s var(--gp-spring), background .2s ease;}
+.gp2 .gp-sw.on{background:var(--gold); border-color:var(--gold);}
+.gp2 .gp-sw.on .gp-sw-dot{transform:translateX(16px); background:#1A1406;}
+.gp2 .gp-sw:focus-visible{outline:2px solid var(--gold-bright); outline-offset:2px;}
+
+.gp2 .gp-time, .gp2 .gp-dur-input{
+  height:36px; padding:0 10px; border-radius:10px; border:1px solid var(--line); background:var(--bg-2); color:var(--text);
+  font:600 14px/1 'Inter',sans-serif; color-scheme:dark; font-variant-numeric:tabular-nums;
+}
+html[data-theme="light"] .gp2 .gp-time, html[data-theme="light"] .gp2 .gp-dur-input{color-scheme:light;}
+.gp2 .gp-time{width:112px;}
+.gp2 .gp-time:focus, .gp2 .gp-dur-input:focus{outline:0; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim);}
+
+.gp2 .gp-edit-dur{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 12px 12px 14px; border-radius:14px; background:var(--bg-3);}
+.gp2 .gp-edit-dur label{font-size:13.5px; font-weight:600; color:var(--text);}
+.gp2 .gp-dur-chips{display:flex; align-items:center; gap:6px;}
+.gp2 .gp-chip{height:36px; min-width:44px; padding:0 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-2); color:var(--text-muted); font:600 13px/1 'Inter',sans-serif; cursor:pointer; transition:background .16s ease, color .16s ease, border-color .16s ease;}
+.gp2 .gp-chip:hover{color:var(--text); border-color:color-mix(in srgb, var(--gold) 40%, transparent);}
+.gp2 .gp-chip.on{background:var(--gold-dim); border-color:var(--gold); color:var(--gold-bright);}
+.gp2 .gp-dur-input{width:76px; text-align:center;}
+
+.gp2 .gp-edit-error{margin:0; font-size:13px; color:var(--danger-bright, #D98B78);}
+.gp2 .gp-edit-actions{display:flex; justify-content:flex-end; gap:8px;}
+
+@media (max-width:560px){
+  .gp2 .gp-time{width:100px;}
+  .gp2 .gp-edit-dur{flex-direction:column; align-items:stretch;}
+  .gp2 .gp-dur-chips{justify-content:space-between;}
+}
+@media (prefers-reduced-motion:reduce){
+  .gp2 .gp-sw, .gp2 .gp-sw-dot, .gp2 .gp-edit-row, .gp2 .gp-chip{transition:none;}
+}

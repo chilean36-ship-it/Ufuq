@@ -1,0 +1,121 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(), payment=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'"
+        },
+        {
+          "key": "Content-Security-Policy-Report-Only",
+          "value": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.workers.dev https://api.alquran.cloud https://tanzil.net https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com https://drive.google.com https://docs.google.com https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'"
+        }
+      ]
+    },
+    {
+      "source": "/zoom-meeting.html",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "credentialless"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=()"
+        },
+        {
+          "key": "Content-Security-Policy-Report-Only",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://source.zoom.us; style-src 'self' 'unsafe-inline' https://source.zoom.us; font-src 'self' data: https://source.zoom.us; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https: wss:; frame-src https:; worker-src 'self' blob: https://source.zoom.us; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "credentialless"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "credentialless"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/quran/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ]
+}
