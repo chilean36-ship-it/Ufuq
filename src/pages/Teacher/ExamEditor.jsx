@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from '../../components/panel/PanelContext';
 import PageStyle from '../../components/PageStyle';
 import css from '../../styles/exam-builder.css?inline';
-import { Q_TYPES, TEMPLATES, parseQ, buildQ, shuffled } from '../../lib/examPaper';
+import { Q_TYPES, TEMPLATES, LISTENING_SECTIONS, LISTENING_DB_TYPE, parseQ, buildQ, shuffled } from '../../lib/examPaper';
 import { lockScroll, unlockScroll } from '../../lib/scrollLock';
 import { LEVEL_LIST, MAX_LEVEL } from '../../lib/levels';
 import { MIDTERM_MAX, FINAL_MAX, LEVEL_MAX, PASS_MARK } from '../../lib/scoring';
@@ -19,7 +19,12 @@ import { MIDTERM_MAX, FINAL_MAX, LEVEL_MAX, PASS_MARK } from '../../lib/scoring'
 
 let seq = 0;
 const uid = (p) => p + (++seq);
-const newItem = (it) => ({ key: uid('i'), id: (it && it.id) || null, type: (it && it.type) || null, text: (it && it.text) || '', criteria: (it && it.criteria) || '' });
+const newItem = (it) => ({
+  key: uid('i'), id: (it && it.id) || null, type: (it && it.type) || null, text: (it && it.text) || '', criteria: (it && it.criteria) || '',
+  // listening items: the mp3 path and the answer options (one per line); the correct one is `criteria`
+  audio: (it && it.audio) || '', optsText: (it && (it.optsText || (it.opts ? it.opts.join('\n') : ''))) || '',
+});
+const optList = (it) => String(it.optsText || '').split('\n').map((x) => x.trim()).filter(Boolean);
 const newSection = (s) => ({
   key: uid('s'), part: (s && s.part) || '', title: (s && s.title) || '', type: (s && s.type) || 'short_answer',
   items: ((s && s.items) || []).map(newItem),
@@ -32,10 +37,10 @@ function questionsToSections(list) {
   list.forEach((q) => {
     const p = parseQ(q.question_text);
     if (!cur || p.sec) {
-      cur = newSection({ part: p.part || '', title: p.sec || '', type: q.type });
+      cur = newSection({ part: p.part || '', title: p.sec || '', type: p.audio ? 'listening' : q.type });
       secs.push(cur);
     }
-    cur.items.push(newItem({ id: q.id, type: q.type, text: p.body, criteria: q.criteria_text || '' }));
+    cur.items.push(newItem({ id: q.id, type: q.type, text: p.body, criteria: q.criteria_text || '', audio: p.audio, opts: p.opts }));
   });
   return secs;
 }
@@ -46,6 +51,7 @@ const PLACEHOLDER = {
   antonym: ['Word', 'Antonym (teacher only)'],
   grammar: ['Task, e.g. العلم ............ (أكمل بخبر جملة اسمية)', 'Model answer (teacher only)'],
   essay: ['Topic', 'Grading notes (teacher only)'],
+  listening: ['Question (Arabic)', 'Correct option (teacher only)'],
 };
 const SECTION_HINT = {
   short_answer: 'Students write a short answer under each question.',
@@ -53,6 +59,7 @@ const SECTION_HINT = {
   antonym: 'Students write the antonym and a sentence that uses it.',
   grammar: 'Complete-the-sentence and i’rab tasks: students type the answer under each item.',
   essay: 'A big writing area, like the composition page of the paper.',
+  listening: 'Students hear the audio (twice at most) and choose one option. The correct option is checked automatically.',
 };
 const isTwoBox = (type) => type === 'matching' || type === 'antonym';
 const kindLabel = (type) => { const q = Q_TYPES.find((x) => x[0] === type); return q ? q[1] : Q_TYPES[0][1]; };
@@ -139,7 +146,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
   useEffect(() => { if (!open) return undefined; lockScroll(); return () => unlockScroll(); }, [open]);
 
   // ---- unsaved-changes tracking ----
-  const sig = useMemo(() => JSON.stringify([title, level, dur, targets, secs.map((s) => [s.part, s.title, s.type, s.items.map((i) => [i.id, i.type, i.text, i.criteria])])]), [title, level, dur, targets, secs]);
+  const sig = useMemo(() => JSON.stringify([title, level, dur, targets, secs.map((s) => [s.part, s.title, s.type, s.items.map((i) => [i.id, i.type, i.text, i.criteria, i.audio, i.optsText])])]), [title, level, dur, targets, secs]);
   useEffect(() => { if (ready) setBaseSig(sig); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ready]);
   const dirty = ready && baseSig !== null && sig !== baseSig;
 
@@ -161,6 +168,17 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     const s = newSection({ type, items: [{}] });
     focusKey.current = 's:' + s.key;
     setSecs((cur) => [...cur, s]);
+  };
+  const addListening = (kindKey) => {
+    const lv = LISTENING_SECTIONS[Number(level) || 1];
+    const tpl = lv && lv[kindKey];
+    if (!tpl) return;
+    const s = newSection(tpl);
+    focusKey.current = 's:' + s.key;
+    setSecs((cur) => {
+      const blank = cur.length === 1 && cur[0].items.every((it) => !it.text.trim());
+      return blank ? [s] : [...cur, s];
+    });
   };
   const changeType = (si, type) => setSecs((cur) => cur.map((s, i) => (i !== si ? s : { ...s, type, items: s.items.map((it) => ({ ...it, type: null })) })));
 
@@ -225,6 +243,11 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     const filled = secs.filter((s) => s.items.some((it) => it.text.trim()));
     if (filled.length === 0) out.push(t('Add at least one question.'));
     secs.forEach((s, si) => {
+      if (s.type !== 'listening') return;
+      const bad = s.items.filter((it) => it.text.trim() && (!it.audio.trim() || optList(it).length < 2 || !optList(it).includes(it.criteria.trim()))).length;
+      if (bad) out.push(t('Section') + ' ' + (si + 1) + ': ' + t('Every listening item needs an audio file, at least two options and a correct option from the list.'));
+    });
+    secs.forEach((s, si) => {
       if (s.type !== 'matching') return;
       const n = s.items.filter((it) => it.text.trim() && !it.criteria.trim()).length;
       if (n) out.push(t('Section') + ' ' + (si + 1) + ': ' + t('Every matching item needs its partner word.'));
@@ -256,9 +279,10 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     filled.forEach((s, si) => {
       const bank = s.type === 'matching' ? shuffled(s.items.map((it) => it.criteria.trim())) : null;
       s.items.forEach((it, ii) => {
+        const listening = s.type === 'listening';
         rows.push({
-          id: it.id, type: it.type || s.type,
-          text: buildQ({ part: ii === 0 ? s.part : '', sec: ii === 0 ? (s.title.trim() || t('Question') + ' ' + (si + 1)) : '', bank: ii === 0 ? bank : null, body: it.text }),
+          id: it.id, type: listening ? LISTENING_DB_TYPE : (it.type || s.type),
+          text: buildQ({ part: ii === 0 ? s.part : '', sec: ii === 0 ? (s.title.trim() || t('Question') + ' ' + (si + 1)) : '', bank: ii === 0 ? bank : null, audio: listening ? it.audio : '', opts: listening ? optList(it) : null, body: it.text }),
           criteria: it.criteria.trim(),
         });
       });
@@ -511,6 +535,19 @@ export default function ExamEditor({ state, onClose, onSaved }) {
                               ? <input type="text" dir="auto" className="pbx-input" value={it.text} placeholder={t(ph[0])} onChange={(e) => patchItem(si, ii, { text: e.target.value })} />
                               : <Area dir="auto" value={it.text} placeholder={t(ph[0])} onChange={(e) => patchItem(si, ii, { text: e.target.value })} />}
                           </div>
+                          {s.type === 'listening' ? (
+                            <div className="pbx-f2">
+                              <div className="pbx-itemlab">Audio (mp3)</div>
+                              <input type="text" dir="ltr" className="pbx-input" value={it.audio} placeholder="/listening/level1/midterm-m1.mp3" onChange={(e) => patchItem(si, ii, { audio: e.target.value })} />
+                              <div className="pbx-itemlab" style={{ marginTop: 8 }}>{t('Options (one per line)')}</div>
+                              <Area dir="rtl" value={it.optsText} onChange={(e) => patchItem(si, ii, { optsText: e.target.value })} />
+                              <div className="pbx-itemlab" style={{ marginTop: 8 }}>{t(ph[1])}</div>
+                              <select className="pbx-select" dir="rtl" value={it.criteria} onChange={(e) => patchItem(si, ii, { criteria: e.target.value })}>
+                                <option value="">{'—'}</option>
+                                {optList(it).map((o) => <option key={o} value={o}>{o}</option>)}
+                              </select>
+                            </div>
+                          ) : (
                           <div className="pbx-f2">
                             <div className="pbx-itemlab">{t(ph[1])}</div>
                             {two
@@ -518,6 +555,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
                                        onChange={(e) => patchItem(si, ii, { criteria: e.target.value })} onKeyDown={(e) => onItemKey(e, si, ii, last)} />
                               : <Area dir="auto" value={it.criteria} placeholder={t(ph[1])} onChange={(e) => patchItem(si, ii, { criteria: e.target.value })} onKeyDown={(e) => onItemKey(e, si, ii, last)} />}
                           </div>
+                          )}
                           <button type="button" className="pbx-x" title={t('Remove')} aria-label={t('Remove')} onClick={() => removeItem(si, ii)}>&times;</button>
                         </div>
                       );
@@ -535,7 +573,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
                     ) : (
                       <div className="pbx-add">
                         <button type="button" className="pbx-btn sm" onClick={() => addItem(si)}>{t('+ Add item')}</button>
-                        <button type="button" className="pbx-btn sm ghost" onClick={() => { setPasteFor(s.key); setPasteText(''); }}>{t('Paste many at once')}</button>
+                        {s.type !== 'listening' && <button type="button" className="pbx-btn sm ghost" onClick={() => { setPasteFor(s.key); setPasteText(''); }}>{t('Paste many at once')}</button>}
                       </div>
                     )}
                   </div>
@@ -549,6 +587,12 @@ export default function ExamEditor({ state, onClose, onSaved }) {
                 <div className="pbx-kinds">
                   {Q_TYPES.map(([val, label]) => <button type="button" key={val} className="pbx-btn sm" onClick={() => addSection(val)}>+ {t(label)}</button>)}
                 </div>
+                {LISTENING_SECTIONS[Number(level) || 1] && (
+                  <div className="pbx-kinds" style={{ marginTop: 8 }}>
+                    <button type="button" className="pbx-btn sm pri" onClick={() => addListening('midterm')}>+ {t('Ready-made listening')} · {t('Midterm')} ({Number(level) || 1})</button>
+                    <button type="button" className="pbx-btn sm pri" onClick={() => addListening('final')}>+ {t('Ready-made listening')} · {t('Final')} ({Number(level) || 1})</button>
+                  </div>
+                )}
               </div>
             )}
           </div>

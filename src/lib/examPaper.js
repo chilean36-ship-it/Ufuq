@@ -16,34 +16,47 @@
 
 export const Q_TYPES = [
   ['short_answer', 'Short answer'], ['matching', 'Matching'], ['antonym', 'Antonym'],
-  ['grammar', 'Grammar'], ['essay', 'Essay'],
+  ['grammar', 'Grammar'], ['essay', 'Essay'], ['listening', 'Listening'],
 ];
 export const TYPE_LABEL = Object.fromEntries(Q_TYPES);
 
-const MARK = /^@@(part|sec|bank):[ \t]*(.*)$/;
+/**
+ * Listening items are stored as ordinary `short_answer` rows (the database only allows the five older types), told apart by
+ * two more marker lines: `@@audio: /listening/level1/midterm-m1.mp3` and `@@opts: option 1|option 2|option 3`.
+ * The student picks one option and the option's text is the saved answer; the correct option is the criteria (never sent to students).
+ */
+export const LISTENING_DB_TYPE = 'short_answer';
+export const LISTENING_MAX_PLAYS = 2;
+export const isListening = (p) => !!(p && p.audio && p.opts && p.opts.length > 1);
 
-/** question_text → { part, sec, bank[], body } */
+const MARK = /^@@(part|sec|bank|audio|opts):[ \t]*(.*)$/;
+
+/** question_text → { part, sec, bank[], audio, opts[], body } */
 export function parseQ(text) {
   const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
-  const out = { part: '', sec: '', bank: null, body: '' };
+  const out = { part: '', sec: '', bank: null, audio: '', opts: null, body: '' };
   let i = 0;
   for (; i < lines.length; i++) {
     const m = lines[i].match(MARK);
     if (!m) break;
     if (m[1] === 'part') out.part = m[2].trim();
     else if (m[1] === 'sec') out.sec = m[2].trim();
+    else if (m[1] === 'audio') out.audio = m[2].trim();
+    else if (m[1] === 'opts') out.opts = m[2].split('|').map((w) => w.trim()).filter(Boolean);
     else out.bank = m[2].split('|').map((w) => w.trim()).filter(Boolean);
   }
   out.body = lines.slice(i).join('\n').trim();
   return out;
 }
 
-/** { part, sec, bank[], body } → question_text */
-export function buildQ({ part, sec, bank, body }) {
+/** { part, sec, bank[], audio, opts[], body } → question_text */
+export function buildQ({ part, sec, bank, audio, opts, body }) {
   const head = [];
   if (part && part.trim()) head.push('@@part: ' + part.trim());
   if (sec && sec.trim()) head.push('@@sec: ' + sec.trim());
   if (bank && bank.length) head.push('@@bank: ' + bank.join('|'));
+  if (audio && audio.trim()) head.push('@@audio: ' + audio.trim());
+  if (opts && opts.length) head.push('@@opts: ' + opts.join('|'));
   return head.concat([String(body || '').trim()]).join('\n');
 }
 
@@ -86,6 +99,7 @@ export function layoutQuestions(questions) {
       secHead: newSec ? p.sec : '',
       bank: q.type === 'matching' ? (newSec ? p.bank : bank) : null,
       showBank: newSec && !!(p.bank && p.bank.length),
+      audio: p.audio, opts: p.opts,
       number: hasSections ? n : idx + 1,
     };
   });
@@ -209,3 +223,41 @@ export const TEMPLATES = [
     ],
   },
 ];
+
+/* ----------------------------------------------------------- listening sections */
+/* One ready-made listening section per exam kind of a level (5 questions, Arabic only). The mp3 files live in
+   public/listening/ and are made by scripts/gen-listening-audio.mjs from the same texts. The correct option is the `criteria`. */
+export const LISTENING_SECTIONS = {
+  1: {
+    midterm: {
+      part: '', title: "السؤال الأول: الاستماع", type: 'listening',
+      items: [
+        { text: "مِنْ أَيْنَ زَيْنَب؟", criteria: "مِنْ مِصْرَ",
+          audio: "/listening/level1/midterm-m1.mp3", opts: ["مِنْ سُورِيَا","مِنْ مِصْرَ","مِنْ تُرْكِيَا"] },
+        { text: "مَا مِهْنَةُ وَالِدِ عَلِيّ؟", criteria: "مُهَنْدِس",
+          audio: "/listening/level1/midterm-m2.mp3", opts: ["طَبِيب","مُدَرِّس","مُهَنْدِس"] },
+        { text: "كَمْ غُرْفَةً فِي البَيْتِ؟", criteria: "ثَلَاثُ غُرَف",
+          audio: "/listening/level1/midterm-m3.mp3", opts: ["ثَلَاثُ غُرَف","أَرْبَعُ غُرَف","خَمْسُ غُرَف"] },
+        { text: "مَتَى يَسْتَيْقِظُ طَارِق يَوْمَ العُطْلَة؟", criteria: "مُتَأَخِّراً",
+          audio: "/listening/level1/midterm-m4.mp3", opts: ["مُبَكِّراً","مُتَأَخِّراً","عِنْدَ الفَجْر"] },
+        { text: "اخْتَرِ الجَوَابَ المُنَاسِب.", criteria: "أَقْرَأُ القُرْآن",
+          audio: "/listening/level1/midterm-m5.mp3", opts: ["أَذْهَبُ بِالحَافِلَة","أَسْتَيْقِظُ مُبَكِّراً","أَقْرَأُ القُرْآن"] },
+      ],
+    },
+    final: {
+      part: '', title: "السؤال الأول: الاستماع", type: 'listening',
+      items: [
+        { text: "مَاذَا تَطْلُبُ المُسَافِرَةُ مِنَ الطَّعَام؟", criteria: "الدَّجَاجُ وَالخُبْز",
+          audio: "/listening/level1/final-f1.mp3", opts: ["السَّمَكُ وَالأَرُزّ","الدَّجَاجُ وَالخُبْز","اللَّحْمُ وَالسَّلَطَة"] },
+        { text: "كَيْفَ يُسَافِرُ صَالِح إِلَى المَدِينَة؟", criteria: "بِالطَّائِرَة",
+          audio: "/listening/level1/final-f2.mp3", opts: ["بِالسَّيَّارَة","بِالحَافِلَة","بِالطَّائِرَة"] },
+        { text: "كَمْ حِصَّةً يَدْرُسُ غَسَّان فِي اليَوْم؟", criteria: "سِتُّ حِصَص",
+          audio: "/listening/level1/final-f3.mp3", opts: ["سِتُّ حِصَص","خَمْسُ حِصَص","سَبْعُ حِصَص"] },
+        { text: "كَمْ طِفْلاً لِمَرْيَم؟", criteria: "خَمْسَةُ أَطْفَال",
+          audio: "/listening/level1/final-f4.mp3", opts: ["ثَلَاثَةُ أَطْفَال","سِتَّةُ أَطْفَال","خَمْسَةُ أَطْفَال"] },
+        { text: "اخْتَرِ الجَوَابَ المُنَاسِب.", criteria: "أُصَلِّي الفَجْرَ فِي البَيْت",
+          audio: "/listening/level1/final-f5.mp3", opts: ["أُصَلِّي الفَجْرَ فِي البَيْت","أُصَلِّي الظُّهْرَ فِي المَسْجِد","أَذْهَبُ بِالسَّيَّارَة"] },
+      ],
+    },
+  },
+};

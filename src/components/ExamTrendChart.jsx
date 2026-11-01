@@ -85,7 +85,7 @@ const CHEV_L = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const CHEV_R = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>;
 
 /** Monotone cubic (Fritsch–Carlson) path through [x,y] points — smooth, never overshoots the 0–100 range. */
-function smoothPath(pts) {
+export function smoothPath(pts) {
   const n = pts.length;
   if (n === 0) return '';
   if (n === 1) return `M${pts[0][0]} ${pts[0][1]}`;

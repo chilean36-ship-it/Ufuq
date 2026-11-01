@@ -19,6 +19,7 @@ import ResultReview from './runner/ResultReview';
 import ExamIntro from './runner/ExamIntro';
 import ConfirmFinish from './runner/ConfirmFinish';
 import QuestionCard from './runner/QuestionCard';
+import ListeningField from './runner/ListeningField';
 
 const AUTOSAVE_MS = 15000;   // safety net; typing also saves ~2.5 s after the last keystroke
 const DEBOUNCE_MS = 2500;
@@ -428,7 +429,10 @@ export default function WrittenRunner({ exam, existingSub, userId, onSubChange, 
     : <span className="xr-chip save ok"><i className="xr-dotlive" /><span className="t">{t('Saved')}</span></span>;
 
   // ---- one answer box, shared by the exam room and the read-only paper ----
-  const buildField = (q, bank, val) => {
+  const buildField = (q, bank, val, item) => {
+    if (item && item.audio && item.opts && item.opts.length > 1) {
+      return <ListeningField subId={sub.id} qid={q.id} audio={item.audio} opts={item.opts} value={val || ''} readOnly={readOnly} onPick={(o) => onType(q.id, o)} />;
+    }
     const ph = readOnly ? undefined : t('Write your answer here');
     let field;
         if (q.type === 'matching' || q.type === 'antonym') {
@@ -609,7 +613,7 @@ export default function WrittenRunner({ exam, existingSub, userId, onSubChange, 
     >
       {!q ? <p className="xq-empty">{t('No questions yet.')}</p> : (
         <QuestionCard t={t} q={q} item={item} cur={cur} total={total} qval={qval} flagged={flagged} ctx={ctxs[cur]} scale={FS_STEPS[fs]}
-                      field={buildField(q, item.bank, qval)} onToggleFlag={toggleFlag} />
+                      field={buildField(q, item.bank, qval, item)} onToggleFlag={toggleFlag} />
       )}
     </ExamShell>
     {!online && phase === 'exam' && !readOnly && (

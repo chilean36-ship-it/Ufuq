@@ -4,6 +4,9 @@ import { usePanel } from '../../components/panel/PanelContext';
 import { Modal } from '../../components/panel/ui';
 import { examTitleFor } from '../../lib/examTitle';
 import { fmtDateTime } from '../../lib/dateLocale';
+import PageStyle from '../../components/PageStyle';
+import css from '../../styles/exam-results.css?inline';
+import RowMenu from './RowMenu';
 
 /** Server error code -> English key (translated by t()). Anything else is shown as the server sent it. */
 const ERR = {
@@ -23,12 +26,14 @@ function toLocalInput(d) {
 const tomorrow = () => toLocalInput(new Date(Date.now() + 24 * 3600 * 1000));
 
 /**
- * Teacher view of ONE exam whose deadline has passed: the group's students who never handed it in, with three actions:
- *  - Extend      : give this one student more time (written_exam_extensions, read by start_written_exam)
- *  - Move down   : the student goes to the NEAREST LOWER active group, exactly like a student who failed the exam (the lower level starts fresh)
- *  - Remove      : the student leaves this group and waits for the teacher to add them to another one
+ * The students of ONE exam who never handed it in, with one place to decide what happens to each of them:
+ *  - Extend deadline      : this one student may still take the exam until the date you choose (written_exam_extensions)
+ *  - Lower group          : the student goes to the NEAREST LOWER active group, like a student who failed (that level starts fresh)
+ *  - Remove from group    : the student leaves the group and waits for the teacher to add them to another one
+ *  - Remove from platform : the account is blocked (a main admin can unblock it on the Students page) and the student leaves the group
+ * Retaking a paper that was ALREADY handed in is done in the Results window, not here.
  * Data and permissions come from RPCs (exam_missed_students, staff_extend_exam_deadline, staff_demote_missed_student,
- * staff_remove_missed_student); the server re-checks that the teacher really teaches this exam's group.
+ * staff_remove_missed_student, admin_update_student); the server re-checks that the teacher really teaches this exam.
  */
 export default function MissedStudentsModal({ state, onClose, onChanged }) {
   const { t, lang, toast, askConfirm } = usePanel();
@@ -36,7 +41,7 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
   const examId = exam ? exam.id : null;
   const [rows, setRows] = useState(null);       // null = loading, { error } = failed
   const [busy, setBusy] = useState(false);
-  const [ext, setExt] = useState(null);         // { uid, value } while the "extend" editor is open for one row
+  const [ext, setExt] = useState(null);         // { uid, value } while the "extend deadline" editor is open for one row
 
   const fail = useCallback((e) => {
     const m = String((e && e.message) || e);
@@ -100,49 +105,70 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
   }
 
   const now = Date.now();
+  const loc = lang === 'UZ' ? 'uz' : lang === 'RU' ? 'ru' : lang === 'AR' ? 'ar' : 'en';
+  let deadlineNote = '';
+  if (exam && exam.deadline_at) {
+    try {
+      const mins = Math.round((new Date(exam.deadline_at).getTime() - now) / 60000);
+      const rtf = new Intl.RelativeTimeFormat(loc, { numeric: 'auto' });
+      const rel = Math.abs(mins) < 60 ? rtf.format(mins, 'minute') : Math.abs(mins) < 2880 ? rtf.format(Math.round(mins / 60), 'hour') : rtf.format(Math.round(mins / 1440), 'day');
+      deadlineNote = t('Deadline') + ': ' + fmtDateTime(exam.deadline_at, lang) + ' (' + rel + ')';
+    } catch (e) { deadlineNote = ''; }
+  }
+
   return (
     <Modal open={state.open} onClose={onClose} wide>
-      <h3>{t('Students who missed the deadline')} &mdash; <span>{exam ? examTitleFor(exam, lang) : ''}</span></h3>
-      <p className="hint" style={{ margin: '0 0 12px' }}>{t('Decide what happens to every student who did not take this exam: allow a retake, move to the nearest lower group, take out of the group, or remove from the platform.')}</p>
-      <div style={{ overflowX: 'auto' }}>
-        <table>
-          <thead><tr><th>{t('Student')}</th><th>{t('Level')}</th><th>{t('Status')}</th><th>{t('Extended until')}</th><th></th></tr></thead>
-          <tbody>
-            {rows === null ? <tr className="empty-row"><td colSpan={5}>{t('Loading…')}</td></tr>
-              : rows.error ? <tr className="empty-row"><td colSpan={5}>{rows.error}</td></tr>
-              : rows.length === 0 ? <tr className="empty-row"><td colSpan={5}>{t('Everyone handed in on time.')}</td></tr>
-              : rows.map((r) => {
+      <PageStyle css={css} />
+      <div className="mm">
+        <header>
+          <div className="er-kicker">{t('Students who did not submit')}{Array.isArray(rows) && rows.length > 0 ? <span className="er-chip">{rows.length}</span> : null}</div>
+          <h3 className="er-title" dir="auto">{exam ? examTitleFor(exam, lang) : ''}</h3>
+        </header>
+        <p className="mm-info">
+          {deadlineNote ? <b>{deadlineNote}. </b> : null}
+          {t('Decide what happens to each student: give more time, move to the nearest lower group, or take them out of the group or the platform.')}
+        </p>
+
+        {rows === null ? <p className="mm-empty">{t('Loading…')}</p>
+          : rows.error ? <p className="mm-empty">{rows.error}</p>
+          : rows.length === 0 ? <p className="mm-empty">{t('Everyone handed in on time.')}</p>
+          : (
+            <div className="mm-list">
+              {rows.map((r) => {
                 const until = r.extended_until && new Date(r.extended_until).getTime() > now ? r.extended_until : null;
                 const editing = ext && ext.uid === r.user_id;
                 return (
-                  <tr key={r.user_id}>
-                    <td><b>{r.name || t('Student')}</b></td>
-                    <td>{t('Level')} {r.level}</td>
-                    <td>{r.status === 'draft' ? t('Not submitted') : t('Not started')}</td>
-                    <td>{until ? fmtDateTime(until, lang) : '\u2014'}</td>
-                    <td style={{ textAlign: 'right' }}>
-                      {editing ? (
-                        <>
-                          <input type="datetime-local" value={ext.value} aria-label={t('Extended until')} min={toLocalInput(new Date())}
-                                 onChange={(e) => setExt({ uid: r.user_id, value: e.target.value })} style={{ marginRight: 6 }} />
-                          <button type="button" className="btn btn-gold btn-sm" disabled={busy} onClick={() => saveExtension(r.user_id)}>{t('Save')}</button>
-                          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setExt(null)} style={{ marginLeft: 6 }}>{t('Cancel')}</button>
-                        </>
-                      ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
-                          <button type="button" className="btn btn-gold btn-sm" disabled={busy} title={t('Give this student more time to take the exam')} onClick={() => setExt({ uid: r.user_id, value: tomorrow() })}>{t('Allow retake')}</button>
-                          <button type="button" className="btn btn-ghost btn-sm" disabled={busy || r.level <= 1} title={r.level <= 1 ? t('This student is already on the lowest level.') : t('Move to the nearest lower group')}
-                                  onClick={() => demote(r)}>{t('Lower level')}</button>
-                          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} title={t('Take the student out of the group; they wait for a new one')} onClick={() => remove(r)}>{t('Remove from group')}</button>
-                          <button type="button" className="btn btn-danger btn-sm" disabled={busy} title={t('Block the account and take the student out of the group')} onClick={() => removeFromPlatform(r)}>{t('Remove from platform')}</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
+                  <div className="mm-card" key={r.user_id}>
+                    <i className="er-av" aria-hidden="true">{(r.name || '?').trim().charAt(0).toUpperCase()}</i>
+                    <div className="mm-who">
+                      <b dir="auto">{r.name || t('Student')}</b>
+                      <div className="mm-meta">
+                        <span>{t('Level')} {r.level}</span>
+                        <span className="tag">{r.status === 'draft' ? t('Started, not submitted') : t('Not started')}</span>
+                        {until && <span className="tag ext">{t('Extended until')}: {fmtDateTime(until, lang)}</span>}
+                      </div>
+                    </div>
+                    <div className="mm-acts">
+                      <button type="button" className="btn btn-gold btn-sm" disabled={busy} title={t('Give this student more time to take the exam')} onClick={() => setExt({ uid: r.user_id, value: tomorrow() })}>{t('Extend deadline')}</button>
+                      <button type="button" className="btn btn-ghost btn-sm" disabled={busy || r.level <= 1} title={r.level <= 1 ? t('This student is already on the lowest level.') : t('Move to the nearest lower group')} onClick={() => demote(r)}>{t('Lower level')}</button>
+                      <RowMenu label={t('More')} disabled={busy} items={[
+                        { key: 'group', label: t('Remove from group'), title: t('Take the student out of the group; they wait for a new one'), onClick: () => remove(r) },
+                        { key: 'platform', label: t('Remove from platform'), title: t('Block the account and take the student out of the group'), danger: true, onClick: () => removeFromPlatform(r) },
+                      ]} />
+                    </div>
+                    {editing && (
+                      <div className="mm-ext">
+                        <label htmlFor={'mmx' + r.user_id}>{t('Can take the exam until')}</label>
+                        <input id={'mmx' + r.user_id} type="datetime-local" value={ext.value} min={toLocalInput(new Date())} onChange={(e) => setExt({ uid: r.user_id, value: e.target.value })} />
+                        <button type="button" className="btn btn-gold btn-sm" disabled={busy} onClick={() => saveExtension(r.user_id)}>{t('Save')}</button>
+                        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setExt(null)}>{t('Cancel')}</button>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
-          </tbody>
-        </table>
+            </div>
+          )}
       </div>
     </Modal>
   );

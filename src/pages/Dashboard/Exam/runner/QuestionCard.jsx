@@ -25,7 +25,7 @@ export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ct
                 {item.bank.map((w) => <span className="xq-chip" key={w}>{w}</span>)}
               </div>
             )}
-            <p className="xq-text" dir="auto">{item.body}</p>
+            <p className={'xq-text' + (item.audio ? ' xq-text-ar' : '')} dir="auto">{item.body}</p>
             {field}
           </article>
           <p className="xq-hint">{t('Your answers are saved automatically.')}</p>
