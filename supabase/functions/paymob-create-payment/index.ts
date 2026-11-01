@@ -1,22 +1,14 @@
-// ============================================================
-// Ufuq — paymob-create-payment
-// Turns a pending card order into a Paymob "payment intention" and returns the hosted-checkout URL.
-//   The browser sends only { order_id } — the price comes from the order row the server itself computed.
-//   Card details are typed on Paymob's page and never reach Ufuq.
-// Secrets (supabase secrets set …):
-//   PAYMOB_SECRET_KEY      (egy_sk_…)   PAYMOB_PUBLIC_KEY   (egy_pk_…)
-//   PAYMOB_INTEGRATION_ID  (the numeric id of your online-card integration; test and live ids differ)
-//   SITE_URL               e.g. https://ufuq.example   (where the student returns to)
-//   optional: PAYMOB_API_HOST (default accept.paymob.com), PAYMOB_CHECKOUT_HOST (default eg.checkout.paymob.com),
-//             PAYMOB_DEFAULT_PHONE (Paymob requires a phone number; default "NA")
-// Deploy:  supabase functions deploy paymob-create-payment
-// ============================================================
+// Ufuq — paymob-create-payment, v2 (hardened): turns a pending card order into a Paymob payment intention and returns the
+// hosted-checkout URL. The browser sends only { order_id }; the price comes from the order row the server itself computed.
+// Card data never reaches Ufuq. v2: card method must be enabled, orders expire after 24 h, at most 5 attempts per order.
+// v3: CORS limited to the site's own origins (_shared/cors.ts) instead of "*".
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
 import { withCors } from "../_shared/cors.ts";
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "Content-Type": "application/json" } });
+const ORDER_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_ATTEMPTS = 5;
 
 Deno.serve(withCors(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "POST expected" }, 405);
@@ -42,9 +34,16 @@ Deno.serve(withCors(async (req: Request) => {
   if (!caller) return json({ error: "Unauthorized" }, 401);
 
   const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+  const { data: settings } = await db.from("payment_settings").select("paymob_enabled").eq("id", 1).maybeSingle();
+  if (!settings?.paymob_enabled) return json({ error: "METHOD_UNAVAILABLE" }, 503);
+
   const { data: order } = await db.from("orders").select("*").eq("id", orderId).maybeSingle();
   if (!order || order.user_id !== caller.id) return json({ error: "ORDER_NOT_FOUND" }, 404);
   if (order.method !== "paymob" || order.status !== "pending") return json({ error: "ORDER_NOT_PAYABLE" }, 409);
+  if (Date.now() - Date.parse(order.created_at) > ORDER_TTL_MS) return json({ error: "ORDER_EXPIRED" }, 409);   // the exchange rate is only honoured for 24 h
+
+  const { count: attempts } = await db.from("payment_events").select("id", { count: "exact", head: true }).eq("order_id", order.id).eq("kind", "intent_created");
+  if ((attempts ?? 0) >= MAX_ATTEMPTS) return json({ error: "TOO_MANY_ATTEMPTS" }, 429);
 
   const { data: plan } = await db.from("plans").select("title").eq("id", order.plan_id).maybeSingle();
   const parts = String(order.buyer_name).trim().split(/\s+/);
@@ -74,6 +73,7 @@ Deno.serve(withCors(async (req: Request) => {
       method: "POST",
       headers: { Authorization: `Token ${SECRET}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20_000),
     });
   } catch (e) {
     console.error("paymob unreachable", e);
@@ -85,6 +85,7 @@ Deno.serve(withCors(async (req: Request) => {
     return json({ error: "PROVIDER_ERROR", status: res.status }, 502);
   }
   await db.rpc("set_order_provider", { p_order: order.id, p_ref: String(out.id || out.intention_order_id || "") });
+  await db.rpc("log_payment_event", { p_order: order.id, p_txn: null, p_kind: "intent_created", p_detail: { provider_ref: String(out.id || out.intention_order_id || "") }, p_alert: false });
   const url = `https://${CHECKOUT_HOST}/?publicKey=${encodeURIComponent(PUBLIC)}&clientSecret=${encodeURIComponent(out.client_secret)}`;
   return json({ ok: true, url });
 }));
