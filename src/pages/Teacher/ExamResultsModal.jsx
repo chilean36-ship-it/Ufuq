@@ -204,7 +204,12 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
             {(pendingRows.length > 0 || (stats.missing > 0 && onManage)) && (
               <div className="er-actions">
                 {pendingRows.length > 0 && <button type="button" className="btn btn-gold btn-sm" disabled={busy} onClick={() => approveMany(pendingRows)}>{'✓'} {t('Approve all AI-checked')} ({pendingRows.length})</button>}
-                {stats.missing > 0 && onManage && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onManage(exam)}>{t('Manage students who did not submit')} ({stats.missing})</button>}
+                {stats.missing > 0 && onManage && (
+                  <button type="button" className="er-btn" onClick={() => onManage(exam)} title={t('Students who did not submit')}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3 19c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5" /><path d="M19 8v6M16 11h6" /></svg>
+                    {t('Manage')}<i>{stats.missing}</i>
+                  </button>
+                )}
               </div>
             )}
           </>

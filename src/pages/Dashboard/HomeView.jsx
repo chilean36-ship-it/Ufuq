@@ -6,7 +6,7 @@ import { getCurrentWeekDates, scheduleDaysToWeekArray, fmtDueDate, isOverdue, MO
 import { computeMonthAttendance, fmtPct, LEVEL_COLORS } from '../../lib/attendanceMonth';
 import { LessonBlocks, statusMessage } from './AttendanceView';
 import { getExamHistory } from './Exam/examData';
-import ExamTrendChart, { CHART_CSS } from '../../components/ExamTrendChart';
+import ProgressLine, { LINE_CSS } from '../../components/ProgressLine';
 import PageStyle from '../../components/PageStyle';
 import SubscriptionCard from './SubscriptionCard';
 import ClosedGroupNotice from './ClosedGroupNotice';
@@ -175,7 +175,7 @@ export default function HomeView({ onNavigate }) {
 
   return (
     <div id="homeView">
-      <PageStyle css={CHART_CSS + HOME_CSS} />
+      <PageStyle css={LINE_CSS + HOME_CSS} />
       <SubscriptionCard />
       <ClosedGroupNotice />
       <div className="welcome">
@@ -308,14 +308,14 @@ export default function HomeView({ onNavigate }) {
           )}
         </div>
 
-        {/* Progress — the student's real exam results, Monthly / Yearly */}
+        {/* Progress: one line graph of the student's real exam results */}
         <div className="panel panel-compact home-panel">
           <PanelHead title={t('Progress')} />
           {!joined ? (
             <Locked />
           ) : examHistory === null ? null : (
             <div className="hp-body" id="homeProgress">
-              <ExamTrendChart items={examHistory} size="sm" />
+              <ProgressLine items={examHistory} compact />
             </div>
           )}
         </div>

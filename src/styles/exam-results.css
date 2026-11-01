@@ -87,3 +87,11 @@ html[data-theme="light"] .er, html[data-theme="light"] .mm{ --er-ok:#2C8F55; --e
   .mm-acts{ grid-column:1 / -1; justify-content:flex-start; }
   .er-pop{ inset-inline-end:auto; inset-inline-start:0; }
 }
+
+/* clear, button-looking action (e.g. "Manage") */
+.er-btn{ display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:11px; border:1.5px solid var(--gold); background:var(--gold-dim); color:var(--gold-bright); font:700 14px/1 inherit; cursor:pointer; transition:background .15s, transform .1s; }
+.er-btn:hover{ background:var(--gold); color:#171717; }
+.er-btn:active{ transform:translateY(1px); }
+.er-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; }
+.er-btn i{ font-style:normal; min-width:22px; padding:2px 7px; border-radius:99px; background:var(--gold); color:#171717; font-size:12px; text-align:center; }
+.er-btn:hover i{ background:#171717; color:var(--gold-bright); }

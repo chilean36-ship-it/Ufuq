@@ -172,7 +172,11 @@ function TaskModal({ open, task, groupCode, onClose, onSaved }) {
       toast(task ? t('Task updated.') : t('New task added.'), 'ok');
       onClose();
       onSaved();
-    } catch (err) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) {
+      // the database refuses task changes to "standard" admin accounts (policy no_std_admin_*): say so in plain words
+      const m = String((err && err.message) || err);
+      setError(/row-level security|42501/i.test(m) ? t('This account is not allowed to create or edit tasks. Ask the main admin to allow it.') : m);
+    } finally { setSaving(false); }
   }
 
   return (

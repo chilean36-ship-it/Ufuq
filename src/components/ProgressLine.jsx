@@ -1,12 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCabinetI18n } from '../context/CabinetI18nContext';
-import { smoothPath } from './ExamTrendChart';
 
 /**
  * The student's Progress picture: ONE line graph of the exam results (0-100 %) in time order. The latest result and how it
  * changed sit on top, a small switch chooses the last 3 months or everything; tap / hover a dot to see the exam and the date.
  * items: [{ id, title, pct, score, total, at }]  (as returned by getExamHistory()).
  */
+/** Monotone cubic (Fritsch–Carlson) path through [x,y] points — smooth, never overshoots the 0–100 range. */
+export function smoothPath(pts) {
+  const n = pts.length;
+  if (n === 0) return '';
+  if (n === 1) return `M${pts[0][0]} ${pts[0][1]}`;
+  const dx = [], m = [], tan = new Array(n);
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0] || 1e-6; m[i] = (pts[i + 1][1] - pts[i][1]) / dx[i]; }
+  tan[0] = m[0]; tan[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) tan[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { tan[i] = 0; tan[i + 1] = 0; continue; }
+    const a = tan[i] / m[i], b = tan[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const k = 3 / Math.sqrt(s); tan[i] = k * a * m[i]; tan[i + 1] = k * b * m[i]; }
+  }
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += ` C${(pts[i][0] + h).toFixed(1)} ${(pts[i][1] + tan[i] * h).toFixed(1)} ${(pts[i + 1][0] - h).toFixed(1)} ${(pts[i + 1][1] - tan[i + 1] * h).toFixed(1)} ${pts[i + 1][0].toFixed(1)} ${pts[i + 1][1].toFixed(1)}`;
+  }
+  return d;
+}
+
 const LOCALES = { UZ: 'uz', RU: 'ru', AR: 'ar', EN: 'en' };
 
 export const LINE_CSS = `
@@ -32,13 +53,14 @@ export const LINE_CSS = `
 .pl-cross{ stroke:var(--gold); stroke-width:1; stroke-dasharray:3 3; opacity:.6; }
 .pl-tip{ position:absolute; pointer-events:none; z-index:3; padding:9px 13px; border-radius:11px; background:var(--bg-3); border:1px solid var(--line); box-shadow:0 10px 26px rgba(0,0,0,.35); font-size:13px; white-space:nowrap; }
 .pl-tip b{ color:var(--gold-bright); font-size:17px; margin-inline-end:6px; } .pl-tip small{ color:var(--text-muted); }
+.pl-compact .pl-now b{ font-size:32px; } .pl-compact .pl-now i{ font-size:12.5px; } .pl-compact .pl-range button{ padding:5px 11px; font-size:12px; }
 .pl-empty{ padding:46px 0; text-align:center; color:var(--text-muted); font-size:14.5px; }
 @keyframes plDraw{ to{ stroke-dashoffset:0; } } @keyframes plFade{ to{ opacity:1; } }
 @media (max-width:520px){ .pl-now b{ font-size:36px; } }
 @media (prefers-reduced-motion:reduce){ .pl-line, .pl-area{ animation:none; stroke-dashoffset:0; opacity:1; } }
 `;
 
-export default function ProgressLine({ items }) {
+export default function ProgressLine({ items, compact = false }) {
   const { t, lang } = useCabinetI18n();
   const locale = LOCALES[lang] || 'en';
   const [range, setRange] = useState(null);      // '3m' | 'all' | null = decided from the data
@@ -65,7 +87,7 @@ export default function ProgressLine({ items }) {
 
   // geometry
   const W = Math.max(280, width || 640);
-  const H = Math.round(Math.min(380, Math.max(220, W * 0.42)));
+  const H = compact ? Math.round(Math.min(260, Math.max(190, W * 0.62))) : Math.round(Math.min(380, Math.max(220, W * 0.42)));
   const L = 40, R = 18, T = 14, B = 30;
   const t0 = mode === '3m' ? threeAgo : (pts.length ? pts[0].ts : 0);
   const t1 = mode === '3m' ? Date.now() : (pts.length ? pts[pts.length - 1].ts : 1);
@@ -98,7 +120,7 @@ export default function ProgressLine({ items }) {
   }
 
   return (
-    <div className="pl" ref={rootRef}>
+    <div className={'pl' + (compact ? ' pl-compact' : '')} ref={rootRef}>
       <div className="pl-top">
         <div className="pl-now">
           <b>{latest ? latest.pct + '%' : '—'}</b>
