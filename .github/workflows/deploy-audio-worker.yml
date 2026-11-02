@@ -1,0 +1,31 @@
+name: Deploy audio worker
+
+# Deploys workers/ufuq-audio-uploader to Cloudflare on every push that changes it (or by hand: Actions → Run workflow).
+# It does nothing until two repository secrets exist: CLOUDFLARE_API_TOKEN (template "Edit Cloudflare Workers") and CLOUDFLARE_ACCOUNT_ID.
+# The worker's variables stay as they are in the Cloudflare dashboard (keep_vars in wrangler.toml).
+on:
+  push:
+    branches: [main]
+    paths: ['workers/ufuq-audio-uploader/**']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secrets
+        id: gate
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$T" ] || [ -z "$A" ]; then echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets are missing - nothing deployed"; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      - name: Deploy
+        if: steps.gate.outputs.go == 'yes'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/ufuq-audio-uploader
+          command: deploy

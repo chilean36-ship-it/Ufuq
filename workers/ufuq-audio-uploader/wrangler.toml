@@ -2,14 +2,11 @@ name = "ufuq-audio-uploader"
 main = "worker.js"
 compatibility_date = "2026-09-01"
 
-# !! Keep these two lines identical to what the CURRENTLY deployed worker uses
-#    (Cloudflare dashboard → Workers → ufuq-audio-uploader → Settings → Bindings / Variables).
+# The variables (SUPABASE_URL, SUPABASE_ANON_KEY, ALLOWED_ORIGINS, PUBLIC_BASE_URL) are set in the Cloudflare dashboard
+# (Workers → ufuq-audio-uploader → Settings → Variables). keep_vars makes every deploy keep them as they are,
+# so deploying from this repo can never change the allowed origins or the public URL.
+keep_vars = true
+
 [[r2_buckets]]
 binding = "AUDIO_BUCKET"
 bucket_name = "lesson-audio"
-
-[vars]
-SUPABASE_URL = "https://ldbthwpikixtykwmvudy.supabase.co"
-SUPABASE_ANON_KEY = "sb_publishable_872FZikCbCvaFfeao1azmQ_20FnUjJy"
-ALLOWED_ORIGINS = "http://localhost:5173"   # add your production site origin, comma-separated
-PUBLIC_BASE_URL = "https://pub-ac01b7560f644bb6a09678bcd5debe09.r2.dev"   # taken from the URLs already stored in audio_lessons
