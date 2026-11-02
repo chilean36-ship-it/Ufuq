@@ -1,0 +1,30 @@
+name: Apply SQL migration
+
+# Manual only: Actions → "Apply SQL migration" → Run workflow, then type the file name from supabase/migrations/.
+# Runs the file on the live project through the Supabase Management API (uses the SUPABASE_ACCESS_TOKEN secret).
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Migration file name, e.g. 20261126_certificates.sql'
+        required: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the migration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          FILE: ${{ github.event.inputs.file }}
+        run: |
+          set -euo pipefail
+          case "$FILE" in */*|*..*) echo "file name only"; exit 1;; esac
+          test -f "supabase/migrations/$FILE"
+          body=$(jq -Rs '{query: .}' "supabase/migrations/$FILE")
+          code=$(curl -sS -o out.json -w '%{http_code}' -X POST \
+            "https://api.supabase.com/v1/projects/ldbthwpikixtykwmvudy/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" -d "$body")
+          cat out.json; echo
+          test "$code" -lt 300
