@@ -60,6 +60,7 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeName, setWelcomeName] = useState('');   // the group just joined (not the one that was open before)
   const [noClassOpen, setNoClassOpen] = useState(false);
   const [noClassInfo, setNoClassInfo] = useState('');
   const [noClassTitle, setNoClassTitle] = useState('');
@@ -227,7 +228,7 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
     // The RPC snapshot may lack group.type / slot settings — re-read the real row. Silent: a network blip here
     // must not wipe the group the student has just (successfully) joined.
     await refreshGroup(true);
-    if (!alreadyMember) setWelcomeOpen(true);
+    if (!alreadyMember) { setWelcomeName((data && data.name) || ''); setWelcomeOpen(true); }
   }
 
   async function handleLeave() { // the Manage dialog has already asked "are you sure?"
@@ -455,7 +456,7 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
       <GroupManageModal open={manageOpen} onClose={() => setManageOpen(false)}
                         groupName={groupData ? groupData.name : ''} groupCode={joinCode} memberCount={members ? members.length : null}
                         onJoinAnother={() => { setManageOpen(false); setJoinOpen(true); }} onLeave={handleLeave} />
-      <GroupWelcomeModal open={welcomeOpen} groupName={groupData ? groupData.name : ''} onSee={() => setWelcomeOpen(false)} />
+      <GroupWelcomeModal open={welcomeOpen} groupName={welcomeName || (groupData ? groupData.name : '')} onSee={() => setWelcomeOpen(false)} />
       <NoClassModal open={noClassOpen} onClose={() => setNoClassOpen(false)} nextInfo={noClassInfo} title={noClassTitle} />
       {/* KEYINCHALIK UCHUN — sayt ichida Zoom (hozircha o'chirilgan):
       {zoomOpen && (

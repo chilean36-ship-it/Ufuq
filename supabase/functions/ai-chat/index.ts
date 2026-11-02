@@ -49,6 +49,15 @@ const LIMIT_TRIAL = { perMinute: 3, perDay: 5 };
 const LIMIT_TEACHER = { perMinute: 25, perDay: 35 };
 const LIMIT_ADMIN = { perMinute: 25, perDay: 15 };
 
+// Live VOICE has its own, much smaller allowance (every spoken turn costs speech-to-text + text-to-speech on top of the AI answer).
+// Voice turns are counted in voice_chat_messages and do NOT use up the text-chat allowance above.
+const VOICE_LIMIT = {
+  student: { perMinute: 5, perDay: 12 },   // about ten minutes of live conversation a day
+  trial: { perMinute: 3, perDay: 3 },
+  teacher: { perMinute: 8, perDay: 30 },
+  admin: { perMinute: 8, perDay: 20 },
+} as const;
+
 const USER_RATE_LIMIT_WINDOW_SECONDS = 60;
 // Site-wide cap per minute (all users together). Main admin is exempt from it.
 const GLOBAL_RATE_LIMIT_MAX_MESSAGES = 100;
@@ -159,8 +168,9 @@ const FIRST_MESSAGE_ADDENDUM = `\n\nNOTE FOR THIS REPLY ONLY: this is the very f
 welcome sentence to Ufuq AI (in their language and script), then answer their message normally. No unsolicited lesson.`;
 
 const VOICE_ADDENDUM = `\n\nNOTE FOR THIS REPLY: this is a live VOICE conversation and your reply is read aloud by a speech engine. Answer in 1 to 3
-short, natural spoken sentences, like a friendly teacher on a call. Absolutely no Markdown, lists, emojis, URLs or symbols.
-Write numbers as words. Reply in the language the person just spoke. When practicing Arabic, say the Arabic phrase first
+short, natural spoken sentences, like a friendly, professional teacher on a call. Answer at once and directly: no preamble, do not
+repeat the question, one idea per turn. Use a polite, calm, professional register. Absolutely no Markdown, lists, emojis, URLs or symbols.
+Write numbers as words. Reply in the language the person just spoke. When you speak Arabic use clear Modern Standard Arabic (Fusha) with correct grammar. When practicing Arabic, say the Arabic phrase first
 (with vowel marks), then a very short explanation in their language. If you did not understand (the speech may be
 mis-transcribed), ask them kindly to repeat or say it in a different way instead of guessing.`;
 
@@ -173,7 +183,7 @@ function json(req: Request, body: unknown, status = 200) {
 
 type GeminiTurn = { role: "user" | "model"; parts: { text: string }[] };
 
-function contentsFromClientHistory(raw: unknown, latest: string): GeminiTurn[] | null {
+function contentsFromClientHistory(raw: unknown, latest: string, keep = HISTORY_CONTEXT_MESSAGES): GeminiTurn[] | null {
   if (!Array.isArray(raw)) return null;
   const turns: { role: "user" | "model"; text: string }[] = [];
   for (const item of raw) {
@@ -186,7 +196,7 @@ function contentsFromClientHistory(raw: unknown, latest: string): GeminiTurn[] |
   }
   const last = turns[turns.length - 1];
   if (last && last.role === "user" && last.text === latest.slice(0, MAX_USER_TURN_CHARS)) turns.pop();
-  const recent = turns.slice(-(HISTORY_CONTEXT_MESSAGES - 1));
+  const recent = turns.slice(-(keep - 1));
   while (recent.length && recent[0].role !== "user") recent.shift();
   const contents: GeminiTurn[] = recent.map((t) => ({ role: t.role, parts: [{ text: t.text }] }));
   contents.push({ role: "user", parts: [{ text: latest }] });
@@ -235,13 +245,15 @@ Deno.serve(async (req: Request) => {
     const globalWindowStart = new Date(Date.now() - GLOBAL_RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
     const dayWindowStart = new Date(Date.now() - DAILY_WINDOW_SECONDS * 1000).toISOString();
 
-    const [profileRes, paidRes, userCountRes, globalCountRes, pastRowsRes, dayCountRes] = await Promise.all([
+    const [profileRes, paidRes, userCountRes, globalCountRes, pastRowsRes, dayCountRes, voiceMinRes, voiceDayRes] = await Promise.all([
       adminSupabase.from("profiles").select("role, admin_tier").eq("id", userId).maybeSingle(),
       supabase.rpc("ufuq_has_access"),
       supabase.from("ai_chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("role", "user").gte("created_at", userWindowStart),
       adminSupabase.from("ai_chat_messages").select("id", { count: "exact", head: true }).eq("role", "user").gte("created_at", globalWindowStart),
       supabase.from("ai_chat_messages").select("role, content").eq("user_id", userId).order("created_at", { ascending: false }).limit(HISTORY_CONTEXT_MESSAGES),
       supabase.from("ai_chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("role", "user").gte("created_at", dayWindowStart),
+      isVoice ? supabase.from("voice_chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("role", "user").gte("created_at", userWindowStart) : Promise.resolve({ count: 0, error: null }),
+      isVoice ? supabase.from("voice_chat_messages").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("role", "user").gte("created_at", dayWindowStart) : Promise.resolve({ count: 0, error: null }),
     ]);
 
     // Account type comes from the profile row (by user id), never from the browser.
@@ -264,10 +276,20 @@ Deno.serve(async (req: Request) => {
             ? { ...LIMIT_STUDENT, kind: "student" }
             : { ...LIMIT_TRIAL, kind: "trial" };
 
-    if (limits.perMinute !== null && !userCountRes.error && (userCountRes.count ?? 0) >= limits.perMinute) {
+    // Live voice: its own limits, checked first (the main admin has none).
+    if (isVoice && !isSuper) {
+      const vl = isAdmin ? VOICE_LIMIT.admin : isTeacher ? VOICE_LIMIT.teacher : paid ? VOICE_LIMIT.student : VOICE_LIMIT.trial;
+      if (!voiceMinRes.error && (voiceMinRes.count ?? 0) >= vl.perMinute) {
+        return json(req, { error: "You're speaking a little too fast - please wait a few seconds and try again." }, 429);
+      }
+      if (!voiceDayRes.error && (voiceDayRes.count ?? 0) >= vl.perDay) {
+        return json(req, { error: `You've used today's live speaking limit (${vl.perDay} turns). It resets within 24 hours. You can keep chatting by text. Bugungi jonli suhbat limiti tugadi, matn orqali yozishni davom ettirishingiz mumkin.` }, 429);
+      }
+    }
+    if (!isVoice && limits.perMinute !== null && !userCountRes.error && (userCountRes.count ?? 0) >= limits.perMinute) {
       return json(req, { error: "You're sending messages a little too fast — please slow down and try again shortly." }, 429);
     }
-    if (limits.perDay !== null && !dayCountRes.error && (dayCountRes.count ?? 0) >= limits.perDay) {
+    if (!isVoice && limits.perDay !== null && !dayCountRes.error && (dayCountRes.count ?? 0) >= limits.perDay) {
       const msg = limits.kind === "trial"
         ? `You've used your ${limits.perDay} free Ufuq AI messages for today. Subscribe to unlock full access to Ufuq AI.`
         : `You've reached today's Ufuq AI message limit (${limits.perDay}). It resets within 24 hours — see you tomorrow!`;
@@ -281,7 +303,7 @@ Deno.serve(async (req: Request) => {
     const pastMessages = (pastRowsRes.data ?? []).reverse();
     const isFirstMessage = pastMessages.length === 0;
 
-    const contents: GeminiTurn[] = contentsFromClientHistory(payload.history, message) ??
+    const contents: GeminiTurn[] = contentsFromClientHistory(payload.history, message, isVoice ? 6 : HISTORY_CONTEXT_MESSAGES) ??
       [
         ...pastMessages.map((m) => ({
           role: (m.role === "assistant" ? "model" : "user") as "user" | "model",
@@ -295,16 +317,16 @@ Deno.serve(async (req: Request) => {
       (isVoice ? VOICE_ADDENDUM : "");
 
     const [, result] = await Promise.all([
-      supabase.from("ai_chat_messages").insert({ user_id: userId, role: "user", content: message }),
+      supabase.from(isVoice ? "voice_chat_messages" : "ai_chat_messages").insert({ user_id: userId, role: "user", content: message }),
       callLLM({
         system: systemPrompt,
         // the history comes in Gemini shape ({role, parts}); the shared caller takes plain messages
         messages: contents.map((c) => ({ role: c.role === "model" ? "assistant" : "user", content: c.parts[0].text })),
-        maxTokens: isVoice ? 350 : 1800,
-        temperature: isVoice ? 0.6 : 0.5,
+        maxTokens: isVoice ? 160 : 1800,        // a spoken answer is 1-3 sentences: short = fast
+        temperature: 0.5,
         effort: "low",                       // chat is high-volume: the cheapest Haiku effort
         thinkingBudget: isVoice ? 0 : 512,
-        deadline: Date.now() + (isVoice ? 25_000 : 45_000),
+        deadline: Date.now() + (isVoice ? 15_000 : 45_000),
       }),
     ]);
 
@@ -324,7 +346,7 @@ Deno.serve(async (req: Request) => {
     }
     if (isVoice) reply = cleanVoiceReply(reply);
 
-    const saveReply = supabase.from("ai_chat_messages").insert({ user_id: userId, role: "assistant", content: reply });
+    const saveReply = supabase.from(isVoice ? "voice_chat_messages" : "ai_chat_messages").insert({ user_id: userId, role: "assistant", content: reply });
     // deno-lint-ignore no-explicit-any
     const edgeRuntime = (globalThis as any).EdgeRuntime;
     if (edgeRuntime?.waitUntil) edgeRuntime.waitUntil(saveReply);

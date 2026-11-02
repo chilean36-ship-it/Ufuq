@@ -185,6 +185,10 @@ export function DashboardDataProvider({ children }) {
     writeActiveGroup(user.id, code);
     setGroupCode(code);
     setGroupData(groupRowsRef.current[code] || null);
+    // A group the student has just joined appears in the topbar switcher at once (the re-read of memberships follows).
+    const row = groupRowsRef.current[code];
+    if (row) setGroups((cur) => (cur.some((g) => g.code === code) ? cur
+      : [...cur, { code, name: row.name, type: row.type }].sort((x, y) => String(x.name || '').localeCompare(String(y.name || ''), undefined, { numeric: true, sensitivity: 'base' }))));
   }, [user]);
 
   const value = useMemo(

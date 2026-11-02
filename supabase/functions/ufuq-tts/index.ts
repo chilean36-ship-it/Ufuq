@@ -15,6 +15,8 @@ const AZURE_REGION = Deno.env.get("AZURE_TTS_REGION");
 const AISHA_KEY = Deno.env.get("AISHA_API_KEY");
 const ELEVEN_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 const ELEVEN_VOICE = Deno.env.get("ELEVENLABS_VOICE_ID") ?? "21m00Tcm4TlvDq8ikWAM";
+// Optional: a dedicated Arabic (Fusha) voice from the ElevenLabs voice library.
+const ELEVEN_VOICE_AR = Deno.env.get("ELEVENLABS_VOICE_ID_AR") ?? ELEVEN_VOICE;
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
 const GEMINI_TTS_MODEL = Deno.env.get("GEMINI_TTS_MODEL") ?? "gemini-2.5-flash-preview-tts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -51,7 +53,7 @@ const AZURE_VOICES: Record<string, [string, string]> = {
   ar: ["ar-SA-ZariyahNeural", "ar-SA-HamedNeural"],
 };
 // Arabic is spoken a bit slower: the audience are learners.
-const AZURE_RATE: Record<string, string> = { uz: "-4%", ru: "0%", en: "-2%", ar: "-12%" };
+const AZURE_RATE: Record<string, string> = { uz: "0%", ru: "+4%", en: "+2%", ar: "-6%" };   // brisk but clear: live conversation
 // Gemini voices: [female, male]
 const GEMINI_VOICES: [string, string] = ["Sulafat", "Charon"];
 
@@ -59,6 +61,9 @@ const MAX_CHARS = 1000;
 const RATE_LIMIT_MAX = 80;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const hits = new Map<string, number[]>();
+// At most this many characters are spoken per student per day (live voice turns are also limited in ai-chat); best effort per instance.
+const DAILY_CHARS = 9000;
+const dailyChars = new Map<string, { day: string; n: number }>();
 
 function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -93,7 +98,7 @@ const BUSY: Result = { ok: false, status: 502, error: "Ovoz xizmati vaqtincha is
 async function azureSynth(text: string, lang: string, male: boolean): Promise<Result> {
   const voice = AZURE_VOICES[lang][male ? 1 : 0];
   // Short pauses after sentence ends make the speech sound natural; Arabic gets a longer pause.
-  const pause = lang === "ar" ? "400ms" : "250ms";
+  const pause = lang === "ar" ? "220ms" : "140ms";
   const body = escapeXml(text).replace(/([.!?؟…]+)\s+/g, `$1<break time="${pause}"/> `);
   const ssml =
     `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">` +
@@ -135,11 +140,11 @@ async function aishaSynth(text: string, lang: string): Promise<Result> {
   return { ok: true, body: a.body! };
 }
 
-async function elevenSynth(text: string): Promise<Result> {
-  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(ELEVEN_VOICE)}?output_format=mp3_44100_96`, {
+async function elevenSynth(text: string, lang: string): Promise<Result> {
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(lang === "ar" ? ELEVEN_VOICE_AR : ELEVEN_VOICE)}?output_format=mp3_44100_96`, {
     method: "POST",
     headers: { "xi-api-key": ELEVEN_KEY!, "Content-Type": "application/json", "Accept": "audio/mpeg" },
-    body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.55, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true } }),
+    body: JSON.stringify({ text, model_id: Deno.env.get("ELEVENLABS_MODEL") ?? "eleven_flash_v2_5", voice_settings: { stability: 0.55, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true } }),
     signal: AbortSignal.timeout(20_000),
   });
   if (!r.ok) { console.error("ElevenLabs xatosi:", r.status, await r.text()); return BUSY; }
@@ -162,7 +167,7 @@ function pcmToWav(pcm: Uint8Array, sampleRate = 24000): Uint8Array {
 
 async function geminiSynth(text: string, lang: string, male: boolean): Promise<Result> {
   const style = lang === "ar"
-    ? "Read this Arabic text aloud slowly and clearly, with correct pronunciation, like a patient teacher"
+    ? "Read this Arabic text aloud in clear Modern Standard Arabic (Fusha) with correct pronunciation and natural intonation, like a professional teacher on a call, at a steady, unhurried pace"
     : "Read this text aloud in a warm, clear, friendly teacher's voice at a calm pace";
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
@@ -216,13 +221,20 @@ Deno.serve(async (req: Request) => {
     const lang = String(payload.lang ?? "uz");
     const male = payload.gender === "male";
     if (!text || !/[\p{L}\p{N}]/u.test(text)) return json(req, { error: "Matn bo'sh" }, 400);
+    {
+      const day = new Date().toISOString().slice(0, 10);
+      const cur = dailyChars.get(userId);
+      const used = cur && cur.day === day ? cur.n : 0;
+      if (used + text.length > DAILY_CHARS) return json(req, { error: "Bugungi ovoz limiti tugadi (brauzer ovozi ishlatiladi)." }, 422);   // 422 = the browser voice takes over
+      dailyChars.set(userId, { day, n: used + text.length });
+    }
     if (!AZURE_VOICES[lang]) return json(req, { error: "Til qo'llab-quvvatlanmaydi" }, 400);
 
     // Ordered attempts: a failing provider falls through to the next one.
     const attempts: (() => Promise<Result>)[] = [];
     if (azureOn) attempts.push(() => azureSynth(text, lang, male));
     if (AISHA_KEY && AISHA_LANGS.has(lang)) attempts.push(() => aishaSynth(text, lang));
-    if (ELEVEN_KEY && ELEVEN_LANGS.has(lang)) attempts.push(() => elevenSynth(text));
+    if (ELEVEN_KEY && ELEVEN_LANGS.has(lang)) attempts.push(() => elevenSynth(text, lang));
     if (GEMINI_KEY) attempts.push(() => geminiSynth(text, lang, male));
     if (!attempts.length) return json(req, { error: "Bu til uchun ovoz yo'q (brauzer ovoziga qaytiladi)." }, 422);
 
