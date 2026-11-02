@@ -56,6 +56,8 @@ const AZURE_VOICES: Record<string, [string, string]> = {
 const AZURE_RATE: Record<string, string> = { uz: "0%", ru: "+4%", en: "+2%", ar: "+2%" };   // medium, clear pace: a live conversation, not a slow reading
 // Gemini voices: [female, male]
 const GEMINI_VOICES: [string, string] = ["Sulafat", "Charon"];
+// Arabic (Fusha) is spoken by a firm, clear male voice. Change it with the GEMINI_TTS_VOICE_AR secret (e.g. Orus, Schedar, Sadaltager, Charon).
+const GEMINI_VOICE_AR_MALE = Deno.env.get("GEMINI_TTS_VOICE_AR") ?? "Orus";
 
 const MAX_CHARS = 1000;
 const RATE_LIMIT_MAX = 80;
@@ -176,7 +178,7 @@ async function geminiSynth(text: string, lang: string, male: boolean): Promise<R
       contents: [{ parts: [{ text: `${style}: ${text}` }] }],
       generationConfig: {
         responseModalities: ["AUDIO"],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: GEMINI_VOICES[male ? 1 : 0] } } },
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: lang === "ar" && male ? GEMINI_VOICE_AR_MALE : GEMINI_VOICES[male ? 1 : 0] } } },
       },
     }),
     signal: AbortSignal.timeout(25_000),
