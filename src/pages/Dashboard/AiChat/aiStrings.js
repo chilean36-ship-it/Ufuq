@@ -27,6 +27,8 @@ export const AI_STRINGS = {
     vLangBad: "This browser can't recognise that language. Pick another one below.",
     vNoVoice: 'No {lang} voice on this device — replies are shown as text.',
     vTry: 'Tap the orb to try again',
+    vLimit: "You've used today's live speaking limit, so the live conversation ends here. It resets within 24 hours. You can keep chatting by text.",
+    vSlow: "You're speaking a little too fast. Wait a few seconds, then continue.",
   },
   UZ: {
     subtitle: 'Arab tili yordamchingiz',
@@ -52,6 +54,8 @@ export const AI_STRINGS = {
     vNetwork: 'Ovoz xizmatiga ulanib bo‘lmadi. Internetni tekshirib, sharni bosing.',
     vLangBad: 'Bu brauzer ushbu tilni tanimaydi. Quyidan boshqa tilni tanlang.',
     vNoVoice: 'Bu qurilmada {lang} ovozi yo‘q — javoblar matn ko‘rinishida chiqadi.',
+    vLimit: 'Bugungi jonli suhbat limiti tugadi, shuning uchun jonli suhbat shu yerda tugaydi. Limit 24 soat ichida yangilanadi. Matn orqali yozishni davom ettirishingiz mumkin.',
+    vSlow: 'Biroz tez gapiryapsiz. Bir necha soniya kutib, davom eting.',
     vTry: 'Qayta urinish uchun sharni bosing',
   },
   RU: {
@@ -78,6 +82,8 @@ export const AI_STRINGS = {
     vNetwork: 'Нет связи с сервисом распознавания. Проверьте интернет и нажмите на шар.',
     vLangBad: 'Браузер не распознаёт этот язык. Выберите другой ниже.',
     vNoVoice: 'На устройстве нет голоса для языка «{lang}» — ответы показаны текстом.',
+    vLimit: 'Лимит живого разговора на сегодня исчерпан, поэтому живой разговор здесь завершается. Лимит обновится в течение 24 часов. Вы можете продолжить в текстовом чате.',
+    vSlow: 'Вы говорите слишком быстро. Подождите несколько секунд и продолжайте.',
     vTry: 'Нажмите на шар, чтобы повторить',
   },
   AR: {
@@ -104,6 +110,8 @@ export const AI_STRINGS = {
     vNetwork: 'تعذّر الوصول إلى خدمة التعرّف على الصوت. تحقّق من الاتصال ثم اضغط على الكرة.',
     vLangBad: 'لا يتعرّف هذا المتصفح على هذه اللغة. اختر لغة أخرى بالأسفل.',
     vNoVoice: 'لا يوجد صوت للغة {lang} على هذا الجهاز — تُعرض الردود نصًّا.',
+    vLimit: 'انتهى حدّ المحادثة الصوتية المباشرة لليوم، لذلك تنتهي المحادثة المباشرة هنا. يتجدد الحد خلال 24 ساعة. يمكنك متابعة الكتابة نصًّا.',
+    vSlow: 'أنت تتحدث بسرعة كبيرة. انتظر بضع ثوانٍ ثم تابع.',
     vTry: 'اضغط على الكرة للمحاولة مجددًا',
   },
 };

@@ -15,6 +15,9 @@ const MAX_SILENT_ROUNDS = 3; // after this many empty listening rounds we wait f
  * Tap the orb to interrupt. Speech engine = voice provider (voiceAdapter.js), answers = askUfuqAi().
  * Every finished turn is handed to `onTurn` so the transcript also lands in the normal chat.
  */
+// Remembers (per day, in this browser) that the live-speaking allowance was used up, so the screen does not even start listening.
+const LIMIT_KEY = 'ufuq-ai-voice-limit-day';
+
 export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, systemPrompt }) {
   const [phase, setPhase] = useState('idle'); // idle | listening | thinking | speaking
   const [userText, setUserText] = useState('');
@@ -33,6 +36,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const abortRef = useRef(null);
   const tokenRef = useRef(0);
   const errRef = useRef(null);
+  const limitRef = useRef(false);
   const silenceRef = useRef(0);
   const bumpRef = useRef(0);
   const orbRef = useRef(null);
@@ -54,7 +58,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   };
 
   api.current.startListening = () => {
-    if (!aliveRef.current || mutedRef.current) return;
+    if (!aliveRef.current || mutedRef.current || limitRef.current) return;
     const prov = getVoiceProvider();
     if (!prov.support().stt) { setProblem('unsupported'); setPhaseBoth('idle'); return; }
     killSpeech();
@@ -97,12 +101,28 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     const history = [...getHistory(), { role: 'user', content: text }];
-    const { reply, offline, aborted } = await askUfuqAi({ text, history, voice: true, signal: ctrl.signal, systemPrompt });
+    const { reply, offline, aborted, voiceLimit, voiceSlow } = await askUfuqAi({ text, history, voice: true, signal: ctrl.signal, systemPrompt });
     if (!aliveRef.current || aborted || ctrl.signal.aborted || mutedRef.current) return;
     abortRef.current = null;
+    if (voiceLimit) { api.current.endForLimit(); return; }   // today's live allowance is used up: the live conversation ends here, nothing is spoken
+    if (voiceSlow) {   // too many turns in a minute: say so in text, then listen again
+      setNotice(tr('vSlow')); setPhaseBoth('idle');
+      setTimeout(() => { if (aliveRef.current && !mutedRef.current && !limitRef.current) api.current.startListening(); }, 4000);
+      return;
+    }
     onTurn(text, reply, offline);
     setBotText(reply);
     api.current.speakReply(reply);
+  };
+
+  // The daily live-speaking limit is reached: stop microphone and speech for good (until tomorrow) and say so, in the screen language.
+  api.current.endForLimit = () => {
+    limitRef.current = true;
+    try { localStorage.setItem(LIMIT_KEY, new Date().toISOString().slice(0, 10)); } catch (e) { /* ignore */ }
+    killListen(); killSpeech(); killRequest(); stopSpeaking(); releaseMic();
+    setProblem('limit');
+    setNotice('');
+    setPhaseBoth('idle');
   };
 
   api.current.speakReply = (reply) => {
@@ -127,6 +147,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   };
 
   const onOrb = () => {
+    if (limitRef.current) return;   // limit reached: the orb stays quiet
     const p = phaseRef.current;
     if (p === 'speaking') { killSpeech(); api.current.startListening(); return; }
     if (p === 'thinking') { killRequest(); api.current.startListening(); return; }
@@ -163,6 +184,9 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   // Start / tear down.
   useEffect(() => {
     aliveRef.current = true;
+    let usedToday = false;
+    try { usedToday = localStorage.getItem(LIMIT_KEY) === new Date().toISOString().slice(0, 10); } catch (e) { /* ignore */ }
+    if (usedToday) { limitRef.current = true; setProblem('limit'); }   // already ended earlier today (the server also enforces it)
     const id = setTimeout(() => api.current.startListening(), 350);
     if (endBtnRef.current) endBtnRef.current.focus({ preventScroll: true });
     return () => {
@@ -251,7 +275,8 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const problemText = problem === 'unsupported' ? tr('vUnsupported')
     : problem === 'denied' ? tr('vDenied')
       : problem === 'network' ? tr('vNetwork')
-        : problem === 'lang' ? tr('vLangBad') : '';
+        : problem === 'lang' ? tr('vLangBad')
+          : problem === 'limit' ? tr('vLimit') : '';
 
   return createPortal(
     <div className="uai-voice" role="dialog" aria-modal="true" aria-label="Ufuq AI Live">

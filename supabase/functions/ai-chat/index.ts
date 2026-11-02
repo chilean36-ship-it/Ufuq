@@ -280,10 +280,10 @@ Deno.serve(async (req: Request) => {
     if (isVoice && !isSuper) {
       const vl = isAdmin ? VOICE_LIMIT.admin : isTeacher ? VOICE_LIMIT.teacher : paid ? VOICE_LIMIT.student : VOICE_LIMIT.trial;
       if (!voiceMinRes.error && (voiceMinRes.count ?? 0) >= vl.perMinute) {
-        return json(req, { error: "You're speaking a little too fast - please wait a few seconds and try again." }, 429);
+        return json(req, { error: "You're speaking a little too fast - please wait a few seconds and try again.", code: "VOICE_SLOW" }, 429);
       }
       if (!voiceDayRes.error && (voiceDayRes.count ?? 0) >= vl.perDay) {
-        return json(req, { error: `You've used today's live speaking limit (${vl.perDay} turns). It resets within 24 hours. You can keep chatting by text. Bugungi jonli suhbat limiti tugadi, matn orqali yozishni davom ettirishingiz mumkin.` }, 429);
+        return json(req, { error: `You've used today's live speaking limit (${vl.perDay} turns). It resets within 24 hours. You can keep chatting by text. Bugungi jonli suhbat limiti tugadi, matn orqali yozishni davom ettirishingiz mumkin.`, code: "VOICE_LIMIT" }, 429);
       }
     }
     if (!isVoice && limits.perMinute !== null && !userCountRes.error && (userCountRes.count ?? 0) >= limits.perMinute) {

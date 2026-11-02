@@ -62,7 +62,10 @@ export async function askUfuqAi({ text, history, voice = false, signal, systemPr
         reply = data.reply || data.message || null;
       } else {
         let serverMsg = '';
-        try { const j = await response.json(); serverMsg = (j && j.error) || ''; } catch (e) { /* not json */ }
+        let code = '';
+        try { const j = await response.json(); serverMsg = (j && j.error) || ''; code = (j && j.code) || ''; } catch (e) { /* not json */ }
+        // Live voice allowance used up / too fast: not an answer to read aloud, the voice screen reacts to the code.
+        if (response.status === 429 && (code === 'VOICE_LIMIT' || code === 'VOICE_SLOW')) return { reply: '', offline: false, aborted: false, voiceLimit: code === 'VOICE_LIMIT', voiceSlow: code === 'VOICE_SLOW' };
         console.error('ai-chat function returned', response.status, serverMsg);
         // Rate limits and "busy" are real answers for the person, not an outage: show the server's own message.
         if ((response.status === 429 || response.status === 503) && serverMsg) return { reply: serverMsg, offline: false, aborted: false };
