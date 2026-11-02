@@ -461,6 +461,13 @@ const ar = {
   ['The student gets a notification with the new date.', 'Talaba yangi sana haqida bildirishnoma oladi.', 'Студент получит уведомление с новой датой.'],
   ['More time granted.', 'Qo‘shimcha muddat berildi.', 'Время продлено.'],
   ['Pick a future date (up to 180 days).', 'Kelajakdagi sanani tanlang (180 kungacha).', 'Выберите будущую дату (до 180 дней).'],
+  ["Level groups","Daraja guruhlari","Группы уровней"],
+  ["Each letter keeps all 14 levels. Open a letter to switch its levels on or off.","Har bir harf 14 ta darajani saqlaydi. Darajalarni yoqish/o‘chirish uchun harfni oching.","Каждая буква хранит все 14 уровней. Откройте букву, чтобы включать и выключать уровни."],
+  ["levels","daraja","уровней"],
+  ["No active level","Faol daraja yo‘q","Нет активного уровня"],
+  ["Open levels","Darajalarni ochish","Открыть уровни"],
+  ["Students move up by themselves when they pass a level; the next level switches on automatically. You can also switch a level on or off here.","Talabalar darajadan o‘tganda o‘zlari ko‘tariladi va keyingi daraja avtomatik yoqiladi. Bu yerda ham darajani yoqish/o‘chirish mumkin.","Студенты поднимаются сами, когда сдают уровень; следующий уровень включается автоматически. Здесь тоже можно включать и выключать уровни."],
+  ["Close","Yopish","Закрыть"],
 ].forEach(([k, u, r]) => { uz[k] = uz[k] || u; ru[k] = ru[k] || r; });
 
 export default { UZ: uz, RU: ru, AR: ar, EN: {} };

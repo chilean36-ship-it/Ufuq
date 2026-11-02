@@ -36,6 +36,7 @@ import myGroupDict from '../../i18n/my-group';
 import ExamView from './Exam/ExamView';
 import NotificationsPanel from './Notifications/NotificationsPanel';
 import LevelResultModal from './LevelResult/LevelResultModal';
+import CertificateWinModal from './Certificates/CertificateWinModal';
 import useLevelResult from './LevelResult/useLevelResult';
 import { useNotifications } from './Notifications/useNotifications';
 import AiChat from './AiChat/AiChat';
@@ -197,6 +198,7 @@ function DashboardInner({ initialView = 'home' }) {
 
       {!locked && <AiChat hideLauncher={gcChatOpen || view === 'hifzLive'} suppress={NO_AI_VIEWS.includes(view)} />}
       <LevelResultModal item={levelResult.item} onClose={closeLevelResult} />
+      {!levelResult.item && <CertificateWinModal onOpen={() => navigate('certificates')} />}
       <ComingSoonModal linkId={comingSoon} onClose={() => setComingSoon(null)} />
       {isPaid && (
         <NotificationsPanel open={notifOpen} onClose={closeNotif} items={notifs.items} onMarkRead={notifs.markRead} onMarkAll={notifs.markAllRead} onNavigate={navigate} />

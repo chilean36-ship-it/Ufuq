@@ -35,12 +35,13 @@ function newGroupKey() {
 }
 
 export default function GroupsPage() {
-  const { t, myGroups, toast, reloadGroups } = usePanel();
+  const { t, allGroups: myGroups, toast, reloadGroups } = usePanel();   // all groups, inactive ones too: this is the only page that shows them
   const [modal, setModal] = useState({ open: false, group: null });
   const { joinCodes } = useJoinCodes(myGroups.map((g) => g.code));
   const [counts, setCounts] = useState(null);
   const [q, setQ] = useState('');
-  const [fStatus, setFStatus] = useState('all');
+  const [fStatus, setFStatus] = useState('active');
+  const [series, setSeries] = useState(null); // letter whose level groups are open in the levels window
   const [fType, setFType] = useState('all');
   const [view, setView] = useState(() => { try { return localStorage.getItem('ufuq-admin-groups-view') || 'cards'; } catch (e) { return 'cards'; } });
   const setViewSaved = (v) => { setView(v); try { localStorage.setItem('ufuq-admin-groups-view', v); } catch (e) { /* ignore */ } };
@@ -62,7 +63,7 @@ export default function GroupsPage() {
   }, [myGroups]);
 
   const stats = useMemo(() => ({
-    all: myGroups.length, active: myGroups.filter((g) => g.is_active).length, inactive: myGroups.filter((g) => !g.is_active).length,
+    all: myGroups.filter((g) => g.is_active || g.type === 'individual').length, active: myGroups.filter((g) => g.is_active).length, inactive: myGroups.filter((g) => !g.is_active).length,
     cls: myGroups.filter((g) => g.type !== 'individual').length, ind: myGroups.filter((g) => g.type === 'individual').length,
   }), [myGroups]);
 
@@ -70,8 +71,20 @@ export default function GroupsPage() {
     const s = q.trim().toLowerCase();
     return myGroups.filter((g) => (fStatus === 'all' || (fStatus === 'active') === !!g.is_active)
       && (fType === 'all' || (fType === 'individual') === (g.type === 'individual'))
+      && !(!g.is_active && g.type !== 'individual' && letterOfGroup(g))   // switched-off level groups live inside their letter card
       && (!s || (g.name || '').toLowerCase().includes(s) || String(joinCodes[g.code] || '').toLowerCase().includes(s)));
   }, [myGroups, q, fStatus, fType]);
+
+  // Lettered class groups come as one compact card per letter (all 14 level groups inside); a group card only for active ones.
+  const seriesList = useMemo(() => {
+    const s2 = q.trim().toLowerCase();
+    const by = {};
+    myGroups.filter((g) => g.type !== 'individual' && letterOfGroup(g)).forEach((g) => { (by[letterOfGroup(g)] = by[letterOfGroup(g)] || []).push(g); });
+    return Object.keys(by).sort().map((L) => ({ letter: L, groups: by[L].slice().sort((a, b) => (a.level || 0) - (b.level || 0)) }))
+      .filter((x) => !s2 || ('group ' + x.letter).toLowerCase().includes(s2) || x.groups.some((g) => (g.name || '').toLowerCase().includes(s2)));
+  }, [myGroups, q]);
+  const showSeries = fType !== 'individual' && (fStatus === 'inactive' || fStatus === 'all');
+  const showGroups = fStatus !== 'inactive' || fType !== 'class';
 
   async function toggleActive(g) {
     const { error } = await supabase.from('groups').update({ is_active: !g.is_active }).eq('code', g.code);
@@ -124,9 +137,9 @@ export default function GroupsPage() {
       {myGroups.length === 0 ? (
         <div className="panel"><EmptyState title={t('No groups yet')} hint={t('You don\'t have any groups yet. Click "+ New group" to add one.')}>
           <button className="btn btn-gold btn-sm" onClick={openNew}>{t('+ New group')}</button></EmptyState></div>
-      ) : list.length === 0 ? (
+      ) : list.length === 0 && !(showSeries && seriesList.length > 0) ? (
         <div className="panel"><EmptyState title={t('No groups match your filters.')}><button className="btn btn-ghost btn-sm" onClick={() => { setQ(''); setFStatus('all'); setFType('all'); }}>{t('Clear filters')}</button></EmptyState></div>
-      ) : view === 'cards' ? (
+      ) : list.length === 0 ? null : view === 'cards' ? (
         <div className="a-cards" id="groupsBody">
           {list.map((g) => {
             const ind = g.type === 'individual';
@@ -181,14 +194,65 @@ export default function GroupsPage() {
           </table>
         </div></div>
       )}
+      {myGroups.length > 0 && showSeries && seriesList.length > 0 && (
+        <>
+          <h3 className="a-series-h">{t('Level groups')} <small>{t('Each letter keeps all 14 levels. Open a letter to switch its levels on or off.')}</small></h3>
+          <div className="a-cards a-series">
+            {seriesList.map((x) => {
+              const act = x.groups.filter((g) => g.is_active);
+              const total = x.groups.reduce((n, g) => n + ((counts && counts[g.code]) || 0), 0);
+              return (
+                <article className="a-gcard a-series-card" key={x.letter} role="button" tabIndex={0} onClick={() => setSeries(x.letter)}
+                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSeries(x.letter); } }}>
+                  <header>
+                    <Avatar name={x.letter} size={42} tone="arabic" />
+                    <div className="a-gcard-t"><h4>{t('Group')} {x.letter}</h4><span className="chip chip-type-class">{x.groups.length} {t('levels')}</span></div>
+                    <span className="a-series-go" aria-hidden="true">{'›'}</span>
+                  </header>
+                  <div className="a-gcard-sched">
+                    {act.length ? act.map((g) => <span className="a-day" key={g.code}>{g.name} <b>{t('Active')}</b></span>) : <span className="muted">{t('No active level')}</span>}
+                  </div>
+                  <footer><span className="muted">{total} {t('Students')}</span><span className="a-link">{t('Open levels')}</span></footer>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+      <LevelsModal letter={series} groups={(seriesList.find((x) => x.letter === series) || { groups: [] }).groups} counts={counts} joinCodes={joinCodes}
+                   onClose={() => setSeries(null)} onToggle={toggleActive} onCopy={copyCode} onEdit={(g) => { setSeries(null); openEdit(g); }} />
       <GroupModal open={modal.open} group={modal.group} onClose={() => setModal((m) => ({ ...m, open: false }))} />
     </section>
   );
 }
 
+/** All level groups of one letter (1-14): switch each on or off. A level switches on by itself when a student reaches it. */
+function LevelsModal({ letter, groups, counts, joinCodes, onClose, onToggle, onCopy, onEdit }) {
+  const { t } = usePanel();
+  return (
+    <Modal open={!!letter} onClose={onClose} style={{ maxWidth: 560 }}>
+      <h3>{t('Group')} {letter} — {t('levels')}</h3>
+      <p className="hint">{t('Students move up by themselves when they pass a level; the next level switches on automatically. You can also switch a level on or off here.')}</p>
+      <div className="a-lv-list">
+        {groups.map((g) => (
+          <div className={'a-lv-row' + (g.is_active ? ' on' : '')} key={g.code}>
+            <span className="a-lv-no">{g.level || '—'}</span>
+            <div className="a-lv-name"><b>{g.name}</b>{g.deadline_closed_at && !g.is_active ? <small>{t('Deadline passed')}</small> : null}</div>
+            <span className="a-lv-n">{counts ? (counts[g.code] || 0) : '…'} <small>{t('Students')}</small></span>
+            <button type="button" className="a-code a-code-inline" title={t('Copy join code')} onClick={() => onCopy(g)}>{joinCodes[g.code] || '—'}</button>
+            <button type="button" className="icon-btn" title={t('Edit')} aria-label={t('Edit')} onClick={() => onEdit(g)}><EditIcon /></button>
+            <label className="a-switch-row" onClick={(e) => { e.preventDefault(); onToggle(g); }}><Switch on={!!g.is_active} /><span>{g.is_active ? t('Active') : t('Inactive')}</span></label>
+          </div>
+        ))}
+      </div>
+      <div className="modal-actions"><button type="button" className="btn btn-ghost" onClick={onClose}>{t('Close')}</button></div>
+    </Modal>
+  );
+}
+
 /** New / Edit group dialog (#groupModalOverlay). */
 function GroupModal({ open, group: g, onClose }) {
-  const { t, toast, user, reloadGroups, myGroups } = usePanel();
+  const { t, toast, user, reloadGroups, allGroups: myGroups } = usePanel();
   const [f, setF] = useState(blank());
   // Letters that already run a series (any class row with a level or switched on). A..G only: 7 groups at most.
   const takenLetters = useMemo(() => new Set((myGroups || []).filter((x) => x.type !== 'individual' && (x.level || x.is_active)).map((x) => letterOfGroup(x)).filter(Boolean)), [myGroups]);

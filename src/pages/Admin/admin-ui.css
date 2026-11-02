@@ -513,3 +513,19 @@ body.adm .a-appoint-groups{ margin-top:14px; padding-top:14px; border-top:1px so
 body.adm .a-appoint-gh{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 body.adm .a-appoint-gh b{ flex:1 1 auto; font-size:13.5px; }
 body.adm .a-appoint-glist{ display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:8px; max-height:220px; overflow:auto; }
+
+/* Level groups (one card per letter) and the levels window */
+body.adm .a-series-h{ margin:26px 0 12px; font-size:15px; display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; }
+body.adm .a-series-h small{ font-weight:400; color:var(--text-muted); font-size:12.5px; }
+body.adm .a-series-card{ cursor:pointer; transition:transform .15s, border-color .2s; }
+body.adm .a-series-card:hover, body.adm .a-series-card:focus-visible{ transform:translateY(-2px); border-color:var(--gold); outline:none; }
+body.adm .a-series-go{ margin-inline-start:auto; font-size:26px; color:var(--text-muted); line-height:1; }
+body.adm .a-lv-list{ display:grid; gap:8px; max-height:60vh; overflow:auto; margin:10px 0; }
+body.adm .a-lv-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--a-surface-2); }
+body.adm .a-lv-row.on{ border-color:var(--gold); background:var(--gold-dim); }
+body.adm .a-lv-no{ flex:none; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font-weight:700; font-size:13px; background:var(--bg-3); }
+body.adm .a-lv-row.on .a-lv-no{ background:var(--gold); color:var(--bg); }
+body.adm .a-lv-name{ flex:1 1 120px; min-width:0; display:grid; }
+body.adm .a-lv-name small{ color:var(--text-muted); }
+body.adm .a-lv-n{ font-weight:700; white-space:nowrap; }
+body.adm .a-lv-n small{ font-weight:400; color:var(--text-muted); }

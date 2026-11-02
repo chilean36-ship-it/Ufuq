@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useScrollTop from '../../hooks/useScrollTop';
 import useHashView, { readHashView } from '../../hooks/useHashView';
@@ -102,8 +102,8 @@ function TeacherInner() {
   useLiveAvatar(user && user.id, setMyAvatarUrl); // photo changed on the Profile page / other tab shows here at once
   const [myRole, setMyRole] = useState('teacher');
   const [myTier, setMyTier] = useState(null); // 'super' | 'standard' for admins, null for teachers
-  const [myGroups, setMyGroups] = useState([]);
-  const activeRef = useRef(new Set()); // codes that were active at the previous load
+  const [allGroups, setMyGroups] = useState([]);   // every linked group, inactive ones too (only Admin → Groups shows those)
+  const myGroups = useMemo(() => allGroups.filter((g) => g.is_active), [allGroups]); // everywhere else only ACTIVE groups exist
   const [groupsLoaded, setGroupsLoaded] = useState(false);
   const [currentGroupCode, setCode] = useState(null);
   const [page, setPage] = useState(() => readHashView('overview', (v) => Object.prototype.hasOwnProperty.call(PAGES, v)));
@@ -171,15 +171,11 @@ function TeacherInner() {
     setGroupsLoaded(true);
     if (groups.length === 0) { setCode(null); return; }
     // A group that closes by itself (its level's final-exam deadline passed) leaves the list and the panel moves to an active one.
-    const wasActive = activeRef.current;
-    activeRef.current = new Set(groups.filter((gg) => gg.is_active).map((gg) => gg.code));
     const firstOpen = (groups.find((gg) => gg.is_active) || groups[0]).code;
     setCode((cur) => {
       const saved = cur || readSavedGroup();
       const g0 = groups.find((gg) => gg.code === saved);
-      const justClosed = !!g0 && !g0.is_active && wasActive.has(g0.code);
-      const staleSaved = !cur && !!g0 && !g0.is_active && groups.some((gg) => gg.is_active);
-      const keep = g0 && !justClosed && !staleSaved ? saved : firstOpen;
+      const keep = g0 && g0.is_active ? saved : firstOpen;   // an inactive group is never the working group
       saveGroup(keep);
       return keep;
     });
@@ -197,7 +193,7 @@ function TeacherInner() {
   }, []);
 
   const setCurrentGroupCode = useCallback((code) => { setCode(code); saveGroup(code); }, []);
-  const currentGroup = useMemo(() => myGroups.find((gg) => gg.code === currentGroupCode) || null, [myGroups, currentGroupCode]);
+  const currentGroup = useMemo(() => allGroups.find((gg) => gg.code === currentGroupCode) || null, [allGroups, currentGroupCode]);
   const showPage = useCallback((name) => { setPage(name); setNonce((n) => n + 1); setSidebarOpen(false); }, []);
   const [announcePrefill, setAnnouncePrefill] = useState(null);
   const goToAnnouncements = useCallback((userId, name) => { setAnnouncePrefill({ userId, name }); showPage('announcements'); }, [showPage]);
@@ -213,10 +209,10 @@ function TeacherInner() {
   }, [navigate, toast, t]);
 
   const ctx = useMemo(() => ({
-    t, lang, toast, askConfirm, user, myName, myAvatarUrl, setMyName, setMyAvatarUrl, myGroups, currentGroup, currentGroupCode, setCurrentGroupCode, reloadGroups,
+    t, lang, toast, askConfirm, user, myName, myAvatarUrl, setMyName, setMyAvatarUrl, myGroups, allGroups, currentGroup, currentGroupCode, setCurrentGroupCode, reloadGroups,
     announcePrefill, clearAnnouncePrefill, goToAnnouncements, showPage, pending,
     myRole, canSwitchToAdmin,
-  }), [myRole, canSwitchToAdmin, t, lang, toast, askConfirm, user, myName, myAvatarUrl, setMyName, setMyAvatarUrl, myGroups, currentGroup, currentGroupCode, setCurrentGroupCode, reloadGroups, announcePrefill, clearAnnouncePrefill, goToAnnouncements, showPage, pending]);
+  }), [myRole, canSwitchToAdmin, t, lang, toast, askConfirm, user, myName, myAvatarUrl, setMyName, setMyAvatarUrl, myGroups, allGroups, currentGroup, currentGroupCode, setCurrentGroupCode, reloadGroups, announcePrefill, clearAnnouncePrefill, goToAnnouncements, showPage, pending]);
 
   const isIndividual = !!(currentGroup && currentGroup.type === 'individual');
   const nav = useMemo(() => [
@@ -271,7 +267,7 @@ function TeacherInner() {
                         disabled={!groupsLoaded || myGroups.length === 0}
                         placeholder={!groupsLoaded ? t('Loading groups…') : t('No group assigned')}
                         emptyText={t('No group assigned')}
-                        options={myGroups.filter((g) => g.is_active || g.code === currentGroupCode).map((g) => ({ value: g.code, label: g.name }))}
+                        options={myGroups.map((g) => ({ value: g.code, label: g.name }))}
                         onChange={(code) => { setCurrentGroupCode(code); setNonce((n) => n + 1); }} />
             <ProfileMenu avatarUrl={myAvatarUrl} initial={(myName || 'T').trim().charAt(0).toUpperCase()} name={myName}
                          roleIcon={<TeacherRoleIcon />} roleLabel={t('Teacher')}
