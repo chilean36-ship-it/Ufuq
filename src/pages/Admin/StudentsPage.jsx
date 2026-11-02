@@ -182,7 +182,7 @@ export default function StudentsPage() {
 
       {myGroups.length > 1 && (
         <div className="a-chips" id="studentsGroupTabs" role="tablist">
-          {myGroups.map((mg) => (
+          {myGroups.filter((mg) => mg.is_active || mg.code === code).map((mg) => (
             <button type="button" role="tab" aria-selected={mg.code === code} key={mg.code} className={'a-chip-btn' + (mg.code === code ? ' on' : '')} onClick={() => setCurrentGroupCode(mg.code)}>{mg.name}</button>
           ))}
         </div>

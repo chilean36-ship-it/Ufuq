@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useScrollTop from '../../hooks/useScrollTop';
 import useHashView, { readHashView } from '../../hooks/useHashView';
@@ -120,6 +120,7 @@ function AdminInner() {
   useLiveAvatar(user && user.id, setMyAvatarUrl); // photo changed on the Profile page / other tab shows here at once
   useLiveName(user && user.id, setMyName); // a rename anywhere (Profile page, other tab / device) shows up here at once
   const [myGroups, setMyGroups] = useState([]);
+  const activeRef = useRef(new Set()); // codes that were active at the previous load
   const [groupsLoaded, setGroupsLoaded] = useState(false);
   const [currentGroupCode, setCode] = useState(null);
   const [page, setPage] = useState(() => readHashView('overview', (v) => Object.prototype.hasOwnProperty.call(PAGES, v)));
@@ -219,9 +220,16 @@ function AdminInner() {
     setMyGroups((cur) => (JSON.stringify(cur) === JSON.stringify(groups) ? cur : groups)); // same data → same reference → no re-render
     setGroupsLoaded(true);
     if (groups.length === 0) { setCode(null); return; }
+    // A group that closes by itself (its level's final-exam deadline passed) leaves the list and the panel moves to an active one.
+    const wasActive = activeRef.current;
+    activeRef.current = new Set(groups.filter((g) => g.is_active).map((g) => g.code));
+    const firstOpen = (groups.find((g) => g.is_active) || groups[0]).code;
     setCode((cur) => {
       const saved = cur || readSavedGroup();
-      const keep = groups.some((g) => g.code === saved) ? saved : groups[0].code;
+      const g0 = groups.find((g) => g.code === saved);
+      const justClosed = !!g0 && !g0.is_active && wasActive.has(g0.code);
+      const staleSaved = !cur && !!g0 && !g0.is_active && groups.some((g) => g.is_active);
+      const keep = g0 && !justClosed && !staleSaved ? saved : firstOpen;
       saveGroup(keep);
       return keep;
     });
@@ -300,7 +308,7 @@ function AdminInner() {
                         disabled={!groupsLoaded || myGroups.length === 0}
                         placeholder={!groupsLoaded ? t('Loading groups…') : t('No group assigned')}
                         emptyText={t('No group assigned')}
-                        options={myGroups.map((g) => ({ value: g.code, label: g.name }))}
+                        options={myGroups.filter((g) => g.is_active || g.code === currentGroupCode).map((g) => ({ value: g.code, label: g.name }))}
                         onChange={(code) => { setCurrentGroupCode(code); setNonce((n) => n + 1); }} />
             <ProfileMenu avatarUrl={myAvatarUrl} initial={(myName || 'A').trim().charAt(0).toUpperCase()} name={myName}
                          roleIcon={<AdminRoleIcon />} roleLabel={t(isSuper ? 'Main admin' : 'Admin')}
