@@ -286,21 +286,34 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, lang, mode, prefs, notif, confirmSO, soBusy, user]);
 
-  // Scroll-spy: highlight the section currently in view.
+  // Scroll-spy: the active item is the last section whose top has passed the header line. The two short sections at the end
+  // (Help & legal, Account) can never reach that line, so once the page is scrolled to its end the LAST section is the active one.
+  const lockUntil = useRef(0);   // after a click on the menu the smooth scroll must not flip the highlight on the way
   useEffect(() => {
-    const els = sections.map((s) => document.getElementById('st-sec-' + s.id)).filter(Boolean);
-    if (!els.length || !('IntersectionObserver' in window)) return undefined;
-    const io = new IntersectionObserver((entries) => {
-      const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (vis) setActive(vis.target.id.replace('st-sec-', ''));
-    }, { rootMargin: '-90px 0px -60% 0px', threshold: 0 });
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    const ids = sections.map((s) => s.id);
+    const pick = () => {
+      if (Date.now() < lockUntil.current) return;
+      const els = ids.map((id) => document.getElementById('st-sec-' + id)).filter(Boolean);
+      if (!els.length) return;
+      const doc = document.scrollingElement || document.documentElement;
+      // the scrolling box can be the page or the cabinet's content area
+      const box = (els[0].closest('.content') && els[0].closest('.content').scrollHeight > els[0].closest('.content').clientHeight + 2) ? els[0].closest('.content') : doc;
+      const atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 6;
+      let cur = els[0].id;
+      if (atEnd && box.scrollTop > 0) cur = els[els.length - 1].id;
+      else els.forEach((el) => { if (el.getBoundingClientRect().top <= 150) cur = el.id; });
+      setActive(cur.replace('st-sec-', ''));
+    };
+    pick();
+    document.addEventListener('scroll', pick, true);   // capture: works whichever element scrolls
+    window.addEventListener('resize', pick);
+    return () => { document.removeEventListener('scroll', pick, true); window.removeEventListener('resize', pick); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown.length, q]);
 
   const go = (id) => {
     setActive(id);
+    lockUntil.current = Date.now() + 900;
     const el = document.getElementById('st-sec-' + id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };

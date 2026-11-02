@@ -5,7 +5,7 @@ import useLiveRefresh from '../../hooks/useLiveRefresh';
 import { getCurrentWeekDates, scheduleDaysToWeekArray, fmtDueDate, isOverdue, MONTH_NAMES } from './weekUtils';
 import { computeMonthAttendance, fmtPct, LEVEL_COLORS } from '../../lib/attendanceMonth';
 import { LessonBlocks, statusMessage } from './AttendanceView';
-import { getExamHistory } from './Exam/examData';
+import { getExamHistory, fetchGroupRanking } from './Exam/examData';
 import ProgressLine, { LINE_CSS } from '../../components/ProgressLine';
 import PageStyle from '../../components/PageStyle';
 import SubscriptionCard from './SubscriptionCard';
@@ -89,17 +89,22 @@ export default function HomeView({ onNavigate }) {
   const [att, setAtt] = useState(null);       // chronological [{ date, present }] the teacher has marked
   const [examHistory, setExamHistory] = useState(null); // every exam result, oldest first — the Progress panel shows the last 30 days
 
+  const [ranking, setRanking] = useState(null); // { [userId]: { avg, taken } } from the exam results
+
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   const load = useCallback(async () => {
     if (!groupReady) return;
     if (!joined) { setTasks([]); setMembers([]); setAtt(null); setExamHistory([]); return; }
-    const [rows, submissions, memberRows, sessions, hist] = await Promise.all([
+    const [rows, submissions, memberRows, sessions, hist, rankRows] = await Promise.all([
       getTasksForGroup(groupCode), getTaskSubmissions(userId), getGroupMembers(groupCode),
-      getAttendanceData(groupCode, userId), getExamHistory(groupCode, userId),
+      getAttendanceData(groupCode, userId), getExamHistory(groupCode, userId), fetchGroupRanking(groupCode),
     ]);
     if (!alive.current) return;
+    const rmap = {};
+    (rankRows || []).forEach((r) => { rmap[r.userId] = { avg: r.avg, taken: r.taken }; });
+    setRanking(rmap);
 
     const withStatus = rows.map((row) => {
       const sub = submissions[row.id];
@@ -162,7 +167,13 @@ export default function HomeView({ onNavigate }) {
   const recentAtt = att ? att.slice().reverse().slice(0, 3) : [];
 
   const myName = localStorage.getItem('ufuq-profile-name') || name;
-  const sortedMembers = members ? [...members].sort((a, b) => a.name.localeCompare(b.name)) : [];
+  // Ranked by exam results (average graded score); classmates without results follow, alphabetically.
+  const scoreOf = (m) => (m.user_id && ranking && ranking[m.user_id]) || null;
+  const sortedMembers = members ? [...members].sort((a, b) => {
+    const sa = scoreOf(a), sb = scoreOf(b);
+    const pa = sa && sa.taken ? sa.avg : -1, pb = sb && sb.taken ? sb.avg : -1;
+    return pb - pa || a.name.localeCompare(b.name);
+  }) : [];
 
   const norm = (v) => String(v || '').trim().toLowerCase();
   const rankRef = useRef(null);
@@ -284,7 +295,7 @@ export default function HomeView({ onNavigate }) {
       <div className="three-col-grid home-two">
         {/* Class ranking */}
         <div className={'panel panel-compact home-panel' + (joined ? ' is-link' : '')} {...linkProps(onNavigate, joined, 'myGroup')}>
-          <PanelHead title={t('Class ranking')} note={t('Alphabetical')} />
+          <PanelHead title={t('Class ranking')} />
           {!joined ? (
             <Locked />
           ) : (
@@ -301,6 +312,7 @@ export default function HomeView({ onNavigate }) {
                     <div className="hr-avatar">{m.avatar_url ? <img src={m.avatar_url} alt="" /> : (m.name || '?').charAt(0).toUpperCase()}</div>
                     <div className="hr-name">{m.name}</div>
                     {isYou && <span className="hr-you">{t('You')}</span>}
+                    {scoreOf(m) && scoreOf(m).taken > 0 && <span className="hr-score">{scoreOf(m).avg}%</span>}
                   </div>
                 );
               })}

@@ -21,6 +21,24 @@ window.addEventListener('vite:preloadError', () => {
   window.location.reload();
 });
 
+// Edge's "Ask Edge to help write text" (Compose) button and other writing assistants are not wanted in our text fields.
+// The standard `writingsuggestions` attribute is inherited from <html>; data-ms-editor covers Microsoft Editor.
+// Fields that appear later (modals, chat box) are marked as they are added.
+const QUIET_FIELDS = 'textarea, input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]), [contenteditable]';
+function quietWritingAssistants(el) {
+  if (el.getAttribute('writingsuggestions') !== 'false') el.setAttribute('writingsuggestions', 'false');
+  if (el.getAttribute('data-ms-editor') !== 'false') el.setAttribute('data-ms-editor', 'false');
+}
+try {
+  document.documentElement.setAttribute('writingsuggestions', 'false');
+  document.querySelectorAll(QUIET_FIELDS).forEach(quietWritingAssistants);
+  new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => {
+    if (n.nodeType !== 1) return;
+    if (n.matches && n.matches(QUIET_FIELDS)) quietWritingAssistants(n);
+    if (n.querySelectorAll) n.querySelectorAll(QUIET_FIELDS).forEach(quietWritingAssistants);
+  }))).observe(document.body, { childList: true, subtree: true });
+} catch (e) { /* ignore */ }
+
 try { applyUiPrefs(); } catch (e) { /* ignore */ }
 try { installLinkUrlHider(); } catch (e) { console.warn('link hider:', e); } // no link addresses on mouse-hover anywhere on the site
 

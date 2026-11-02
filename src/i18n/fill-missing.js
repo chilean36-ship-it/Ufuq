@@ -1,3 +1,4 @@
+import v3 from './ufuq-v3';
 import v2 from './ufuq-v2';
 // Translations that were missing from the cabinet dictionaries (found by the translation audit).
 // Merged FIRST in every panel's dictionary, so any value defined elsewhere still wins.
@@ -786,5 +787,6 @@ const fill = {
 };
 // Strings of the Nov 2026 redesign (tasks, exams, progress, settings, notifications) live in ufuq-v2.js; a key already defined above wins.
 Object.keys(v2).forEach((L) => { fill[L] = { ...(v2[L] || {}), ...(fill[L] || {}) }; });
+Object.keys(v3).forEach((L) => { fill[L] = { ...(v3[L] || {}), ...(fill[L] || {}) }; });
 
 export default fill;

@@ -47,6 +47,8 @@
 
 /* ---- Cards ---- */
 .st-body{display:flex; flex-direction:column; gap:18px; min-width:0;}
+/* Room below the last card so the final sections can scroll up to the top and become the active one. */
+.st-body::after{content:''; display:block; min-height:30vh; flex:none;}
 .st-card{
   scroll-margin-top:90px; background:var(--bg-2); border:1px solid var(--line); border-radius:20px; overflow:hidden;
   animation:stIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 70ms);

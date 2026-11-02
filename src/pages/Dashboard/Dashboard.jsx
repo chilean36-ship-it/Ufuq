@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import useScrollTop from '../../hooks/useScrollTop';
 import tokensCss from '../../styles/tokens.css?inline';
 import shellCss from '../../styles/app-shell.css?inline';
@@ -25,6 +25,7 @@ import TasksView from './TasksView';
 import AttendanceView from './AttendanceView';
 import ProgressView from './ProgressView';
 import LibraryView from './Library/LibraryView';
+const CertificatesView = lazy(() => import('./Certificates/CertificatesView'));
 import SettingsView from './SettingsView';
 import BillingView, { BILLING_CSS } from './BillingView';
 import PaywallGate from './PaywallGate';
@@ -43,7 +44,7 @@ import PillSelect, { GROUP_ICON } from '../../components/PillSelect';
 
 const CRUMB_TITLES = {
   home: 'Home', myGroup: 'My Group', hifzLive: 'Hifz Mushaf', tasks: 'Tasks', exam: 'Exams', attendance: 'Attendance',
-  progress: 'Progress', library: 'Library', profile: 'Profile', settings: 'Settings', billing: 'Billing',
+  progress: 'Progress', library: 'Library', certificates: 'Certificates', profile: 'Profile', settings: 'Settings', billing: 'Billing',
 };
 
 // A section listed here shows the "coming soon" window instead of opening (e.g. { tasks: 'tasksLink' }).
@@ -52,10 +53,10 @@ const SECTIONS_COMING_SOON = {};
 
 // Yangilashdan (F5) keyin qaytib ochilishi mumkin bo'lgan bo'limlar (#hash orqali). "Tez orada" bo'limlari kirmaydi.
 const LEARNING_VIEWS = ['myGroup', 'hifzLive', 'tasks', 'exam', 'attendance', 'progress'];
-const RESTORABLE_VIEWS = ['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'settings', 'profile', 'billing'];
+const RESTORABLE_VIEWS = ['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'certificates', 'settings', 'profile', 'billing'];
 // Sections that need a paid plan. Home, Billing, Settings and Profile stay open; My Group (and joining a group) needs a plan.
 const NO_AI_VIEWS = ['myGroup', 'billing', 'settings']; // Ufuq AI is not offered on these sections
-const PAID_VIEWS = ['tasks', 'hifzLive', 'attendance', 'progress', 'library', 'exam'];
+const PAID_VIEWS = ['tasks', 'hifzLive', 'attendance', 'progress', 'library', 'exam', 'certificates'];
 
 // The Profile view reuses the profile dictionary; the dashboard's own strings win on any overlap.
 const cabinetDict = Object.fromEntries(
@@ -159,7 +160,7 @@ function DashboardInner({ initialView = 'home' }) {
       <Sidebar active={view} onNavigate={navigate} learningOpen={learningOpen} onToggleLearning={() => setLearningOpen((o) => !o)}
                collapsed={sbCollapsed} onToggleCollapsed={toggleSbCollapsed} onExpand={() => setSbCollapsed(false)} mobileOpen={sidebarOpen} />
 
-      <div className="main">
+      <div className={'main' + (gcChatOpen && view === 'myGroup' ? ' gc-focus' : '')}>
         <Topbar
           crumb={t(CRUMB_TITLES[view] || 'Home')} name={shownName} avatarInitial={initial} avatarUrl={shownAvatar} role="student" onProfile={() => navigate('profile')}
           theme={theme} onToggleTheme={toggleTheme} onMobileMenu={() => setSidebarOpen((o) => !o)}
@@ -173,6 +174,7 @@ function DashboardInner({ initialView = 'home' }) {
           {view === 'myGroup' && !locked && !accessPending && <MyGroupView onNavigate={navigate} onChatOpenChange={setGcChatOpen} />}
           {view === 'hifzLive' && isIndividual && !locked && <HifzLiveView />}
           {view === 'tasks' && !locked && <TasksView />}
+          {view === 'certificates' && !locked && <Suspense fallback={null}><CertificatesView /></Suspense>}
           {view === 'attendance' && !locked && <AttendanceView />}
           {view === 'progress' && !locked && <ProgressView />}
           {view === 'library' && !locked && <LibraryView />}
@@ -180,7 +182,7 @@ function DashboardInner({ initialView = 'home' }) {
           {view === 'billing' && <BillingView />}
           {view === 'settings' && <SettingsView theme={theme} onToggleTheme={toggleTheme} themeMode={themeMode} onSetThemeMode={setThemeMode} onNavigate={navigate} />}
           {view === 'profile' && <ProfileView onIdentityChange={onIdentityChange} />}
-          {!['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'settings', 'exam', 'profile', 'billing'].includes(view) && <Pending name={t(CRUMB_TITLES[view] || view)} />}
+          {!['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'certificates', 'settings', 'exam', 'profile', 'billing'].includes(view) && <Pending name={t(CRUMB_TITLES[view] || view)} />}
         </div>
       </div>
 

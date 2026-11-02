@@ -107,16 +107,25 @@ export default function ProgressLine({ items, compact = false }) {
     return out.filter((_, i) => i % step === 0);
   }, [t0, t1, locale]);
 
-  const active = hover != null ? hover : (pts.length ? pts.length - 1 : null);
+  // the details bubble shows only while the pointer is over a dot (or after a tap on a phone), never by itself
+  const active = hover != null && hover < pts.length ? hover : null;
   const shown = active != null ? pts[active] : null;
   const boxRef = useRef(null);
-  function nearest(clientX) {
+  useEffect(() => {
+    if (hover == null) return undefined;
+    const away = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setHover(null); };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [hover]);
+  // the dot under the pointer; null when the pointer is not close to any dot (the bubble then disappears)
+  function nearest(clientX, clientY) {
     const el = boxRef.current; if (!el || !P.length) return null;
     const r = el.getBoundingClientRect();
     const px = ((clientX - r.left) / r.width) * W;
-    let best = 0, bd = Infinity;
-    P.forEach((p, i) => { const dd = Math.abs(p[0] - px); if (dd < bd) { bd = dd; best = i; } });
-    return best;
+    const py = ((clientY - r.top) / r.height) * H;
+    let best = null, bd = Infinity;
+    P.forEach((p, i) => { const dd = Math.hypot(p[0] - px, p[1] - py); if (dd < bd) { bd = dd; best = i; } });
+    return bd <= 26 ? best : null;
   }
 
   return (
@@ -134,12 +143,12 @@ export default function ProgressLine({ items, compact = false }) {
 
       {pts.length === 0 ? <div className="pl-empty">{t('No exams in this period.')}</div> : (
         <div className="pl-box" ref={boxRef} tabIndex={0} role="img" aria-label={t('Exam results over time')}
-             onMouseMove={(e) => setHover(nearest(e.clientX))} onMouseLeave={() => setHover(null)}
-             onTouchStart={(e) => setHover(nearest(e.touches[0].clientX))} onTouchMove={(e) => setHover(nearest(e.touches[0].clientX))}
+             onMouseMove={(e) => setHover(nearest(e.clientX, e.clientY))} onMouseLeave={() => setHover(null)}
+             onTouchStart={(e) => setHover(nearest(e.touches[0].clientX, e.touches[0].clientY))}
              onKeyDown={(e) => {
                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
                e.preventDefault();
-               const cur = active == null ? pts.length - 1 : active;
+               const cur = active == null ? (e.key === 'ArrowRight' ? -1 : pts.length) : active;
                setHover(Math.min(pts.length - 1, Math.max(0, cur + (e.key === 'ArrowRight' ? 1 : -1))));
              }}>
           <svg key={mode} className="pl-svg" viewBox={`0 0 ${W} ${H}`}>

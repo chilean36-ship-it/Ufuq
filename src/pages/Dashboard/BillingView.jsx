@@ -4,6 +4,7 @@ import { useCabinetI18n } from '../../context/CabinetI18nContext';
 import { useDashboardData } from '../../context/DashboardDataContext';
 import useLiveRefresh from '../../lib/liveRefresh';
 import OrderSteps from './OrderSteps';
+import PricingSection from './PricingSection';
 import usePlanPrices from '../../lib/usePlanPrices';
 import { fetchMyOrders, fetchOrder, cancelOrder, startCardPayment, uploadTransferProof, submitTransferProof, formatMoney, fill } from '../../lib/payments';
 
@@ -234,33 +235,7 @@ export default function BillingView() {
       </section>
 
       {access && (!access.exempt || showAsStudent) && (
-        <div className="bl-plans">
-          {plansLoading && <div className="bl-muted">…</div>}
-          {!plansLoading && plans.map((p, i) => {
-            const isYear = p.months === 12;
-            return (
-              <article key={p.id} className={'bl-plan' + (isYear ? ' rec' : '')} style={{ animationDelay: `${i * 80}ms` }}>
-                <div className="bl-plan-head">
-                  <span>{t(isYear ? 'Yearly' : 'Monthly')}</span>
-                  {isYear && savePct > 0 && <span className="bl-pill">{fill(t('Save {n}%'), { n: savePct })}</span>}
-                </div>
-                <div className="bl-plan-price">
-                  {usd(p.usd_cents)}
-                  <small>{t(isYear ? 'per year' : 'per month')}</small>
-                </div>
-                {isYear && <div className="bl-muted">≈ {usd(p.usd_cents / p.months)} {t('per month')}</div>}
-                <ul className="bl-plan-list">
-                  {PLAN_FEATURES.map((f) => (
-                    <li key={f}><span className="bl-tick" aria-hidden="true">✓</span>{t(f)}</li>
-                  ))}
-                </ul>
-                <button type="button" className="bl-plan-btn" onClick={() => navigate(`/checkout?plan=${p.id}`)}>
-                  {active ? t('Renew') : t('Choose')} →
-                </button>
-              </article>
-            );
-          })}
-        </div>
+        <PricingSection plans={plans} loading={plansLoading} savePct={savePct} active={active} />
       )}
 
       <section className="bl-orders" aria-label={t('Order history')}>

@@ -367,3 +367,25 @@ html[data-theme="light"] .group-chat-fullview{ --gc-other:#FFFFFF; --gc-ink:#1D1
   .group-chat-card .gc-msg-name{ font-size:11.5px; }
   .group-chat-card .gc-header-actions{ gap:2px; }
 }
+
+/* ==========================================================================
+   Focus mode — while the group chat is open it takes the whole area right of the sidebar, top to bottom.
+   The topbar keeps only what a chat needs (notifications, theme, profile); the group and language
+   switchers come back as soon as the chat is closed.
+   ========================================================================== */
+.main.gc-focus{ display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden; }
+.main.gc-focus .topbar{ padding-block:10px; flex:none; }
+.main.gc-focus .top-right > :not(#notifBtn):not(#themeToggle):not(.top-profile){ display:none; }
+.main.gc-focus .content{ padding:0; flex:1; min-height:0; max-width:none; display:flex; }
+.main.gc-focus .group-page.chat-mode{ flex:1; min-width:0; min-height:0; padding:0; margin:0; display:flex; max-width:none; }
+.main.gc-focus .group-chat-fullview{ flex:1; max-width:none; width:100%; margin:0; display:flex; min-height:0; }
+.main.gc-focus .group-page.chat-mode .group-chat-card.group-chat-card--full,
+.main.gc-focus .group-chat-card.panel{
+  flex:1; width:100%; height:auto; max-height:none; min-height:0; border-radius:0; border-width:0 0 0 1px; box-shadow:none;
+}
+.main.gc-focus .group-chat-card .gc-msg-row{ max-width:min(68%, 760px); }
+.main.gc-focus .group-chat-card .group-chat-body{ padding-inline:clamp(16px, 5vw, 72px); }
+@media (max-width:900px){
+  .main.gc-focus .group-chat-card .gc-msg-row{ max-width:88%; }
+  .main.gc-focus .group-chat-card .group-chat-body{ padding-inline:12px; }
+}
