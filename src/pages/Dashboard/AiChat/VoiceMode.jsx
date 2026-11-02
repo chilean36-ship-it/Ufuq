@@ -5,7 +5,7 @@ import {
   VOICE_LANGS, getVoiceProvider, readSavedVoiceLang, saveVoiceLang, stripForSpeech, voiceBcp, voiceLabel,
 } from './voiceAdapter';
 import { I } from './icons';
-import { releaseMic } from '../../../lib/serverStt';
+import { releaseMic, watchVoice } from '../../../lib/serverStt';
 import { stopSpeaking } from '../../../lib/speak';
 
 const MAX_SILENT_ROUNDS = 3; // after this many empty listening rounds we wait for a tap instead of looping forever
@@ -37,6 +37,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const tokenRef = useRef(0);
   const errRef = useRef(null);
   const limitRef = useRef(false);
+  const watchRef = useRef(null);   // barge-in watcher while the assistant speaks
   const silenceRef = useRef(0);
   const bumpRef = useRef(0);
   const orbRef = useRef(null);
@@ -50,6 +51,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     if (listenRef.current) { listenRef.current.abort(); listenRef.current = null; }
   };
   const killSpeech = () => {
+    if (watchRef.current) { watchRef.current.stop(); watchRef.current = null; }   // stop watching for barge-in
     if (speakRef.current) { speakRef.current.cancel(); speakRef.current = null; }
     stopSpeaking();   // always silence every audio source (the handle alone can miss a clip that is loading)
   };
@@ -57,7 +59,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     if (abortRef.current) { abortRef.current.abort(); abortRef.current = null; }
   };
 
-  api.current.startListening = () => {
+  api.current.startListening = (opts) => {
     if (!aliveRef.current || mutedRef.current || limitRef.current) return;
     const prov = getVoiceProvider();
     if (!prov.support().stt) { setProblem('unsupported'); setPhaseBoth('idle'); return; }
@@ -71,6 +73,8 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     const token = tokenRef.current;
     listenRef.current = prov.listen({
       lang: voiceBcp(vlangRef.current),
+      endSilenceMs: 650,                         // quick turn-taking, like a call
+      preheard: !!(opts && opts.bargeIn),        // the person interrupted: they are already talking
       onInterim: (txt) => { if (token === tokenRef.current) { bumpRef.current = 1; setUserText(txt); } },
       onLevel: (lv) => { if (token === tokenRef.current && lv > 0.15) bumpRef.current = 1; },
       onError: (code) => { if (token === tokenRef.current) errRef.current = code; },
@@ -102,7 +106,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     abortRef.current = ctrl;
     const history = [...getHistory(), { role: 'user', content: text }];
     const { reply, offline, aborted, voiceLimit, voiceSlow } = await askUfuqAi({ text, history, voice: true, signal: ctrl.signal, systemPrompt });
-    if (!aliveRef.current || aborted || ctrl.signal.aborted || mutedRef.current) return;
+    if (!aliveRef.current || aborted || ctrl.signal.aborted) return;   // muting only turns the microphone off: the answer still comes
     abortRef.current = null;
     if (voiceLimit) { api.current.endForLimit(); return; }   // today's live allowance is used up: the live conversation ends here, nothing is spoken
     if (voiceSlow) {   // too many turns in a minute: say so in text, then listen again
@@ -126,7 +130,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   };
 
   api.current.speakReply = (reply) => {
-    if (!aliveRef.current || mutedRef.current) return;   // muted meanwhile: never start talking
+    if (!aliveRef.current) return;
     const prov = getVoiceProvider();
     const bcp = voiceBcp(vlangRef.current);
     const spoken = stripForSpeech(reply);
@@ -144,6 +148,14 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       return;
     }
     speakRef.current = prov.speak(spoken, { lang: bcp, onBoundary: () => { bumpRef.current = 1; }, onEnd: done });
+    // Barge-in: if the person starts talking over the answer, stop it at once and listen (not while muted).
+    setTimeout(() => {
+      if (!aliveRef.current || mutedRef.current || phaseRef.current !== 'speaking' || watchRef.current) return;
+      watchRef.current = watchVoice({ onVoice: () => {
+        watchRef.current = null;
+        if (aliveRef.current && !mutedRef.current && phaseRef.current === 'speaking') { killSpeech(); api.current.startListening({ bargeIn: true }); }
+      } });
+    }, 700);
   };
 
   const onOrb = () => {
@@ -157,17 +169,20 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     api.current.startListening();
   };
 
+  // Mute = only MY microphone is off. The assistant keeps thinking / speaking and finishes its answer (like a call);
+  // it just does not start listening again until the microphone is back on.
   const toggleMute = () => {
     const next = !mutedRef.current;
     mutedRef.current = next;
     setMuted(next);
     if (next) {
-      killListen(); killSpeech(); killRequest();
-      stopSpeaking();
-      setPhaseBoth('idle');
+      killListen();
+      if (watchRef.current) { watchRef.current.stop(); watchRef.current = null; }
+      if (phaseRef.current === 'listening') setPhaseBoth('idle');
     } else {
       silenceRef.current = 0;
-      api.current.startListening();
+      if (limitRef.current) return;
+      if (phaseRef.current === 'idle' || phaseRef.current === 'listening') api.current.startListening();   // speaking / thinking: it listens when the answer ends
     }
   };
 

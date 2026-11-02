@@ -25,6 +25,7 @@ export type LLMRequest = {
   thinkingBudget?: number;   // Gemini only
   json?: boolean;            // Gemini: forces JSON output; Claude: the prompt must ask for JSON
   deadline: number;          // epoch ms: give up after this
+  order?: string[];          // provider order for this call (default: LLM_ORDER); live voice puts the fastest first
   timeoutMs?: number;        // per-request cap (default 45 s); long jobs such as grading a whole paper use more
 };
 export type LLMResult = { ok: true; text: string; provider: string } | { ok: false; status: number; err: string };
@@ -179,7 +180,7 @@ async function tryProvider(name: string, req: LLMRequest): Promise<Attempt> {
  * Never throws: { ok:false, status, err } when nothing answered before the deadline.
  */
 export async function callLLM(req: LLMRequest): Promise<LLMResult> {
-  const order = ORDER();
+  const order = req.order && req.order.length ? req.order : ORDER();
   let lastStatus = 502, lastErr = "";
   for (let round = 0; ; round++) {
     let hint = 0, anyAlive = false;

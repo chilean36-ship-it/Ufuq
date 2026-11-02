@@ -16,7 +16,7 @@ const AISHA_KEY = Deno.env.get("AISHA_API_KEY");
 const ELEVEN_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 const ELEVEN_VOICE = Deno.env.get("ELEVENLABS_VOICE_ID") ?? "21m00Tcm4TlvDq8ikWAM";
 // Optional: a dedicated Arabic (Fusha) voice from the ElevenLabs voice library.
-const ELEVEN_VOICE_AR = Deno.env.get("ELEVENLABS_VOICE_ID_AR") ?? ELEVEN_VOICE;
+const ELEVEN_VOICE_AR = Deno.env.get("ELEVENLABS_VOICE_ID_AR") ?? "pNInz6obpgDQGcFmaJgB";   // a male multilingual voice (Adam) unless a Fusha voice id is set
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
 const GEMINI_TTS_MODEL = Deno.env.get("GEMINI_TTS_MODEL") ?? "gemini-2.5-flash-preview-tts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -53,7 +53,7 @@ const AZURE_VOICES: Record<string, [string, string]> = {
   ar: ["ar-SA-ZariyahNeural", "ar-SA-HamedNeural"],
 };
 // Arabic is spoken a bit slower: the audience are learners.
-const AZURE_RATE: Record<string, string> = { uz: "0%", ru: "+4%", en: "+2%", ar: "-6%" };   // brisk but clear: live conversation
+const AZURE_RATE: Record<string, string> = { uz: "0%", ru: "+4%", en: "+2%", ar: "+2%" };   // medium, clear pace: a live conversation, not a slow reading
 // Gemini voices: [female, male]
 const GEMINI_VOICES: [string, string] = ["Sulafat", "Charon"];
 
@@ -167,7 +167,7 @@ function pcmToWav(pcm: Uint8Array, sampleRate = 24000): Uint8Array {
 
 async function geminiSynth(text: string, lang: string, male: boolean): Promise<Result> {
   const style = lang === "ar"
-    ? "Read this Arabic text aloud in clear Modern Standard Arabic (Fusha) with correct pronunciation and natural intonation, like a professional teacher on a call, at a steady, unhurried pace"
+    ? "Read this Arabic text aloud in clear Modern Standard Arabic (Fusha) with correct pronunciation and natural intonation, like a professional teacher on a call, at a natural, medium pace, clearly articulated, never slow or drawn out"
     : "Read this text aloud in a warm, clear, friendly teacher's voice at a calm pace";
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
@@ -219,7 +219,8 @@ Deno.serve(async (req: Request) => {
     try { payload = await req.json(); } catch { return json(req, { error: "Noto'g'ri JSON" }, 400); }
     const text = sanitize(String(payload.text ?? "")).slice(0, MAX_CHARS);
     const lang = String(payload.lang ?? "uz");
-    const male = payload.gender === "male";
+    // Arabic (Fusha) is spoken by a male voice by default; the other languages keep the female teacher voice unless asked otherwise.
+    const male = payload.gender ? payload.gender === "male" : lang === "ar";
     if (!text || !/[\p{L}\p{N}]/u.test(text)) return json(req, { error: "Matn bo'sh" }, 400);
     {
       const day = new Date().toISOString().slice(0, 10);

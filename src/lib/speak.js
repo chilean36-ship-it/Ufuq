@@ -173,7 +173,7 @@ async function browserFallback(segments) {
     u.lang = codes[s.lang] || 'uz-UZ';
     const v = pickVoice(u.lang);
     if (v) { u.voice = v; u.lang = v.lang; }
-    if (s.lang === 'ar') u.rate = 0.85; // arabcha o'rganuvchilar uchun sekinroq
+    if (s.lang === 'ar') u.rate = 1;
     u.onend = resolve; u.onerror = resolve;
     window.speechSynthesis.speak(u);
   })));

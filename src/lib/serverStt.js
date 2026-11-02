@@ -112,7 +112,7 @@ function scheduleRelease() {
 
 // `raw: true` (used by the Hifz checker): do NOT call ufuq-stt, hand the recorded 16 kHz WAV (base64) to onDone instead.
 // maxMs / noSpeechMs / endSilenceMs let a caller allow longer pauses (a student recalling a verse needs more than a chat turn).
-export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, raw = false, maxMs = MAX_MS, noSpeechMs = NO_SPEECH_MS, endSilenceMs = END_SILENCE_MS }) {
+export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, raw = false, maxMs = MAX_MS, noSpeechMs = NO_SPEECH_MS, endSilenceMs = END_SILENCE_MS, preheard = false }) {
   let finished = false;
   let silent = false;
   let ctx = null;
@@ -124,8 +124,9 @@ export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, r
   let silenceMs = 0;
   let totalMs = 0;
   let noise = 0.008;
-  let calibrating = 300;
-  let heard = false;
+  let calibrating = preheard ? 0 : 300;   // preheard: the person already started talking (barge-in) - do not wait for the speech to begin
+  let heard = !!preheard;
+  if (preheard) speechMs = 400;
   let stopping = false;
 
   const cleanup = () => {
@@ -202,4 +203,42 @@ export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, r
     stop() { if (!finished) finishRecording(); },
     abort() { silent = true; if (!finished) { finished = true; cleanup(); } },
   };
+}
+
+/**
+ * While the assistant is speaking: calls onVoice() once the person has clearly started talking over it (barge-in, like a phone call).
+ * Uses the shared microphone (echo cancellation is on), so the assistant's own voice does not trigger it. Returns { stop() }.
+ */
+export function watchVoice({ onVoice, minMs = 320, threshold = 0.055 }) {
+  let stopped = false;
+  let proc = null;
+  let src = null;
+  let loud = 0;
+  const cleanupWatch = () => {
+    try { if (proc) { proc.onaudioprocess = null; proc.disconnect(); } } catch (e) { /* ignore */ }
+    try { if (src) src.disconnect(); } catch (e) { /* ignore */ }
+    proc = null; src = null;
+    scheduleRelease();
+  };
+  (async () => {
+    let mic;
+    try { mic = await acquireMic(); } catch (e) { return; }
+    if (stopped) { scheduleRelease(); return; }
+    const ctx = mic.ctx;
+    src = ctx.createMediaStreamSource(mic.stream);
+    proc = ctx.createScriptProcessor(2048, 1, 1);
+    proc.onaudioprocess = (e) => {
+      if (stopped) return;
+      const input = e.inputBuffer.getChannelData(0);
+      let sum = 0;
+      for (let i = 0; i < input.length; i++) sum += input[i] * input[i];
+      const rms = Math.sqrt(sum / input.length);
+      const ms = (input.length / ctx.sampleRate) * 1000;
+      loud = rms > threshold ? loud + ms : Math.max(0, loud - ms * 2);
+      if (loud >= minMs) { stopped = true; cleanupWatch(); onVoice(); }
+    };
+    src.connect(proc);
+    proc.connect(ctx.destination);
+  })();
+  return { stop() { if (stopped) return; stopped = true; cleanupWatch(); } };
 }

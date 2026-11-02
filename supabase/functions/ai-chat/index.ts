@@ -322,11 +322,12 @@ Deno.serve(async (req: Request) => {
         system: systemPrompt,
         // the history comes in Gemini shape ({role, parts}); the shared caller takes plain messages
         messages: contents.map((c) => ({ role: c.role === "model" ? "assistant" : "user", content: c.parts[0].text })),
-        maxTokens: isVoice ? 160 : 1800,        // a spoken answer is 1-3 sentences: short = fast
+        maxTokens: isVoice ? 110 : 1800,        // a spoken answer is 1-3 sentences: short = fast
         temperature: 0.5,
         effort: "low",                       // chat is high-volume: the cheapest Haiku effort
         thinkingBudget: isVoice ? 0 : 512,
-        deadline: Date.now() + (isVoice ? 15_000 : 45_000),
+        deadline: Date.now() + (isVoice ? 12_000 : 45_000),
+        ...(isVoice ? { order: ["gemini", "claude"] } : {}),   // live voice: the faster model first, Claude as the backup
       }),
     ]);
 
