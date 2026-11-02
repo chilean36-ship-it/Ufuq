@@ -77,7 +77,8 @@ export default function MaterialsPage() {
 }
 
 function AudioLessons({ hidden, onCount, restricted }) {
-  const { t, toast, askConfirm, currentGroup: g } = usePanel();
+  const { t, toast, askConfirm, currentGroup, myGroups } = usePanel();
+  const g = currentGroup || (myGroups || []).find((x) => x.is_active) || (myGroups || [])[0] || null; // one linked group: use it without asking
   const code = g ? g.code : null;
   const [list, setList] = useState(null);
   const [modal, setModal] = useState({ open: false, item: null });
@@ -109,10 +110,10 @@ function AudioLessons({ hidden, onCount, restricted }) {
     <div className="mt-pane" hidden={hidden}>
       <div className="mt-bar">
         <span className="mt-bar-title">{t('Audio lessons')}</span>
-        <button className="btn btn-gold btn-sm mt-add" onClick={() => { if (!g) { toast(t('Select a group first.'), 'err'); return; } setModal({ open: true, item: null }); }}>{IcoPlus}{t('+ New audio lesson').replace(/^\+\s*/, '')}</button>
+        <button className="btn btn-gold btn-sm mt-add" onClick={() => { if (!g) { toast(t('No group is linked to your account yet. Ask the main admin.'), 'err'); return; } setModal({ open: true, item: null }); }}>{IcoPlus}{t('+ New audio lesson').replace(/^\+\s*/, '')}</button>
       </div>
       <div className="mt-list">
-        {!g ? <div className="empty-block">{t('Select a group')}</div>
+        {!g ? <div className="empty-block">{t('No group is linked to your account yet. Ask the main admin.')}</div>
           : list === null ? <div className="empty-block">{t('Loading…')}</div>
           : list.error ? <div className="empty-block">{list.error}</div>
           : list.length === 0 ? <div className="empty-block">{t('No audio lessons yet.')}</div>
@@ -155,7 +156,8 @@ function AudioLessons({ hidden, onCount, restricted }) {
 }
 
 function AudioModal({ state, onClose, onSaved, restricted }) {
-  const { t, currentGroup: g } = usePanel();
+  const { t, currentGroup, myGroups } = usePanel();
+  const g = currentGroup || (myGroups || []).find((x) => x.is_active) || (myGroups || [])[0] || null;
   const fileRef = useRef(null);
   const [f, setF] = useState({ title: '', desc: '', url: '', minutes: 0, scope: 'group' });
   const [error, setError] = useState('');
@@ -174,7 +176,7 @@ function AudioModal({ state, onClose, onSaved, restricted }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!g) { setError(t('Select a group first.')); return; }
+    if (!g) { setError(t('No group is linked to your account yet. Ask the main admin.')); return; }
     setSaving(true); setError('');
     let url = f.url.trim();
     const file = fileRef.current && fileRef.current.files[0];
@@ -233,7 +235,8 @@ function AudioModal({ state, onClose, onSaved, restricted }) {
 }
 
 function BoardPhotos({ hidden, onCount }) {
-  const { t, toast, askConfirm, currentGroup: g } = usePanel();
+  const { t, toast, askConfirm, currentGroup, myGroups } = usePanel();
+  const g = currentGroup || (myGroups || []).find((x) => x.is_active) || (myGroups || [])[0] || null; // one linked group: use it without asking
   const code = g ? g.code : null;
   const [list, setList] = useState(null);
   const [modal, setModal] = useState({ open: false, item: null });
@@ -264,9 +267,9 @@ function BoardPhotos({ hidden, onCount }) {
     <div className="mt-pane" hidden={hidden}>
       <div className="mt-bar">
         <span className="mt-bar-title">{t('Board photos')}</span>
-        <button className="btn btn-gold btn-sm mt-add" onClick={() => { if (!g) { toast(t('Select a group first.'), 'err'); return; } setModal({ open: true, item: null }); }}>{IcoPlus}{t('+ New board photo').replace(/^\+\s*/, '')}</button>
+        <button className="btn btn-gold btn-sm mt-add" onClick={() => { if (!g) { toast(t('No group is linked to your account yet. Ask the main admin.'), 'err'); return; } setModal({ open: true, item: null }); }}>{IcoPlus}{t('+ New board photo').replace(/^\+\s*/, '')}</button>
       </div>
-      {!g ? <div className="empty-block">{t('Select a group')}</div>
+      {!g ? <div className="empty-block">{t('No group is linked to your account yet. Ask the main admin.')}</div>
         : list === null ? <div className="empty-block">{t('Loading…')}</div>
         : list.error ? <div className="empty-block">{list.error}</div>
         : list.length === 0 ? <div className="empty-block">{t('No board photos yet.')}</div>
@@ -299,7 +302,8 @@ function BoardPhotos({ hidden, onCount }) {
 }
 
 function BoardModal({ state, onClose, onSaved }) {
-  const { t, currentGroup: g } = usePanel();
+  const { t, currentGroup, myGroups } = usePanel();
+  const g = currentGroup || (myGroups || []).find((x) => x.is_active) || (myGroups || [])[0] || null;
   const fileRef = useRef(null);
   const [f, setF] = useState({ caption: '', url: '', date: todayStr() });
   const [error, setError] = useState('');
@@ -315,7 +319,7 @@ function BoardModal({ state, onClose, onSaved }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!g) { setError(t('Select a group first.')); return; }
+    if (!g) { setError(t('No group is linked to your account yet. Ask the main admin.')); return; }
     setSaving(true); setError('');
     let url = f.url.trim();
     const file = fileRef.current && fileRef.current.files[0];

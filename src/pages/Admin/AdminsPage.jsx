@@ -17,6 +17,7 @@ export default function AdminsPage() {
   const [groups, setGroups] = useState([]);
   const [email, setEmail] = useState('');
   const [kind, setKind] = useState('teacher');
+  const [newGroups, setNewGroups] = useState(() => new Set()); // groups the new teacher / admin will work with
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [picker, setPicker] = useState(null); // staff row whose groups are being edited
@@ -27,7 +28,7 @@ export default function AdminsPage() {
   const load = useCallback(async (opts) => {
     const [st, gr] = await Promise.all([
       supabase.rpc('admin_list_staff'),
-      supabase.from('groups').select('code, name').order('name'),
+      supabase.from('groups').select('code, name, is_active').order('name'),
     ]);
     if (st.error) { if (!(opts && opts.silent)) setRows({ error: st.error.message }); return; }
     setRows(st.data || []);
@@ -46,12 +47,21 @@ export default function AdminsPage() {
     e.preventDefault();
     setError('');
     if (!email.trim()) { setError(t('Enter the email of the person.')); return; }
+    // A teacher / ordinary admin works only with the groups chosen here; a main admin gets every group.
+    if (kind !== 'super' && newGroups.size === 0) { setError(t('Choose at least one group for this person.')); return; }
     setBusy(true);
     const { error: err } = await supabase.rpc('admin_appoint', { p_email: email.trim(), p_tier: kind });
+    if (err) { setBusy(false); fail(err); return; }
+    if (kind !== 'super') {
+      const st = await supabase.rpc('admin_list_staff');
+      const me = (st.data || []).find((a) => String(a.email || '').toLowerCase() === email.trim().toLowerCase());
+      const known = new Set(groups.map((g) => g.code));
+      const { error: gErr } = me ? await supabase.rpc('admin_set_staff_groups', { p_user: me.id, p_codes: [...newGroups].filter((c) => known.has(c)) }) : { error: null };
+      if (gErr) { setBusy(false); fail(gErr); await load(); return; }
+    }
     setBusy(false);
-    if (err) { fail(err); return; }
     toast(kind === 'teacher' ? t('Teacher appointed.') : t('Admin appointed.'), 'ok');
-    setEmail('');
+    setEmail(''); setNewGroups(new Set());
     await load();
   }
 
@@ -109,7 +119,27 @@ export default function AdminsPage() {
           </div>
           <button type="submit" className="btn btn-gold a-appoint-btn" disabled={busy}>{busy ? t('Saving…') : t('Appoint')}</button>
         </div>
-        <p className="hint" style={{ margin: '10px 0 0' }}>{kind === 'super' ? t('A main admin works with every group.') : t('Choose the groups right after appointing: use "Groups" in the list below.')}</p>
+        {kind === 'super' ? (
+          <p className="hint" style={{ margin: '10px 0 0' }}>{t('A main admin works with every group.')}</p>
+        ) : (
+          <div className="a-appoint-groups">
+            <div className="a-appoint-gh">
+              <b>{t('Groups this person can work with')}</b>
+              <span className="a-gp-count">{newGroups.size} {t('selected')}</span>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set(groups.filter((g) => g.is_active !== false).map((g) => g.code)))}>{t('Select all')}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set())}>{t('Clear')}</button>
+            </div>
+            <div className="a-gp-list a-appoint-glist" role="group" aria-label={t('Groups')}>
+              {groups.length === 0 ? <p className="hint">{t('No groups yet')}</p> : groups.map((g) => (
+                <label key={g.code} className={'a-gp-item' + (newGroups.has(g.code) ? ' on' : '')}>
+                  <input type="checkbox" checked={newGroups.has(g.code)} onChange={() => setNewGroups((cur) => { const n = new Set(cur); if (n.has(g.code)) n.delete(g.code); else n.add(g.code); return n; })} />
+                  <span className="a-gp-name">{g.name || '—'}</span>
+                </label>
+              ))}
+            </div>
+            <p className="hint" style={{ margin: '8px 0 0' }}>{t('The person sees and manages only these groups. You can change them later with "Groups" in the list below.')}</p>
+          </div>
+        )}
         <p className="hint" role="alert" style={{ display: error ? 'block' : 'none', color: 'var(--danger-bright)', margin: '6px 0 0' }}>{error}</p>
       </form>
 
