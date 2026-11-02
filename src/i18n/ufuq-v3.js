@@ -55,5 +55,6 @@ const ROWS = [
   ['Yes — the yearly price is lower than paying month by month, shown below the price.', "Ha — yillik narx oyma-oy to'lashdan arzon, narx ostida ko'rsatilgan.", 'Да — годовая цена ниже помесячной, это показано под ценой.', 'نعم — السعر السنوي أقل من الدفع شهريًا كما يظهر تحت السعر.'],
 ];
 ROWS.push(['The top 2 of each level get one.', "Har bir darajaning eng yaxshi 2 natijasi oladi.", 'Получают два лучших результата каждого уровня.', 'تُمنح لأفضل نتيجتين في كل مستوى.']);
+ROWS.push(['Upgrade plan', 'Tarifni oshirish', 'Улучшить тариф', 'ترقية الخطة'], ['Renew plan', 'Tarifni yangilash', 'Продлить тариф', 'تجديد الخطة'], ['Keep your lessons going', "Darslaringiz to'xtamasin", 'Не прерывайте занятия', 'واصل دروسك'], ['Unlock lessons, exams and more', 'Darslar, imtihonlar va boshqalarni oching', 'Откройте уроки, экзамены и многое другое', 'افتح الدروس والاختبارات وغيرها'], ['from', 'dan', 'от', 'من'], ['month', 'oy', 'мес.', 'شهر']);
 const pick = (i) => Object.fromEntries(ROWS.map((r) => [r[0], r[i]]));
 export default { UZ: pick(1), RU: pick(2), AR: pick(3), EN: {} };

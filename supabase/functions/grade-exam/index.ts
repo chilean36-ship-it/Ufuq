@@ -59,6 +59,13 @@ SEMANTIC SCORING (international language-exam practice, e.g. CEFR-based exams, A
 - Consistency: equal answers get equal scores; do not become stricter or more generous as you go through the items.
 - Do not give full marks for a wrong answer only because it is long or well written, and do not give a low score for a correct answer only because it is short.
 
+TEACHER'S GRADING POLICY (highest priority - it overrides any stricter rule above or below):
+P1. SPELLING (imlo) is NOT graded. Learners often slip while typing or writing, so spelling mistakes never lower the score (not even by a few points). After grading, mention the spelling slips briefly in the feedback (name the word and give the correct spelling) as a friendly note - the score stays as it would be without them. Only if a spelling slip turns the word into a different real word with another meaning does it count as a mistake of meaning.
+P2. SENTENCE BUILDING: if the sentence is a little incomplete in meaning, awkward or loosely built, do not lower the score for that. Judge whether the learner understood the task and used the word/structure.
+P3. GENERAL SPIRIT: do not be harsh. Small shortcomings never reduce the score. When in doubt, give the benefit of the doubt to the learner.
+P4. GRAMMAR IS THE EXCEPTION - be exact where grammar is the point. Mistakes in the grammar the item tests or that change the grammatical meaning are real errors and must be counted precisely: a wrong case ending/vowel that matters (e.g. damma instead of kasra where the grammar requires kasra), wrong i'rab, wrong gender/number agreement, wrong verb form or particle. Deduct clearly for these, and name the correct form in the feedback.
+P5. ESSAYS: be lenient. Minor spelling mistakes and small slips in building sentences are not counted and do not lower the score. Grade the ideas, relevance and general clarity; only large problems (off-topic, not understandable, copied filler) reduce the score a lot. Serious grammar errors may reduce it moderately; small ones do not.
+
 By type:
 - short_answer / grammar: correctness of content and of the required grammar point.
 - matching: "student_answer" = line 1 the partner word chosen, the rest = the sentence written. The chosen word (about 60 points): full if it equals the criteria OR is genuinely the correct partner by meaning; if it has a one-letter slip (see 4a) give 50-58; if it is a related but weaker partner give 25-45. The sentence (about 40 points): full if it uses the word(s) correctly and is grammatical; minor slips cost 2-8 points (see 4b); a sentence that is understandable but uses the word weakly still earns 20-30; only a missing or meaningless sentence earns 0 for this part.

@@ -19,6 +19,7 @@ import AuthModal from './AuthModal';
 import Lightbox from './Lightbox';
 import { LEGAL_DOCS, legalUi } from '../Legal/legalContent';
 import { useLandingMedia } from '../../lib/landingMedia';
+import usePlanPrices from '../../lib/usePlanPrices';
 import {
   NAV_LINKS, ABOUT_CREDS, EXPLORE_CARDS, PROGRAMS, PROG_ARROW, DISCOVER_TABS,
   FACES, QUOTES, PRICING_FEATURES, FAQ, FOOTER_COLUMNS, FLOATING_LETTERS,
@@ -61,12 +62,13 @@ function SiteHeader({ onOpenAuth }) {
     };
   }, []);
 
+  const media = useLandingMedia();
   return (
     <header id="site-header" className={scrolled ? 'scrolled' : undefined}>
       <div className="wrap">
         <nav>
           <div className="nav-left">
-            <div className="logo"><img src="/assets/images/img-01.webp" alt="Ufuq logo" /><span>Ufuq</span></div>
+            <div className="logo"><img src={media.img('site_logo', '/assets/images/img-01.webp')} alt="Ufuq logo" /><span>Ufuq</span></div>
             <div className={'nav-links' + (menuOpen ? ' mobile-open' : '')}>
               {NAV_LINKS.map((l) => (
                 <a
@@ -147,7 +149,7 @@ function AboutTeaser() {
   const { t } = useI18n();
   const media = useLandingMedia();
   return (
-    <section className="about-author" id="about-author" style={{ '--about-bg-image': "url('/assets/images/img-03.webp')" }}>
+    <section className="about-author" id="about-author" style={{ '--about-bg-image': "url('" + media.img('bg_about', '/assets/images/img-03.webp') + "')" }}>
       <div className="wrap about-grid">
         <Reveal className="about-visual">
           <div className="glow"></div>
@@ -246,7 +248,7 @@ function Discover({ onOpenLightbox }) {
   const media = useLandingMedia();
   const [tab, setTab] = useState('stories');
   return (
-    <section className="discover" id="discover" style={{ '--discover-img': 'url("/assets/images/img-08.webp")' }}>
+    <section className="discover" id="discover" style={{ '--discover-img': 'url("' + media.img('bg_discover', '/assets/images/img-08.webp') + '")' }}>
       <div className="wrap">
         <Reveal className="section-head" style={{ textAlign: 'center', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="eyebrow" style={{ justifyContent: 'center' }}>{t('discover.eyebrow')}</div>
@@ -415,12 +417,20 @@ const PAY_LOCK = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 
 function Pricing({ onOpenAuth }) {
   const { t } = useI18n();
+  const media = useLandingMedia();
+  // Prices come from the server (the same plans the checkout charges), so an admin change shows here at once.
+  const { plans, savePct } = usePlanPrices('en');
+  const money = (c) => '$' + (Math.round(c) / 100).toFixed(c % 100 ? 2 : 0);
+  const pm = plans.find((x) => x.id === 'monthly'), py = plans.find((x) => x.id === 'yearly');
+  const monthlyAmt = pm ? money(pm.usd_cents) : '$30';
+  const yearlyAmt = py ? money(py.usd_cents / py.months) : '$24.90';
+  const yearlyNote = (s) => (py ? s.replace('298.80', (py.usd_cents / 100).toFixed(2)).replace(/17%/, savePct + '%') : s);
   const [plan, setPlan] = useState('monthly');
   const yearly = plan === 'yearly';
   // "Pay" = remember the chosen plan, then sign up; right after signing in the visitor lands on the checkout with this plan.
   const startPay = (mode) => (e) => { e.preventDefault(); setPayIntent(plan); onOpenAuth(mode); };
   return (
-    <section className="pricing" id="pricing" style={{ '--flower-img': "url('/assets/images/img-18.webp')" }}>
+    <section className="pricing" id="pricing" style={{ '--flower-img': "url('" + media.img('bg_pricing', '/assets/images/img-18.webp') + "')" }}>
       <PageStyle css={PAY_CSS} />
       {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <span key={n} className={`flower f${n}`} aria-hidden="true"></span>)}
       <div className="wrap">
@@ -440,8 +450,8 @@ function Pricing({ onOpenAuth }) {
           <div className="pc-grid">
           <div className="pc-main">
           <div className="plan-name">{t('pricing.planname')}</div>
-          <div className="amount" id="planAmount">{yearly ? '$24.90' : '$30'}<span>{t('pricing.perMonth')}</span></div>
-          <div className="plan-note" id="planNote">{t(yearly ? 'pricing.billedYearly' : 'pricing.billedMonthly')}</div>
+          <div className="amount" id="planAmount">{yearly ? yearlyAmt : monthlyAmt}<span>{t('pricing.perMonth')}</span></div>
+          <div className="plan-note" id="planNote">{yearly ? yearlyNote(t('pricing.billedYearly')) : t('pricing.billedMonthly')}</div>
           <div className="pay-cta">
             <a href="#" className="btn-primary js-open-auth" data-mode="signup" onClick={startPay('signup')}>
               {t(yearly ? 'payEntry.ctaYearly' : 'payEntry.ctaMonthly')}
@@ -524,7 +534,7 @@ function Footer() {
       <div className="wrap">
         <div className="foot-grid">
           <div>
-            <div className="foot-logo"><img src="/assets/images/img-01.webp" alt="Ufuq logo" /><span>Ufuq</span></div>
+            <div className="foot-logo"><img src={media.img('site_logo', '/assets/images/img-01.webp')} alt="Ufuq logo" /><span>Ufuq</span></div>
             <p className="foot-desc">{t('footer.desc')}</p>
           </div>
           {FOOTER_COLUMNS.map((col) => (

@@ -16,6 +16,7 @@ const ICONS = {
   billing: <><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></>,
   signout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></>,
   collapse: <path d="M15 18l-6-6 6-6" />,
+  spark: <><path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9z" /><path d="M19 15l.7 2.1L21.8 18l-2.1.7L19 21l-.7-2.3L16 18l2.3-.9z" /></>,
 };
 const Icon = ({ name }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{ICONS[name]}</svg>
@@ -40,6 +41,10 @@ export default function Sidebar({ active, onNavigate, learningOpen, onToggleLear
   const { role, groupData, access } = useDashboardData();
   const isIndividual = !!(groupData && groupData.type === 'individual'); // Hifz Mushaf is for 1:1 groups only
   const navigate = useNavigate();
+
+  // Marketing nudge (like "Upgrade plan" in AI apps): students without an active plan, or whose plan ends within a week.
+  const endsInDays = access && access.active && access.ends_at ? Math.ceil((new Date(access.ends_at).getTime() - Date.now()) / 86400000) : null;
+  const upgradeKind = role !== 'student' || !access || access.exempt ? null : !access.active ? 'upgrade' : (endsInDays !== null && endsInDays <= 7 ? 'renew' : null);
 
   const go = (view) => (e) => { e.preventDefault(); onNavigate(view); };
   const isLearningActive = ['myGroup', 'hifzLive', 'tasks', 'exam', 'attendance', 'progress'].includes(active);
@@ -118,6 +123,16 @@ export default function Sidebar({ active, onNavigate, learningOpen, onToggleLear
           </div>
         )}
       </nav>
+
+      {upgradeKind && (
+        <button type="button" className="sb-upgrade" data-label={t(upgradeKind === 'renew' ? 'Renew plan' : 'Upgrade plan')} onClick={() => onNavigate('billing')}>
+          <span className="sb-up-ico"><Icon name="spark" /></span>
+          <span className="sb-up-txt">
+            <b>{t(upgradeKind === 'renew' ? 'Renew plan' : 'Upgrade plan')}</b>
+            <small>{t(upgradeKind === 'renew' ? 'Keep your lessons going' : 'Unlock lessons, exams and more')}</small>
+          </span>
+        </button>
+      )}
 
       <div className="sb-foot">
         <a className={'sb-link' + (active === 'settings' ? ' active' : '')} href="#" id="settingsLink" onClick={go('settings')}>

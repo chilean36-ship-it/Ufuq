@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
 import { useDashboardData } from '../../context/DashboardDataContext';
-import { fill } from '../../lib/payments';
+import { fill, formatMoney } from '../../lib/payments';
+import usePlanPrices from '../../lib/usePlanPrices';
 
 /* Home-page payment card. Shows nothing when the student is exempt or payments are not enforced.
    - no active plan  → "payment not made" notice, short explanation, benefit cards, one button to the checkout (no prices here)
@@ -66,12 +67,20 @@ html[dir="rtl"] .sc-cta svg{ transform:scaleX(-1); }
 
 /* .content section{padding:0} (dashboard.css) would wipe the padding above — restate it with higher specificity */
 .content .sc-card{ padding:22px 24px; }
+.sc-hero{ position:relative; overflow:hidden; border-color:rgba(200,160,60,.55); background:radial-gradient(520px 200px at 0% 0%, rgba(229,200,120,.2), transparent 70%), linear-gradient(180deg,var(--bg-2),var(--bg)); box-shadow:0 20px 44px -28px rgba(200,160,60,.7); }
+.sc-buy{ flex:none; display:grid; gap:8px; justify-items:end; }
+.sc-price{ font-size:13px; color:var(--text-muted); display:flex; align-items:baseline; gap:6px; }
+.sc-price b{ font-family:'Fraunces',serif; font-size:24px; color:var(--gold-bright); }
+.sc-save{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:rgba(70,170,110,.18); color:#4cc38a; }
+.sc-cta-big{ position:relative; overflow:hidden; min-height:50px; padding:13px 28px; font-size:15.5px; box-shadow:0 14px 28px -12px rgba(200,160,60,.8); }
+.sc-cta-big::after{ content:''; position:absolute; inset:0; transform:translateX(-120%); background:linear-gradient(105deg, transparent 35%, rgba(255,255,255,.35) 50%, transparent 65%); animation:sbShine 3.4s ease-in-out infinite; }
 @media (max-width:640px){
+  .sc-buy{ justify-items:stretch; width:100%; }
   .content .sc-card{ padding:18px; }
   .sc-title{ font-size:18px; }
   .sc-cta{ width:100%; }
 }
-@media (prefers-reduced-motion:reduce){ .sc-card, .sc-cta, .sc-benefit{ animation:none; transition:none; } .sc-cta:hover, .sc-benefit:hover{ transform:none; } }
+@media (prefers-reduced-motion:reduce){ .sc-card, .sc-cta, .sc-benefit, .sc-cta-big::after{ animation:none; transition:none; } .sc-cta:hover, .sc-benefit:hover{ transform:none; } }
 `;
 
 function daysLeft(iso) {
@@ -83,6 +92,10 @@ export default function SubscriptionCard() {
   const { access } = useDashboardData();
   const navigate = useNavigate();
   const locale = LOCALE[lang] || 'en';
+  const { plans, savePct } = usePlanPrices(locale);
+  const yearly = plans.find((p) => p.months === 12);
+  const monthly = plans.find((p) => p.months === 1);
+  const perMonth = yearly ? yearly.usd_cents / yearly.months : monthly ? monthly.usd_cents : null;
 
   const needsPlan = !!access && !access.exempt && access.enforced && !access.active;
   const endingSoon = !!access && !access.exempt && access.active && !!access.ends_at && daysLeft(access.ends_at) <= WARN_DAYS;
@@ -109,7 +122,7 @@ export default function SubscriptionCard() {
   }
 
   return (
-    <section className="sc-card" aria-labelledby="sc-title">
+    <section className="sc-card sc-hero" aria-labelledby="sc-title">
       <style>{CSS}</style>
       <div className="sc-row">
         <div className="sc-text">
@@ -117,7 +130,10 @@ export default function SubscriptionCard() {
           <h2 className="sc-title" id="sc-title">{t('Payment not made')}</h2>
           <p className="sc-sub">{t('Your plan is not active. Lessons, tasks, exams and the library are locked until you renew.')}</p>
         </div>
-        <button type="button" className="sc-cta" onClick={() => navigate('/checkout')}>{t('Pay for access')}{ARROW}</button>
+        <div className="sc-buy">
+          {perMonth !== null && <div className="sc-price">{t('from')} <b>{formatMoney(perMonth / 100, 'USD', 'en')}</b> / {t('month')}{savePct > 0 && <span className="sc-save">−{savePct}%</span>}</div>}
+          <button type="button" className="sc-cta sc-cta-big" onClick={() => navigate('/checkout')}>{t('Upgrade plan')}{ARROW}</button>
+        </div>
       </div>
 
       <div className="sc-divider" aria-hidden="true" />
