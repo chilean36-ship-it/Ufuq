@@ -46,6 +46,9 @@ export const LINE_CSS = `
 .pl-grid{ stroke:var(--line); stroke-width:1; }
 .pl-pass{ stroke:var(--gold); stroke-width:1; stroke-dasharray:4 5; opacity:.5; }
 .pl-axis{ fill:var(--text-muted); font-size:12px; }
+.pl-year{ fill:var(--gold-bright); font-size:11px; font-weight:700; letter-spacing:.04em; }
+.pl-tick{ stroke:var(--line); stroke-width:1; }
+.pl-axis{ font-weight:500; }
 .pl-line{ fill:none; stroke:var(--gold); stroke-width:3.4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:1; animation:plDraw 1s ease forwards; }
 .pl-area{ opacity:0; animation:plFade .8s .3s ease forwards; }
 .pl-dot{ fill:var(--bg-2); stroke:var(--gold); stroke-width:3; cursor:pointer; transition:r .15s ease; }
@@ -88,7 +91,7 @@ export default function ProgressLine({ items, compact = false }) {
   // geometry
   const W = Math.max(280, width || 640);
   const H = compact ? Math.round(Math.min(260, Math.max(190, W * 0.62))) : Math.round(Math.min(380, Math.max(220, W * 0.42)));
-  const L = 40, R = 18, T = 14, B = 30;
+  const L = 40, R = 26, T = 18, B = 46;
   const t0 = mode === '3m' ? threeAgo : (pts.length ? pts[0].ts : 0);
   const t1 = mode === '3m' ? Date.now() : (pts.length ? pts[pts.length - 1].ts : 1);
   const span = Math.max(1, t1 - t0);
@@ -100,12 +103,19 @@ export default function ProgressLine({ items, compact = false }) {
 
   // month labels under the line (at most ~6)
   const ticks = useMemo(() => {
-    const out = []; const d = new Date(t0); d.setDate(1); d.setHours(0, 0, 0, 0);
+    let out = []; const d = new Date(t0); d.setDate(1); d.setHours(0, 0, 0, 0);
     if (d.getTime() < t0) d.setMonth(d.getMonth() + 1);
-    while (d.getTime() <= t1 && out.length < 40) { out.push({ ts: d.getTime(), text: d.toLocaleDateString(locale, { month: 'short' }) }); d.setMonth(d.getMonth() + 1); }
+    while (d.getTime() <= t1 && out.length < 40) { out.push({ ts: d.getTime(), text: d.toLocaleDateString(locale, { month: 'short' }), y: d.getFullYear() }); d.setMonth(d.getMonth() + 1); }
     const step = Math.max(1, Math.ceil(out.length / 6));
-    return out.filter((_, i) => i % step === 0);
-  }, [t0, t1, locale]);
+    out = out.filter((_, i) => i % step === 0);
+    // a short period has no month start inside it: label the first and last result by day instead
+    if (out.length < 2 && pts.length) {
+      const ends = pts.length === 1 ? [pts[0]] : [pts[0], pts[pts.length - 1]];
+      out = ends.map((p) => ({ ts: p.ts, text: new Date(p.ts).toLocaleDateString(locale, { day: 'numeric', month: 'short' }), y: new Date(p.ts).getFullYear() }));
+    }
+    // the year is written under the first label and wherever it changes
+    return out.map((tk, i) => ({ ...tk, showYear: i === 0 || tk.y !== out[i - 1].y }));
+  }, [t0, t1, locale, pts]);
 
   // the details bubble shows only while the pointer is over a dot (or after a tap on a phone), never by itself
   const active = hover != null && hover < pts.length ? hover : null;
@@ -154,14 +164,15 @@ export default function ProgressLine({ items, compact = false }) {
           <svg key={mode} className="pl-svg" viewBox={`0 0 ${W} ${H}`}>
             <defs><linearGradient id="plFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--gold)" stopOpacity=".32" /><stop offset="100%" stopColor="var(--gold)" stopOpacity="0" /></linearGradient></defs>
             {[0, 50, 100].map((v) => <g key={v}><line className="pl-grid" x1={L} x2={W - R} y1={yp(v)} y2={yp(v)} /><text className="pl-axis" x={L - 8} y={yp(v) + 4} textAnchor="end">{v}</text></g>)}
-            {ticks.map((tk) => <text key={tk.ts} className="pl-axis" x={xp(tk.ts)} y={H - 8} textAnchor="middle">{tk.text}</text>)}
+            {ticks.map((tk) => <text key={tk.ts} className="pl-axis" x={xp(tk.ts)} y={H - 24} textAnchor="middle">{tk.text}{tk.showYear && <tspan className="pl-year" x={xp(tk.ts)} dy="15">{tk.y}</tspan>}</text>)}
+            {ticks.map((tk) => <line key={'t' + tk.ts} className="pl-tick" x1={xp(tk.ts)} x2={xp(tk.ts)} y1={H - B} y2={H - B + 5} />)}
             {P.length > 1 && <path className="pl-area" d={area} fill="url(#plFill)" />}
             {P.length > 1 && <path className="pl-line" d={line} pathLength="1" />}
             {active != null && P[active] && <line className="pl-cross" x1={P[active][0]} x2={P[active][0]} y1={T} y2={H - B} />}
             {P.map((p, i) => <circle key={pts[i].id + '-' + i} className={'pl-dot' + (i === pts.length - 1 ? ' last' : '')} cx={p[0]} cy={p[1]} r={active === i ? 9 : 6} />)}
           </svg>
           {shown && P[active] && (
-            <div className="pl-tip" style={{ left: Math.min(Math.max((P[active][0] / W) * 100, 16), 84) + '%', top: (P[active][1] / H) * 100 + '%', transform: 'translate(-50%,-135%)' }}>
+            <div className="pl-tip" style={{ left: Math.min(Math.max((P[active][0] / W) * 100, 16), 84) + '%', top: (P[active][1] / H) * 100 + '%', transform: P[active][1] < 96 ? 'translate(-50%,28%)' : 'translate(-50%,-135%)' }}>
               <b>{shown.pct}%</b><small>{new Date(shown.ts).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</small>
               {shown.title ? <><br /><small dir="auto">{shown.title}</small></> : null}
             </div>

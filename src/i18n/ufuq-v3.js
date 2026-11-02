@@ -54,5 +54,6 @@ const ROWS = [
   ['Is the yearly plan really cheaper?', 'Yillik tarif haqiqatan arzonmi?', 'Годовой тариф действительно дешевле?', 'هل الخطة السنوية أرخص فعلًا؟'],
   ['Yes — the yearly price is lower than paying month by month, shown below the price.', "Ha — yillik narx oyma-oy to'lashdan arzon, narx ostida ko'rsatilgan.", 'Да — годовая цена ниже помесячной, это показано под ценой.', 'نعم — السعر السنوي أقل من الدفع شهريًا كما يظهر تحت السعر.'],
 ];
+ROWS.push(['The top 2 of each level get one.', "Har bir darajaning eng yaxshi 2 natijasi oladi.", 'Получают два лучших результата каждого уровня.', 'تُمنح لأفضل نتيجتين في كل مستوى.']);
 const pick = (i) => Object.fromEntries(ROWS.map((r) => [r[0], r[i]]));
 export default { UZ: pick(1), RU: pick(2), AR: pick(3), EN: {} };

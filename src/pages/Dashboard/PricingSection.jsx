@@ -6,23 +6,12 @@ import { formatMoney, fill } from '../../lib/payments';
 /* Marketing-style pricing block for the Billing page: period toggle, one featured plan card, what's included,
    trust row and FAQ. Prices come from the server (usePlanPrices); the browser never sets an amount. */
 const INCLUDED = [
-  ['Live group classes', 'Weekly lessons with Ustaz Ali in a small group.'],
-  ['Tasks and exams', 'Homework with feedback, midterm and final exams.'],
-  ['Progress and attendance', 'See your results and attendance at a glance.'],
-  ['Library and group chat', 'Books, audio and a chat with your classmates.'],
-  ['Certificates', 'Earn a place certificate for your level results.'],
-  ['Ufuq AI assistant', 'Practice and ask questions any time.'],
-];
-const FAQ = [
-  ['Can I cancel any time?', 'Yes. Plans are not renewed automatically — you pay again only when you decide to.'],
-  ['Which payment methods can I use?', 'Bank card and bank transfer. Transfers are checked by our team after you send the receipt.'],
-  ['What happens when my plan ends?', 'Your progress and results are kept. You can renew whenever you are ready and continue.'],
-  ['Is the yearly plan really cheaper?', 'Yes — the yearly price is lower than paying month by month, shown below the price.'],
+  'Live group classes', 'Tasks and exams', 'Progress and attendance', 'Library and group chat', 'Certificates', 'Ufuq AI assistant',
 ];
 
 export const PRICING_CSS = `
 .pr{ display:grid; gap:26px; }
-.pr-head{ text-align:center; display:grid; gap:10px; justify-items:center; padding-top:8px; }
+.pr-head{ display:grid; justify-items:center; padding-top:4px; }
 .pr-kicker{ font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-bright); font-weight:700; }
 .pr-title{ font-family:'Fraunces',serif; font-size:clamp(26px,4vw,38px); line-height:1.15; margin:0; color:var(--text); }
 .pr-sub{ max-width:520px; margin:0; color:var(--text-muted); font-size:14.5px; line-height:1.6; }
@@ -49,9 +38,9 @@ html[dir="rtl"] .pr-toggle.year .pr-knob{ transform:translateX(-100%); }
 .pr-fine{ font-size:11.5px; color:var(--text-muted); text-align:center; }
 .pr-incl{ padding:30px; display:grid; gap:14px; align-content:start; }
 .pr-incl h4{ margin:0; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
-.pr-feat{ display:flex; gap:12px; align-items:flex-start; }
+.pr-feat{ display:flex; gap:12px; align-items:center; }
 .pr-feat .bl-tick{ margin-top:2px; }
-.pr-feat b{ display:block; font-size:14px; color:var(--text); font-weight:600; }
+.pr-feat b{ display:block; font-size:14.5px; color:var(--text); font-weight:600; }
 .pr-feat span.d{ display:block; font-size:12.5px; color:var(--text-muted); line-height:1.5; }
 .pr-trust{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 26px; color:var(--text-muted); font-size:13px; }
 .pr-trust span{ display:inline-flex; align-items:center; gap:8px; }
@@ -79,8 +68,7 @@ export default function PricingSection({ plans, loading, savePct, active }) {
   const { t } = useCabinetI18n();
   const navigate = useNavigate();
   const [period, setPeriod] = useState('year');
-  const [openQ, setOpenQ] = useState(0);
-
+  
   const monthly = plans.find((p) => p.months === 1);
   const yearly = plans.find((p) => p.months === 12);
   const plan = (period === 'year' ? yearly : monthly) || yearly || monthly;
@@ -91,9 +79,6 @@ export default function PricingSection({ plans, loading, savePct, active }) {
     <section className="pr" aria-label={t('Plans and pricing')}>
       <style>{PRICING_CSS}</style>
       <div className="pr-head">
-        <span className="pr-kicker">{t('Plans and pricing')}</span>
-        <h2 className="pr-title">{t('One plan. Everything you need to learn Arabic.')}</h2>
-        <p className="pr-sub">{t('Simple, transparent pricing in US dollars. Pay monthly or save with the yearly plan.')}</p>
         {monthly && yearly && (
           <div className={'pr-toggle ' + period} role="tablist" aria-label={t('Billing period')}>
             <span className="pr-knob" aria-hidden="true" />
@@ -124,10 +109,10 @@ export default function PricingSection({ plans, loading, savePct, active }) {
           </div>
           <div className="pr-incl">
             <h4>{t("What's included")}</h4>
-            {INCLUDED.map(([title, desc]) => (
+            {INCLUDED.map((title) => (
               <div className="pr-feat" key={title}>
                 <span className="bl-tick" aria-hidden="true">✓</span>
-                <div><b>{t(title)}</b><span className="d">{t(desc)}</span></div>
+                <b>{t(title)}</b>
               </div>
             ))}
           </div>
@@ -140,18 +125,6 @@ export default function PricingSection({ plans, loading, savePct, active }) {
         <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2" /><circle cx="12" cy="12" r="9" /></svg>{t('Access starts right after payment')}</span>
       </div>
 
-      <div className="pr-faq">
-        <h3>{t('Questions, answered')}</h3>
-        {FAQ.map(([q, a], i) => (
-          <div key={q} className={'pr-q' + (openQ === i ? ' open' : '')}>
-            <button type="button" aria-expanded={openQ === i} onClick={() => setOpenQ(openQ === i ? -1 : i)}>
-              {t(q)}
-              <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-            </button>
-            <div className="pr-a"><div><p>{t(a)}</p></div></div>
-          </div>
-        ))}
-      </div>
     </section>
   );
 }

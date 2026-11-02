@@ -81,23 +81,11 @@ export default function CertificatesView() {
   const print = (r) => { if (!printCertificate(propsFor(r))) setMsg(t('Allow pop-ups to print the certificate.')); };
 
   const list = rows || [];
-  const firsts = list.filter((r) => Number(r.place) === 1).length;
-  const seconds = list.filter((r) => Number(r.place) === 2).length;
 
   return (
     <div className="cf">
       <PageStyle css={css} />
-      <section className="cf-hero">
-        <div className="cf-hero-txt">
-          <span className="cf-kicker">{t('Achievements')}</span>
-          <h2>{t('Your certificates')}</h2>
-          <p>{t('The two best results of every level receive a certificate. Students with the same result share the same place.')}</p>
-        </div>
-        <div className="cf-stats">
-          <div><b>{rows === null ? '–' : firsts}</b><span>{t('1st place')}</span></div>
-          <div><b>{rows === null ? '–' : seconds}</b><span>{t('2nd place')}</span></div>
-        </div>
-      </section>
+      <h2 className="cf-title">{t('Certificates')}</h2>
 
       {rows !== null && list.length > 0 && (
         <div className="cf-grid">
@@ -109,7 +97,7 @@ export default function CertificatesView() {
               <div className="cf-meta">
                 <span className={'cf-place p' + r.place}>{t(PLACE_LABEL[r.place] || '')}</span>
                 <b>{t('Level')} {r.level} · {LEVEL_NAMES[Math.max(0, Number(r.level) - 1)]}</b>
-                <small>{fmtPts(r.total_points)} / {r.max_points || 150} · {t('{n} students').replace('{n}', r.cohort_size)}</small>
+                <small>{fmtPts(r.total_points)} / {r.max_points || 150}</small>
               </div>
             </TiltCard>
           ))}
@@ -118,28 +106,12 @@ export default function CertificatesView() {
 
       {rows !== null && list.length === 0 && (
         <section className="cf-empty">
-          <div className="cf-ghosts" aria-hidden="true">
-            {[1, 2].map((p) => (
-              <div key={p} className={'cf-ghost g' + p}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="9" r="6" /><path d="m8.5 14 -1.5 8 5 -3 5 3 -1.5 -8" /></svg>
-                <b>{p}</b>
-              </div>
-            ))}
-          </div>
-          <h3>{t('No certificates yet')}</h3>
-          <p>{t('When a level ends, the best two results receive a certificate here. Finish your midterm and final to compete.')}</p>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6" /><path d="m8.5 14-1.5 8 5-3 5 3-1.5-8" /></svg>
+          <p>{t('No certificates yet')}</p>
+          <small>{t('The top 2 of each level get one.')}</small>
         </section>
       )}
 
-      <section className="cf-how">
-        {[
-          ['1', 'Take the midterm and the final', 'Your level total is the midterm plus the final (150 points).'],
-          ['2', 'The best results win', 'The highest total gets the 1st-place certificate, the next one the 2nd.'],
-          ['3', 'Ties are shared', 'If several students have the same total, all of them receive that place.'],
-        ].map(([n, h, d]) => (
-          <div key={n} className="cf-step"><i>{n}</i><div><b>{t(h)}</b><span>{t(d)}</span></div></div>
-        ))}
-      </section>
 
       {open && (
         <div className="cf-modal" role="dialog" aria-modal="true" aria-label={t('Certificate')} onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(null); }}>
