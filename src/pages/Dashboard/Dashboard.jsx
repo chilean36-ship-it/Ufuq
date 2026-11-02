@@ -145,10 +145,9 @@ function DashboardInner({ initialView = 'home' }) {
   const initial = shownName.charAt(0).toUpperCase();
 
   // Group switcher (like the teacher panel's) — only for students who belong to more than one group.
-  // Upgrade button in the topbar (students without a running plan, or whose plan ends within a week)
+  // Upgrade button in the topbar: only for students who have no paid plan running
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const endsInDays = access && access.active && access.ends_at ? Math.ceil((new Date(access.ends_at).getTime() - Date.now()) / 86400000) : null;
-  const upgradeLabel = role !== 'student' || !access || access.exempt ? null : !access.active ? t('Upgrade plan') : (endsInDays !== null && endsInDays <= 7 ? t('Renew plan') : null);
+  const upgradeLabel = role !== 'student' || !access || access.exempt || access.active ? null : t('Upgrade plan');
   const upgrade = upgradeLabel ? { label: upgradeLabel, onClick: () => setUpgradeOpen(true) } : null;
 
   const groupSwitcher = groups.length > 1 ? (
