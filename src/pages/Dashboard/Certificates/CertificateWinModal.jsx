@@ -24,12 +24,12 @@ const CSS = `
 
 export default function CertificateWinModal({ onOpen }) {
   const { t } = useCabinetI18n();
-  const { user, role, locked } = useDashboardData();
+  const { user, locked } = useDashboardData();
   const [win, setWin] = useState(null);
   const uid = user && user.id;
 
   useEffect(() => {
-    if (!uid || role !== 'student' || locked) return undefined;
+    if (!uid || locked) return undefined;
     let alive = true;
     (async () => {
       const { data, error } = await supabase.rpc('my_certificates');
@@ -38,7 +38,7 @@ export default function CertificateWinModal({ onOpen }) {
       if (fresh.length) setWin(fresh[0]);
     })();
     return () => { alive = false; };
-  }, [uid, role, locked]);
+  }, [uid, locked]);
 
   if (!win) return null;
   const close = async (go) => {

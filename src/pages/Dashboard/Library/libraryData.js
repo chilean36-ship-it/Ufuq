@@ -73,14 +73,27 @@ export function audioSourceCandidates(a) {
   return [];
 }
 
-/** Rows from public.board_photos: general photos (group_code IS NULL) + the student's own group's. */
+/** Group codes whose materials this student sees: the own group plus the lower levels of the same letter (materials follow the student
+ *  up the levels). Falls back to the own group when the server function is not available yet. */
+async function materialCodes(code) {
+  if (!code) return [];
+  try {
+    const { data, error } = await supabase.rpc('ufuq_series_codes_for', { p_code: code });
+    if (!error && Array.isArray(data) && data.length) return [...new Set([code, ...data.map((x) => String(x))])].filter((c) => /^[A-Za-z0-9]+$/.test(c));
+  } catch (e) { /* use the own group only */ }
+  return [code];
+}
+const groupFilter = (codes) => 'group_code.is.null,group_code.in.(' + codes.join(',') + ')';
+
+/** Rows from public.board_photos: general photos (group_code IS NULL) + those of the student's group and its lower levels. */
 export async function getBoardPhotos(code) {
   try {
     let query = supabase
       .from('board_photos')
       .select('*')
       .order('taken_at', { ascending: false });
-    query = code ? query.or('group_code.is.null,group_code.eq.' + code) : query.is('group_code', null);
+    const codes = await materialCodes(code);
+    query = codes.length ? query.or(groupFilter(codes)) : query.is('group_code', null);
     const { data, error } = await query;
     if (error) throw error;
     const rows = data || [];
@@ -109,14 +122,15 @@ export async function getBoardPhotos(code) {
   }
 }
 
-/** Rows from public.audio_lessons: general lessons + those published for the student's own group. */
+/** Rows from public.audio_lessons: general lessons + those of the student's group and its lower levels. */
 export async function getAudioLessons(code) {
   try {
     let query = supabase
       .from('audio_lessons')
       .select('*')
       .order('published_at', { ascending: false });
-    query = code ? query.or('group_code.is.null,group_code.eq.' + code) : query.is('group_code', null);
+    const codes = await materialCodes(code);
+    query = codes.length ? query.or(groupFilter(codes)) : query.is('group_code', null);
     const { data, error } = await query;
     if (error) throw error;
     return (data || []).map((a) => ({
