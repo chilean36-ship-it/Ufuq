@@ -128,11 +128,12 @@ export async function cancelOrder(orderId) {
   if (error) throw error;
 }
 export async function fetchMyOrders() {
-  const { data, error } = await supabase.from('orders')
-    .select('id, invoice_no, status, method, plan_id, months, usd_cents, display_currency, display_amount, charge_currency, charge_cents, paid_at, starts_at, ends_at, created_at, refund_cents, review_note, reviewed_at')
-    .order('created_at', { ascending: false }).limit(50);
-  if (error) throw error;
-  return data || [];
+  const base = 'id, invoice_no, status, method, plan_id, months, usd_cents, display_currency, display_amount, charge_currency, charge_cents, paid_at, starts_at, ends_at, created_at, refund_cents, review_note, reviewed_at';
+  // cancelled_at / expires_at exist once the payment-policy migration is applied; until then fall back to the old column list.
+  let res = await supabase.from('orders').select(base + ', cancelled_at, expires_at').order('created_at', { ascending: false }).limit(50);
+  if (res.error) res = await supabase.from('orders').select(base).order('created_at', { ascending: false }).limit(50);
+  if (res.error) throw res.error;
+  return res.data || [];
 }
 export async function fetchOrder(id) {
   const { data, error } = await supabase.from('orders')

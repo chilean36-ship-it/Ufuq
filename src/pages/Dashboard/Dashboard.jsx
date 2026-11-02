@@ -29,6 +29,8 @@ const CertificatesView = lazy(() => import('./Certificates/CertificatesView'));
 import SettingsView from './SettingsView';
 import BillingView, { BILLING_CSS } from './BillingView';
 import PaywallGate from './PaywallGate';
+import UpgradeModal from './UpgradeModal';
+import PaymentBanner from './PaymentBanner';
 import billingDict from '../../i18n/billing-cabinet';
 import myGroupDict from '../../i18n/my-group';
 import ExamView from './Exam/ExamView';
@@ -65,7 +67,7 @@ const cabinetDict = Object.fromEntries(
 
 function DashboardInner({ initialView = 'home' }) {
   const { t } = useCabinetI18n();
-  const { user, name, isPaid, locked, accessPending, avatarUrl, setAvatarUrl, groupData, groupReady, groups, groupCode, switchGroup, refreshGroup, role } = useDashboardData();
+  const { user, name, isPaid, locked, accessPending, avatarUrl, setAvatarUrl, groupData, groupReady, groups, groupCode, switchGroup, refreshGroup, role, access } = useDashboardData();
   const isIndividual = !!(groupData && groupData.type === 'individual');
   const [theme, toggleTheme, themeMode, setThemeMode] = useTheme();
   const [sbCollapsed, toggleSbCollapsed, setSbCollapsed] = useSidebarCollapsed();
@@ -143,6 +145,12 @@ function DashboardInner({ initialView = 'home' }) {
   const initial = shownName.charAt(0).toUpperCase();
 
   // Group switcher (like the teacher panel's) — only for students who belong to more than one group.
+  // Upgrade button in the topbar (students without a running plan, or whose plan ends within a week)
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const endsInDays = access && access.active && access.ends_at ? Math.ceil((new Date(access.ends_at).getTime() - Date.now()) / 86400000) : null;
+  const upgradeLabel = role !== 'student' || !access || access.exempt ? null : !access.active ? t('Upgrade plan') : (endsInDays !== null && endsInDays <= 7 ? t('Renew plan') : null);
+  const upgrade = upgradeLabel ? { label: upgradeLabel, onClick: () => setUpgradeOpen(true) } : null;
+
   const groupSwitcher = groups.length > 1 ? (
     <PillSelect icon={GROUP_ICON} ariaLabel={t('Group')} value={groupCode || ''} hideCurOnMobile
                 options={groups.map((g) => ({ value: g.code, label: g.name }))}
@@ -165,9 +173,10 @@ function DashboardInner({ initialView = 'home' }) {
           crumb={t(CRUMB_TITLES[view] || 'Home')} name={shownName} avatarInitial={initial} avatarUrl={shownAvatar} role="student" onProfile={() => navigate('profile')}
           theme={theme} onToggleTheme={toggleTheme} onMobileMenu={() => setSidebarOpen((o) => !o)}
           onNotif={toggleNotif} notifCount={notifs.unread} notifHidden={!isPaid} notifOpen={notifOpen}
-          groupSwitcher={groupSwitcher}
+          groupSwitcher={groupSwitcher} upgrade={upgrade}
         />
         <div className="content" key={switchNonce}>
+          {view !== 'billing' && <PaymentBanner onUpgrade={() => setUpgradeOpen(true)} />}
           {locked && PAID_VIEWS.includes(view) && <PaywallGate onNavigate={navigate} />}
           {locked && view === 'myGroup' && <PaywallGate variant="group" onNavigate={navigate} />}
           {view === 'home' && <HomeView onNavigate={navigate} />}
@@ -179,7 +188,8 @@ function DashboardInner({ initialView = 'home' }) {
           {view === 'progress' && !locked && <ProgressView />}
           {view === 'library' && !locked && <LibraryView />}
           {view === 'exam' && !locked && <ExamView />}
-          {view === 'billing' && <BillingView />}
+          {view === 'billing' && <BillingView onUpgrade={() => setUpgradeOpen(true)} />}
+          <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
           {view === 'settings' && <SettingsView theme={theme} onToggleTheme={toggleTheme} themeMode={themeMode} onSetThemeMode={setThemeMode} onNavigate={navigate} />}
           {view === 'profile' && <ProfileView onIdentityChange={onIdentityChange} />}
           {!['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'certificates', 'settings', 'exam', 'profile', 'billing'].includes(view) && <Pending name={t(CRUMB_TITLES[view] || view)} />}

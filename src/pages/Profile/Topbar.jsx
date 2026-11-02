@@ -34,7 +34,7 @@ const ROLE_META = {
  * `role` ('student' | 'teacher' | 'admin') draws a small badge under the name so it's always
  * clear whose account — and which kind of account — is signed in (Profile is shared by every role).
  */
-export default function Topbar({ crumb, onMobileMenu, theme, onToggleTheme, name, avatarInitial, avatarUrl, role, onProfile, onNotif, notifCount, notifHidden, notifOpen, groupSwitcher }) {
+export default function Topbar({ crumb, onMobileMenu, theme, onToggleTheme, name, avatarInitial, avatarUrl, role, onProfile, onNotif, notifCount, notifHidden, notifOpen, groupSwitcher, upgrade }) {
   const { t } = useCabinetI18n();
   const roleMeta = ROLE_META[role];
   return (
@@ -44,6 +44,12 @@ export default function Topbar({ crumb, onMobileMenu, theme, onToggleTheme, name
       </button>
       <div className="crumb"><span>{t('Cabinet')}</span> / <b>{crumb}</b></div>
       <div className="top-right">
+        {upgrade && (
+          <button type="button" className="tb-upgrade" onClick={upgrade.onClick} aria-label={upgrade.label}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9z" /><path d="M19 15l.7 2.1L21.8 18l-2.1.7L19 21l-.7-2.3L16 18l2.3-.9z" /></svg>
+            <span>{upgrade.label}</span>
+          </button>
+        )}
         <CabinetLangSelect />
         {groupSwitcher /* only passed when the student belongs to 2+ groups */}
 

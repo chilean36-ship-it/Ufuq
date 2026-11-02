@@ -8,7 +8,6 @@ import { LessonBlocks, statusMessage } from './AttendanceView';
 import { getExamHistory, fetchGroupRanking } from './Exam/examData';
 import ProgressLine, { LINE_CSS } from '../../components/ProgressLine';
 import PageStyle from '../../components/PageStyle';
-import SubscriptionCard from './SubscriptionCard';
 import ClosedGroupNotice from './ClosedGroupNotice';
 
 import { fmtDate } from '../../lib/dateLocale';
@@ -187,7 +186,6 @@ export default function HomeView({ onNavigate }) {
   return (
     <div id="homeView">
       <PageStyle css={LINE_CSS + HOME_CSS} />
-      <SubscriptionCard />
       <ClosedGroupNotice />
       <div className="welcome">
         <div className="eyebrow">{t('Your cabinet')}</div>

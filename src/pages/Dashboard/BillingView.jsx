@@ -4,14 +4,10 @@ import { useCabinetI18n } from '../../context/CabinetI18nContext';
 import { useDashboardData } from '../../context/DashboardDataContext';
 import useLiveRefresh from '../../lib/liveRefresh';
 import OrderSteps from './OrderSteps';
-import PricingSection from './PricingSection';
-import usePlanPrices from '../../lib/usePlanPrices';
-import { fetchMyOrders, fetchOrder, cancelOrder, startCardPayment, uploadTransferProof, submitTransferProof, formatMoney, fill } from '../../lib/payments';
+import { fetchMyOrders, fetchOrder, cancelOrder, startCardPayment, uploadTransferProof, submitTransferProof, formatMoney } from '../../lib/payments';
 
 const LOCALE = { EN: 'en', UZ: 'uz', RU: 'ru', AR: 'ar' };
 const MAX_BYTES = 5 * 1024 * 1024;
-/* Shared with the Home payment card, so the same benefits read the same everywhere. */
-const PLAN_FEATURES = ['Live group classes', 'Tasks and exams', 'Progress and attendance', 'Library and group chat'];
 const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const STATUS = {
   pending: 'Waiting for payment', awaiting_review: 'Waiting for review', paid: 'Paid', failed: 'Failed',
@@ -56,6 +52,18 @@ export const BILLING_CSS = `
 .bl-chip.active{background:rgba(70,170,110,.16); color:#4cc38a;}
 .bl-chip.soon{background:rgba(200,160,60,.16); color:var(--gold-bright);}
 .bl-chip.none{background:rgba(220,80,80,.14); color:var(--danger);}
+.bl-chip.warn{background:rgba(229,100,90,.16); color:#e5645a;}
+.bl-chip.info{background:rgba(120,160,230,.16); color:#8db0f0;}
+.bl-hero-side{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.bl-upgrade{ border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:99px; font-weight:700; font-size:13.5px; font-family:inherit; color:var(--bg); background:linear-gradient(180deg,var(--gold-bright),var(--gold)); box-shadow:0 10px 22px -12px rgba(200,160,60,.9); transition:transform .15s, filter .2s; }
+.bl-upgrade:hover{ filter:brightness(1.07); transform:translateY(-1px); }
+.bl-upgrade:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; }
+.bl-orders-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.bl-filter{ display:inline-flex; gap:4px; padding:3px; border-radius:11px; background:var(--bg-3); border:1px solid var(--line); }
+.bl-filter button{ border:0; background:transparent; color:var(--text-muted); font-weight:600; font-size:13px; font-family:inherit; padding:7px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:7px; }
+.bl-filter button.on{ background:var(--gold); color:var(--bg); }
+.bl-filter i{ font-style:normal; font-size:11px; min-width:18px; padding:1px 6px; border-radius:99px; background:rgba(127,127,127,.2); text-align:center; }
+.bl-filter button.on i{ background:rgba(0,0,0,.2); }
 .bl-chip.free{background:var(--bg-3); color:var(--text-muted);}
 .bl-plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px;}
 .bl-plan{background:var(--bg-2); border:1px solid var(--line); border-radius:16px; padding:20px 22px; display:flex; flex-direction:column; gap:10px; transition:border-color .2s, transform .2s;}
@@ -138,7 +146,7 @@ function daysLeft(iso) {
 }
 
 /** Student → Billing: access status, renew, order history, invoices, and finishing a bank transfer. */
-export default function BillingView() {
+export default function BillingView({ onUpgrade }) {
   const { t, lang } = useCabinetI18n();
   const { user, role, access, refreshAccess } = useDashboardData();
   const showAsStudent = role === 'admin'; // admins see Billing exactly like a student, including plans
@@ -149,6 +157,7 @@ export default function BillingView() {
   const [files, setFiles] = useState({});
   const [msg, setMsg] = useState({}); // orderId -> { kind, text }
   const [phones, setPhones] = useState({}); // orderId -> phone typed for a card payment
+  const [flt, setFlt] = useState('all');   // order filter: all | open | paid
 
   const load = useCallback(async () => {
     try { setOrders(await fetchMyOrders()); } catch (e) { setOrders((o) => o || []); }
@@ -208,18 +217,37 @@ export default function BillingView() {
   const left = active && access.ends_at ? daysLeft(access.ends_at) : 0;
   const soon = active && left <= 7;
 
-  const { plans, savePct, loading: plansLoading } = usePlanPrices(locale);
   /* Every price on this page is shown in US dollars. */
   const usd = (cents) => formatMoney(Number(cents) / 100, 'USD', 'en');
-  const heroKind = !access ? 'none' : access.exempt ? 'free' : active ? (soon ? 'soon' : 'active') : 'none';
-  const heroChip = { free: t('Free'), active: t('Active'), soon: t('Ending soon'), none: t('Inactive') }[heroKind];
+  const st = access ? access.state : null;
+  const heroKind = !access ? 'none' : access.exempt ? 'free' : st === 'grace' ? 'warn' : st === 'pre_due' ? 'soon' : st === 'extended' ? 'info' : active ? (soon ? 'soon' : 'active') : 'none';
+  const heroChip = { free: t('Free'), active: t('Active'), soon: st === 'pre_due' ? t('Payment due') : t('Ending soon'), warn: t('Grace period'), info: t('Extra time'), none: t('Inactive') }[heroKind];
   const heroTitle = access && access.exempt ? t('Free access')
+    : st === 'grace' ? date(access.grace_ends_at)
+    : st === 'pre_due' ? date(access.due_at)
+    : st === 'extended' ? date(access.extension_until)
     : active ? date(access.ends_at)
     : t('No active access');
   const heroSub = access && access.exempt ? t('Teachers and main admins do not need a plan.')
+    : st === 'grace' ? t('Payment is overdue. Your access closes on this date unless you pay.')
+    : st === 'pre_due' ? t('Please choose a plan by this date to keep your access.')
+    : st === 'extended' ? t('You were given extra time. Your access stays open until this date.')
     : active ? `${t('Active until')} · ${left} ${t('days left')}`
     : access && access.enforced ? t('Your access has ended or has not started yet. Choose a plan to unlock the cabinet.')
     : t('Payments are not required right now. Everything is open.');
+  const canBuy = !!access && (!access.exempt || showAsStudent) && heroKind !== 'free';
+
+  // Order history: newest first. A cancelled order disappears a day after it was cancelled and an unpaid order when its payment
+  // window ends. The server deletes them too; this only hides them until the next cleanup run.
+  const DAY = 86400000;
+  const shown = (orders || []).filter((o) => {
+    if (o.status === 'cancelled' && o.cancelled_at && Date.now() - new Date(o.cancelled_at).getTime() > DAY) return false;
+    if (o.status === 'pending' && o.expires_at && new Date(o.expires_at).getTime() < Date.now()) return false;
+    return true;
+  }).sort((x, y) => new Date(y.created_at) - new Date(x.created_at));
+  const isOpen = (o) => ['pending', 'awaiting_review'].includes(o.status);
+  const list = flt === 'open' ? shown.filter(isOpen) : flt === 'paid' ? shown.filter((o) => o.status === 'paid') : shown;
+  const counts = { all: shown.length, open: shown.filter(isOpen).length, paid: shown.filter((o) => o.status === 'paid').length };
 
   return (
     <div className="bl-grid">
@@ -231,17 +259,26 @@ export default function BillingView() {
           <div className="bl-hero-title">{heroTitle}</div>
           <p className="bl-muted" style={{ margin: 0 }}>{heroSub}</p>
         </div>
-        <span className={'bl-chip ' + heroKind}>{heroChip}</span>
+        <div className="bl-hero-side">
+          <span className={'bl-chip ' + heroKind}>{heroChip}</span>
+          {canBuy && <button type="button" className="bl-upgrade" onClick={onUpgrade}>{active ? t('Renew plan') : t('Upgrade plan')} <span aria-hidden="true">→</span></button>}
+        </div>
       </section>
 
-      {access && (!access.exempt || showAsStudent) && (
-        <PricingSection plans={plans} loading={plansLoading} savePct={savePct} active={active} />
-      )}
-
       <section className="bl-orders" aria-label={t('Order history')}>
-        <div className="bl-eyebrow">{t('Order history')}</div>
-        {orders && orders.length === 0 && <div className="bl-card bl-muted">{t('No orders yet.')}</div>}
-        {orders && orders.length > 0 && <div className="bl-orders-grid">{orders.map((o, i) => {
+        <div className="bl-orders-head">
+          <div className="bl-eyebrow">{t('Order history')}</div>
+          {shown.length > 0 && (
+            <div className="bl-filter" role="tablist" aria-label={t('Filter orders')}>
+              {[['all', 'All'], ['open', 'In progress'], ['paid', 'Paid']].map(([k, l]) => (
+                <button key={k} type="button" role="tab" aria-selected={flt === k} className={flt === k ? 'on' : ''} onClick={() => setFlt(k)}>{t(l)}<i>{counts[k]}</i></button>
+              ))}
+            </div>
+          )}
+        </div>
+        {orders && shown.length === 0 && <div className="bl-card bl-muted">{t('No orders yet.')}</div>}
+        {orders && shown.length > 0 && list.length === 0 && <div className="bl-card bl-muted">{t('No orders in this filter.')}</div>}
+        {orders && list.length > 0 && <div className="bl-orders-grid">{list.map((o, i) => {
           const m = msg[o.id];
           const isBank = o.method === 'bank_transfer';
           const isCard = o.method === 'paymob';
@@ -264,6 +301,7 @@ export default function BillingView() {
                 <OrderSteps status={o.status} />
               </div>
 
+              {o.status === 'pending' && o.expires_at && <div className="bl-muted">{t('Pay before')} {date(o.expires_at)}</div>}
               {isBank && o.status === 'pending' && <div className="bl-muted">{t('Transfer the exact amount with the reference below, then send the receipt.')}</div>}
               {isBank && o.status === 'awaiting_review' && <div className="bl-muted">{t('Receipt received. We are checking the transfer.')}</div>}
               {isBank && open && <div className="bl-ref">{t('Payment reference')}: UFUQ-{o.id.slice(0, 8).toUpperCase()}</div>}

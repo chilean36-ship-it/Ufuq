@@ -56,5 +56,44 @@ const ROWS = [
 ];
 ROWS.push(['The top 2 of each level get one.', "Har bir darajaning eng yaxshi 2 natijasi oladi.", 'Получают два лучших результата каждого уровня.', 'تُمنح لأفضل نتيجتين في كل مستوى.']);
 ROWS.push(['Upgrade plan', 'Tarifni oshirish', 'Улучшить тариф', 'ترقية الخطة'], ['Renew plan', 'Tarifni yangilash', 'Продлить тариф', 'تجديد الخطة'], ['Keep your lessons going', "Darslaringiz to'xtamasin", 'Не прерывайте занятия', 'واصل دروسك'], ['Unlock lessons, exams and more', 'Darslar, imtihonlar va boshqalarni oching', 'Откройте уроки, экзамены и многое другое', 'افتح الدروس والاختبارات وغيرها'], ['from', 'dan', 'от', 'من'], ['month', 'oy', 'мес.', 'شهر']);
+// Upgrade window, payment banner, billing (Nov 2026)
+ROWS.push(
+  ['Upgrade your plan', 'Tarifingizni oshiring', 'Улучшите тариф', 'قم بترقية خطتك'],
+  ['Your current plan', 'Joriy tarifingiz', 'Ваш текущий тариф', 'خطتك الحالية'],
+  ['Limited access', 'Cheklangan kirish', 'Ограниченный доступ', 'وصول محدود'],
+  ['Recommended', 'Tavsiya etiladi', 'Рекомендуем', 'موصى به'],
+  ['Your cabinet and profile', 'Kabinet va profilingiz', 'Ваш кабинет и профиль', 'حسابك وملفك'],
+  ['Billing and order history', "To'lovlar va buyurtmalar tarixi", 'Оплата и история заказов', 'الفواتير وسجل الطلبات'],
+  ['Live classes, tasks and exams', 'Jonli darslar, vazifalar va imtihonlar', 'Живые уроки, задания и экзамены', 'الدروس المباشرة والمهام والاختبارات'],
+  ['Live group classes with Ustaz Ali', 'Ustoz Ali bilan jonli guruh darslari', 'Живые групповые уроки с устазом Али', 'دروس جماعية مباشرة مع الأستاذ علي'],
+  ['Homework, midterm and final exams', 'Uy vazifalari, midterm va final imtihonlar', 'Домашние задания, промежуточные и финальные экзамены', 'الواجبات والاختبارات النصفية والنهائية'],
+  ['Progress, attendance and certificates', 'Progress, davomat va sertifikatlar', 'Прогресс, посещаемость и сертификаты', 'التقدم والحضور والشهادات'],
+  ['Library, group chat and Ufuq AI', 'Kutubxona, guruh chati va Ufuq AI', 'Библиотека, чат группы и Ufuq AI', 'المكتبة ودردشة المجموعة وأفق الذكي'],
+  ['Secure payment · Card or bank transfer · No automatic renewals', "Xavfsiz to'lov · Karta yoki bank o'tkazmasi · Avto-yangilanish yo'q", 'Безопасная оплата · Карта или банковский перевод · Без автопродления', 'دفع آمن · بطاقة أو تحويل بنكي · بلا تجديد تلقائي'],
+  ['Billed monthly', "Oylik to'lov", 'Оплата ежемесячно', 'دفع شهري'],
+  ['Your plan ends in {n} days', 'Tarifingiz {n} kundan keyin tugaydi', 'Ваш тариф закончится через {n} дн.', 'تنتهي خطتك بعد {n} يومًا'],
+  ['Payment is required in {n} days', "To'lov {n} kundan keyin majburiy", 'Оплата потребуется через {n} дн.', 'الدفع مطلوب بعد {n} يومًا'],
+  ['Payment overdue — {n} days left', "To'lov kechikdi — {n} kun qoldi", 'Оплата просрочена — осталось {n} дн.', 'الدفع متأخر — بقي {n} يومًا'],
+  ['You have extra time to pay', "To'lash uchun qo'shimcha muddat berilgan", 'У вас есть дополнительное время для оплаты', 'لديك وقت إضافي للدفع'],
+  ['Active until', 'Faol muddati', 'Активен до', 'نشط حتى'],
+  ['Choose a plan before', 'Tarifni quyidagi sanagacha tanlang:', 'Выберите тариф до', 'اختر خطة قبل'],
+  ['to keep your access.', 'kirishni saqlab qolish uchun.', 'чтобы сохранить доступ.', 'للحفاظ على وصولك.'],
+  ['Your access closes on', 'Kirishingiz yopiladi:', 'Доступ закроется', 'سيُغلق وصولك في'],
+  ['unless you pay.', "agar to'lamasangiz.", 'если вы не оплатите.', 'ما لم تدفع.'],
+  ['Your access stays open until', 'Kirishingiz shu sanagacha ochiq:', 'Ваш доступ открыт до', 'يبقى وصولك مفتوحًا حتى'],
+  ['Choose a plan', 'Tarifni tanlash', 'Выбрать тариф', 'اختر خطة'],
+  ['Payment due', "To'lov muddati", 'Срок оплаты', 'موعد الدفع'],
+  ['Grace period', 'Imtiyozli davr', 'Льготный период', 'فترة سماح'],
+  ['Extra time', "Qo'shimcha muddat", 'Доп. время', 'وقت إضافي'],
+  ['Payment is overdue. Your access closes on this date unless you pay.', "To'lov kechikdi. To'lamasangiz, kirishingiz shu sanada yopiladi.", 'Оплата просрочена. Если вы не оплатите, доступ закроется в эту дату.', 'الدفع متأخر. سيُغلق وصولك في هذا التاريخ ما لم تدفع.'],
+  ['Please choose a plan by this date to keep your access.', "Kirishni saqlash uchun shu sanagacha tarifni tanlang.", 'Выберите тариф к этой дате, чтобы сохранить доступ.', 'يرجى اختيار خطة قبل هذا التاريخ للحفاظ على وصولك.'],
+  ['You were given extra time. Your access stays open until this date.', "Sizga qo'shimcha muddat berildi. Kirishingiz shu sanagacha ochiq.", 'Вам дали дополнительное время. Доступ открыт до этой даты.', 'مُنحت وقتًا إضافيًا. يبقى وصولك مفتوحًا حتى هذا التاريخ.'],
+  ['Filter orders', 'Buyurtmalarni saralash', 'Фильтр заказов', 'تصفية الطلبات'],
+  ['All', 'Hammasi', 'Все', 'الكل'],
+  ['In progress', 'Jarayonda', 'В процессе', 'قيد التنفيذ'],
+  ['Paid', "To'langan", 'Оплачено', 'مدفوع'],
+  ['No orders in this filter.', "Bu filtrda buyurtma yo'q.", 'В этом фильтре заказов нет.', 'لا توجد طلبات في هذا الفلتر.'],
+  ['Pay before', "To'lash muddati:", 'Оплатить до', 'ادفع قبل'],
+);
 const pick = (i) => Object.fromEntries(ROWS.map((r) => [r[0], r[i]]));
 export default { UZ: pick(1), RU: pick(2), AR: pick(3), EN: {} };
