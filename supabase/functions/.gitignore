@@ -1,0 +1,4 @@
+# Local secrets for `supabase functions serve` — never commit
+.env
+.env.*
+!.env.example
