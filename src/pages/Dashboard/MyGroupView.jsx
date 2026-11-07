@@ -366,7 +366,7 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
                 </div>
                 <span className="group-schedule-dot" id="pageScheduleDot" style={dotStyle} aria-hidden="true"></span>
               </div>
-              <button type="button" className={'group-join-btn' + (heroKind === 'live' ? ' is-live' : '')} id="joinClassBtn" onClick={handleJoinClass}>
+              <button type="button" className={'group-join-btn' + (heroKind === 'live' ? ' is-live' : heroKind === 'none' ? ' is-idle' : '')} id="joinClassBtn" onClick={handleJoinClass}>
                 {JOIN_ICON}<span id="joinClassBtnLabel">{t(isIndividual ? 'Join Zoom' : 'Join Class')}</span>
               </button>
             </div>

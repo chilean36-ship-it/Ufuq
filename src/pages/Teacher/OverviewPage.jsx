@@ -55,15 +55,24 @@ export default function OverviewPage() {
       if (myGroups.length === 0) { setData({ empty: true, counts: {}, joinCodes: {}, total: 0 }); return; }
       const codes = myGroups.map((g) => g.code);
       const [{ data: members }, { data: codeRows }] = await Promise.all([
-        supabase.from('group_members').select('group_code').in('group_code', codes),
+        supabase.from('group_members').select('group_code, user_id').in('group_code', codes),
         supabase.from('group_access_codes').select('code, group_code').in('group_code', codes),
       ]);
+      // Count STUDENTS, each once: a student in two groups was counted twice, and teacher / admin accounts that sit in a
+      // group were counted as students (77 here vs 68 real students). Unknown roles (profile not readable) still count.
+      const ids = [...new Set((members || []).map((m) => m.user_id))];
+      const staff = new Set();
+      if (ids.length) {
+        const { data: profs } = await supabase.from('profiles').select('id, role').in('id', ids);
+        (profs || []).forEach((p) => { if (p.role && p.role !== 'student') staff.add(p.id); });
+      }
+      const studentRows = (members || []).filter((m) => !staff.has(m.user_id));
       const counts = {};
-      (members || []).forEach((m) => { counts[m.group_code] = (counts[m.group_code] || 0) + 1; });
+      studentRows.forEach((m) => { counts[m.group_code] = (counts[m.group_code] || 0) + 1; });
       // The code students actually type to join is group_access_codes.code (NOT the internal groups.code).
       const joinCodes = {};
       (codeRows || []).forEach((r) => { if (!joinCodes[r.group_code]) joinCodes[r.group_code] = r.code; });
-      if (!cancelled) setData({ empty: false, counts, joinCodes, total: (members || []).length });
+      if (!cancelled) setData({ empty: false, counts, joinCodes, total: new Set(studentRows.map((m) => m.user_id)).size });
     })();
     return () => { cancelled = true; };
   }, [myGroups, liveTick]);

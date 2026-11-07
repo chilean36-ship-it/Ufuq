@@ -112,7 +112,10 @@ html:not([data-theme="light"]) .pbx{
 .xl-list{display:grid; gap:12px;}
 .xl-card{display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:14px 18px; padding:16px 18px; border:1px solid var(--line); border-radius:14px; background:var(--bg-2);}
 .xl-card:hover{border-color:rgba(201,162,75,.45);}
-.xl-title{font-size:16px; font-weight:700; line-height:1.4; overflow-wrap:anywhere;}
+.xl-title{font-size:16px; font-weight:700; line-height:1.4; overflow-wrap:anywhere;
+  /* dir="auto" keeps an Arabic title's reading order, but it also pushed the title to the right edge of an LTR row.
+     Align with the page instead (left in uz/ru/en, right in the Arabic interface). */
+  text-align:match-parent;}
 .xl-meta{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:5px; font-size:13px; color:var(--text-muted);} .xl-meta b{color:var(--text); font-weight:700;}
 .xl-switch{display:inline-flex; align-items:center; gap:10px; cursor:pointer; font-size:13.5px; font-weight:700; user-select:none; white-space:nowrap;}
 .xl-switch input{position:absolute; opacity:0; width:0; height:0;}

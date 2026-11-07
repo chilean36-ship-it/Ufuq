@@ -20,26 +20,27 @@ import Topbar from '../Profile/Topbar';
 import ProfileView from '../Profile/ProfileView';
 import HomeView from './HomeView';
 import MyGroupView from './MyGroupView';
-import HifzLiveView from './Hifz/HifzLiveView';
+// Heavy views load on first open instead of with the cabinet (the Dashboard chunk was ~690 KB).
+const HifzLiveView = lazy(() => import('./Hifz/HifzLiveView'));
 import TasksView from './TasksView';
 import AttendanceView from './AttendanceView';
 import ProgressView from './ProgressView';
-import LibraryView from './Library/LibraryView';
+const LibraryView = lazy(() => import('./Library/LibraryView'));
 const CertificatesView = lazy(() => import('./Certificates/CertificatesView'));
-import SettingsView from './SettingsView';
+const SettingsView = lazy(() => import('./SettingsView'));
 import BillingView, { BILLING_CSS } from './BillingView';
 import PaywallGate from './PaywallGate';
 import UpgradeModal from './UpgradeModal';
 import PaymentBanner from './PaymentBanner';
 import billingDict from '../../i18n/billing-cabinet';
 import myGroupDict from '../../i18n/my-group';
-import ExamView from './Exam/ExamView';
+const ExamView = lazy(() => import('./Exam/ExamView'));
 import NotificationsPanel from './Notifications/NotificationsPanel';
 import LevelResultModal from './LevelResult/LevelResultModal';
 import CertificateWinModal from './Certificates/CertificateWinModal';
 import useLevelResult from './LevelResult/useLevelResult';
 import { useNotifications } from './Notifications/useNotifications';
-import AiChat from './AiChat/AiChat';
+const AiChat = lazy(() => import('./AiChat/AiChat')); // the floating Ufuq AI button loads after the page itself
 import ComingSoonModal from './ComingSoonModal';
 import Pending from '../Pending/Pending';
 import useHashView, { readHashView } from '../../hooks/useHashView';
@@ -183,22 +184,22 @@ function DashboardInner({ initialView = 'home' }) {
           {locked && view === 'myGroup' && <PaywallGate variant="group" onNavigate={navigate} />}
           {view === 'home' && <HomeView onNavigate={navigate} />}
           {view === 'myGroup' && !locked && !accessPending && <MyGroupView onNavigate={navigate} onChatOpenChange={setGcChatOpen} />}
-          {view === 'hifzLive' && isIndividual && !locked && <HifzLiveView />}
+          {view === 'hifzLive' && isIndividual && !locked && <Suspense fallback={null}><HifzLiveView /></Suspense>}
           {view === 'tasks' && !locked && <TasksView />}
           {view === 'certificates' && !locked && <Suspense fallback={null}><CertificatesView /></Suspense>}
           {view === 'attendance' && !locked && <AttendanceView />}
           {view === 'progress' && !locked && <ProgressView />}
-          {view === 'library' && !locked && <LibraryView />}
-          {view === 'exam' && !locked && <ExamView />}
+          {view === 'library' && !locked && <Suspense fallback={null}><LibraryView /></Suspense>}
+          {view === 'exam' && !locked && <Suspense fallback={null}><ExamView /></Suspense>}
           {view === 'billing' && <BillingView onUpgrade={() => setUpgradeOpen(true)} />}
           <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
-          {view === 'settings' && <SettingsView theme={theme} onToggleTheme={toggleTheme} themeMode={themeMode} onSetThemeMode={setThemeMode} onNavigate={navigate} />}
+          {view === 'settings' && <Suspense fallback={null}><SettingsView theme={theme} onToggleTheme={toggleTheme} themeMode={themeMode} onSetThemeMode={setThemeMode} onNavigate={navigate} /></Suspense>}
           {view === 'profile' && <ProfileView onIdentityChange={onIdentityChange} />}
           {!['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 'progress', 'library', 'certificates', 'settings', 'exam', 'profile', 'billing'].includes(view) && <Pending name={t(CRUMB_TITLES[view] || view)} />}
         </div>
       </div>
 
-      {!locked && <AiChat hideLauncher={gcChatOpen || view === 'hifzLive'} suppress={NO_AI_VIEWS.includes(view)} />}
+      {!locked && <Suspense fallback={null}><AiChat hideLauncher={gcChatOpen || view === 'hifzLive'} suppress={NO_AI_VIEWS.includes(view)} /></Suspense>}
       <LevelResultModal item={levelResult.item} onClose={closeLevelResult} />
       {!levelResult.item && <CertificateWinModal onOpen={() => navigate('certificates')} />}
       <ComingSoonModal linkId={comingSoon} onClose={() => setComingSoon(null)} />

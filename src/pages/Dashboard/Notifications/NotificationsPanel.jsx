@@ -7,8 +7,9 @@ import { fmtDate, currentLang } from '../../../lib/dateLocale';
 
 /* The database triggers (notify_group_on_new_member / _lesson / _task) write these titles in Uzbek. Recognise them and
    show them in the cabinet language; anything else goes through t() as before. */
+const JOIN_RE = /^(.+) guruhga qo['‘’]shildi$/;
 const SERVER_TITLES = [
-  [/^(.+) guruhga qo['‘’]shildi$/, '{name} joined the group', 'name'],
+  [JOIN_RE, '{name} joined the group', 'name'],
   [/^Yangi video dars: (.+)$/, 'New video lesson: {title}', 'title'],
   [/^Yangi vazifa: (.+)$/, 'New task: {title}', 'title'],
 ];
@@ -78,10 +79,25 @@ export default function NotificationsPanel({ open, onClose, items, onMarkRead, o
     const today = startOfDay(Date.now()); const yday = today - 86400000;
     const out = [['today', t('Today'), []], ['yesterday', t('Yesterday'), []], ['earlier', t('Earlier'), []]];
     list.forEach((n) => { (n.time >= today ? out[0] : n.time >= yday ? out[1] : out[2])[2].push(n); });
+    // Every new member of the group sends a "… joined the group" notification to everyone, so they piled up
+    // (50+ of them). Within each day block they now fold into one row at the newest one's place.
+    out.forEach((g) => {
+      const joins = g[2].filter((n) => JOIN_RE.test(String(n.title || '')));
+      if (joins.length < 2) return;
+      const first = String(joins[0].title).match(JOIN_RE)[1];
+      const merged = {
+        ...joins[0], id: 'joins-' + g[0], ids: joins.map((n) => n.id), read: joins.every((n) => n.read),
+        mergedTitle: t('{name} and {n} others joined the group').replace('{name}', first).replace('{n}', joins.length - 1),
+      };
+      const at = g[2].indexOf(joins[0]);
+      g[2] = g[2].filter((n) => !joins.includes(n));
+      g[2].splice(at, 0, merged);
+    });
     return out.filter((g) => g[2].length);
   }, [list, t]);
 
   const go = (n) => {
+    if (n.ids) { n.ids.forEach((id) => onMarkRead(id)); return; }
     onMarkRead(n.id);
     const v = n.link && LINK_VIEWS[n.link];
     if (v && onNavigate) { onNavigate(v); onClose(); }
@@ -123,7 +139,7 @@ export default function NotificationsPanel({ open, onClose, items, onMarkRead, o
                   <button type="button" className={'nf-item t-' + type + (n.read ? '' : ' unread')} data-id={n.id} key={n.id} onClick={() => go(n)}>
                     <span className="nf-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML={{ __html: NOTIF_ICONS[type] }} /></span>
                     <span className="nf-body">
-                      <span className="nf-t">{localizeTitle(n.title, t)}</span>
+                      <span className="nf-t">{n.mergedTitle || localizeTitle(n.title, t)}</span>
                       <span className="nf-x2">{t(n.text)}</span>
                       <span className="nf-time">{timeAgo(n.time, t)}</span>
                     </span>

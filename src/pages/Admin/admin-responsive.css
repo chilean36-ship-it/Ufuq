@@ -36,6 +36,9 @@ body.adm-shell .modal-actions > *{ min-width:0; }
   body.adm-shell .icon-btn, body.adm-shell .modal-close{ width:42px; height:42px; }
   body.adm .a-seg button, body.adm .a-chip-btn{ min-height:38px; }
   body.adm .a-check{ width:20px; height:20px; }
+  /* level − / + and the chip selects in the students table were the remaining small targets on phones */
+  body.adm .a-stepper button{ min-width:36px; min-height:36px; }
+  body.adm .chip-select{ min-height:36px; }
 }
 
 /* ---------- tablet & down ---------- */

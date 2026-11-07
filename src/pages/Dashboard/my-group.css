@@ -123,6 +123,9 @@ html[data-theme="light"] .gp2{ --gp-live:#238A5B; }
 .gp2 .group-join-btn:hover svg{transform:scale(1.12) rotate(-6deg);}
 .gp2 .group-join-btn:active{transform:translateY(0) scale(.98); transition-duration:.08s;}
 .gp2 .group-join-btn:focus-visible{outline:2px solid var(--gold-bright); outline-offset:3px;}
+/* No lesson today or coming up: the button still opens the "next class" note, but it should not invite a click. */
+.gp2 .group-join-btn.is-idle{opacity:.55; box-shadow:none;}
+.gp2 .group-join-btn.is-idle:hover{opacity:.8; transform:none;}
 .gp2 .group-join-btn.is-live{
   color:#1A1406; border-color:transparent;
   background:linear-gradient(135deg,#EBD08A 0%,#D2A94F 55%,#C39A45 100%);

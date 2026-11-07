@@ -98,10 +98,21 @@ export default function AttendancePage() {
     await loadForDate(d);
   };
 
-  const toggle = (id) => setPresence((p) => ({ ...p, [id]: p[id] === false }));
+  // Three states: true = present, false = absent, undefined = not marked yet. A student nobody marked used to show
+  // "Present" and was SAVED as present, so a quick Save marked absent students as present. Now the first tap marks
+  // present, the next ones toggle, and "All present" fills only the students still unmarked.
+  const toggle = (id) => setPresence((p) => ({ ...p, [id]: p[id] === undefined ? true : !p[id] }));
+  const markAllPresent = () => setPresence((p) => {
+    const next = { ...p };
+    (members || []).forEach((m) => { if (next[m.user_id] === undefined) next[m.user_id] = true; });
+    return next;
+  });
+  const unmarked = (members || []).filter((m) => presence[m.user_id] === undefined).length;
 
   async function save() {
     if (!g) { toast(t('Select a group.'), 'err'); return; }
+    const marked = (members || []).filter((m) => typeof presence[m.user_id] === 'boolean');
+    if (!marked.length) { toast(t('Mark at least one student first.'), 'err'); return; }
     setSaving(true);
     try {
       let sid = sessionId;
@@ -111,10 +122,11 @@ export default function AttendancePage() {
         sid = data.id;
         setSessionId(sid);
       }
-      const rows = (members || []).map((m) => ({ session_id: sid, user_id: m.user_id, present: presence[m.user_id] !== false }));
+      // Only students the teacher actually marked are written; the rest stay "not marked" (not counted as absent).
+      const rows = marked.map((m) => ({ session_id: sid, user_id: m.user_id, present: presence[m.user_id] }));
       const { error: upErr } = await supabase.from('attendance_records').upsert(rows, { onConflict: 'session_id,user_id' });
       if (upErr) throw upErr;
-      toast(t('Attendance saved.'), 'ok');
+      toast(unmarked ? t('Saved. Not marked yet: {n}.').replace('{n}', unmarked) : t('Attendance saved.'), 'ok');
       loadHistory(members ? members.length : 0);
       setSummaryNonce((n) => n + 1);
     } catch (err) {
@@ -138,6 +150,9 @@ export default function AttendancePage() {
           <h3>{t('Mark attendance')}</h3>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <DatePicker value={date} group={g} onPick={pick} />
+            {members && members.length > 0 && unmarked > 0 && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={markAllPresent}>{t('All present')}</button>
+            )}
             <button className="btn btn-gold btn-sm" id="saveAttendanceBtn" onClick={save} disabled={saving}>{t('Save')}</button>
           </div>
         </div>
@@ -147,13 +162,13 @@ export default function AttendancePage() {
             : members === null ? <Loader inline label={t('Loading…')} />
             : members.length === 0 ? <div className="empty-block">{t('There are no students in this group yet.')}</div>
             : members.map((m) => {
-              const present = presence[m.user_id] !== false;
+              const state = presence[m.user_id];
               return (
                 <div className="att-row" key={m.user_id}>
                   <span>{m.name || t('Student')}</span>
-                  <span className="att-toggle" onClick={() => toggle(m.user_id)}>
-                    <Switch on={present} />
-                    {t(present ? 'Present' : 'Absent')}
+                  <span className="att-toggle" onClick={() => toggle(m.user_id)} style={state === undefined ? { opacity: 0.6 } : undefined}>
+                    <Switch on={state === true} />
+                    {state === undefined ? t('Not marked') : t(state ? 'Present' : 'Absent')}
                   </span>
                 </div>
               );
