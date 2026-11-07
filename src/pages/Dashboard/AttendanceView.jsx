@@ -115,7 +115,7 @@ export default function AttendanceView() {
           <div className={'panel am-hero lvl-' + (stats ? stats.level : 'good')} style={{ '--am-color': color }}>
             <div className="am-ring" style={{ '--p': stats ? stats.rate : 0 }}>
               <div className="am-ring-in">
-                <b id="attRateBig">{stats ? fmtPct(stats.rate) + '%' : '—%'}</b>
+                <b id="attRateBig">{stats && stats.marked ? fmtPct(stats.rate) + '%' : '—'}</b>
                 <span>{t('Attendance rate')}</span>
               </div>
             </div>

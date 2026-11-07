@@ -148,7 +148,9 @@ function DashboardInner({ initialView = 'home' }) {
   // Group switcher (like the teacher panel's) — only for students who belong to more than one group.
   // Upgrade button in the topbar: only for students who have no paid plan running
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const upgradeLabel = role !== 'student' || !access || access.exempt || access.active ? null : t('Upgrade plan');
+  // Hidden while payments are not enforced (state 'free'): the cabinet is open, so a gold "Upgrade" on every page only confuses.
+  // Billing still offers a plan for anyone who wants to pay.
+  const upgradeLabel = role !== 'student' || !access || access.exempt || access.active || access.state === 'free' ? null : t('Upgrade plan');
   const upgrade = upgradeLabel ? { label: upgradeLabel, onClick: () => setUpgradeOpen(true) } : null;
 
   const groupSwitcher = groups.length > 1 ? (

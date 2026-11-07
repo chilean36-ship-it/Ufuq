@@ -65,6 +65,7 @@ export const BILLING_CSS = `
 .bl-filter i{ font-style:normal; font-size:11px; min-width:18px; padding:1px 6px; border-radius:99px; background:rgba(127,127,127,.2); text-align:center; }
 .bl-filter button.on i{ background:rgba(0,0,0,.2); }
 .bl-chip.free{background:var(--bg-3); color:var(--text-muted);}
+.bl-chip.open{background:rgba(70,170,110,.16); color:#4cc38a;}
 .bl-plans{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px;}
 .bl-plan{background:var(--bg-2); border:1px solid var(--line); border-radius:16px; padding:20px 22px; display:flex; flex-direction:column; gap:10px; transition:border-color .2s, transform .2s;}
 .bl-plan:hover{border-color:var(--gold); transform:translateY(-2px);}
@@ -220,9 +221,11 @@ export default function BillingView({ onUpgrade }) {
   /* Every price on this page is shown in US dollars. */
   const usd = (cents) => formatMoney(Number(cents) / 100, 'USD', 'en');
   const st = access ? access.state : null;
-  const heroKind = !access ? 'none' : access.exempt ? 'free' : st === 'grace' ? 'warn' : st === 'pre_due' ? 'soon' : st === 'extended' ? 'info' : active ? (soon ? 'soon' : 'active') : 'none';
-  const heroChip = { free: t('Free'), active: t('Active'), soon: st === 'pre_due' ? t('Payment due') : t('Ending soon'), warn: t('Grace period'), info: t('Extra time'), none: t('Inactive') }[heroKind];
+  // 'open' = payments are not enforced yet (my_access state 'free'): the cabinet is open, so it must not read as "Inactive".
+  const heroKind = !access ? 'none' : access.exempt ? 'free' : st === 'grace' ? 'warn' : st === 'pre_due' ? 'soon' : st === 'extended' ? 'info' : active ? (soon ? 'soon' : 'active') : st === 'free' ? 'open' : 'none';
+  const heroChip = { free: t('Free'), open: t('Open'), active: t('Active'), soon: st === 'pre_due' ? t('Payment due') : t('Ending soon'), warn: t('Grace period'), info: t('Extra time'), none: t('Inactive') }[heroKind];
   const heroTitle = access && access.exempt ? t('Free access')
+    : heroKind === 'open' ? t('Open access')
     : st === 'grace' ? date(access.grace_ends_at)
     : st === 'pre_due' ? date(access.due_at)
     : st === 'extended' ? date(access.extension_until)

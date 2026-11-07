@@ -21,10 +21,10 @@ export function installLinkUrlHider() {
     if (href == null) return;
     a.setAttribute('data-href', href);
     a.removeAttribute('href');
-    if (href !== '#') {
-      if (!a.hasAttribute('role')) a.setAttribute('role', 'link');
-      if (!a.hasAttribute('tabindex')) a.setAttribute('tabindex', '0');
-    }
+    // Without href an anchor drops out of the Tab order, so give it back: '#' anchors act as buttons (sidebar items),
+    // the rest as links.
+    if (!a.hasAttribute('role')) a.setAttribute('role', href === '#' ? 'button' : 'link');
+    if (!a.hasAttribute('tabindex')) a.setAttribute('tabindex', '0');
   };
   const scan = (node) => {
     if (!node || node.nodeType !== 1) return;
@@ -56,8 +56,10 @@ export function installLinkUrlHider() {
     setTimeout(() => { if (!e.defaultPrevented) go(a, e.ctrlKey || e.metaKey || e.shiftKey); }, 0);
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
     const a = e.target.closest && e.target.closest('a[data-href]');
-    if (a && a.getAttribute('role') === 'link') { e.preventDefault(); a.click(); }
+    if (!a) return;
+    const role = a.getAttribute('role');
+    if ((role === 'link' && e.key === 'Enter') || role === 'button') { e.preventDefault(); a.click(); }
   });
 }

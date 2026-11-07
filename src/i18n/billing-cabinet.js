@@ -1,5 +1,6 @@
 // Student "Billing" view + paywall. Key = English text.
 const uz = {
+  'Open access': 'Ochiq kirish', 'Open': 'Ochiq',
   'Opening checkout…': 'To‘lov sahifasi ochilmoqda…',
   'You are not subscribed': 'Siz obuna bo‘lmagansiz', 'Your group opens after you pay for a plan. Choose a plan to join your group, see the lessons and chat with your classmates.': 'Guruhingiz tarif to‘langandan keyin ochiladi. Guruhga qo‘shilish, darslarni ko‘rish va guruhdoshlar bilan yozishish uchun tarifni tanlang.',
   'Billing': 'To‘lovlar', 'Your access': 'Sizning kirishingiz', 'Active until': 'Faol, tugash sanasi:', 'No active access': 'Faol kirish yo‘q',
@@ -38,6 +39,7 @@ const uz = {
   'Pay to see this section.': 'Bu bo‘limni ko‘rish uchun to‘lov qiling.',
 };
 const ru = {
+  'Open access': 'Открытый доступ', 'Open': 'Открыт',
   'Opening checkout…': 'Открываем оплату…',
   'You are not subscribed': 'У вас нет подписки', 'Your group opens after you pay for a plan. Choose a plan to join your group, see the lessons and chat with your classmates.': 'Группа откроется после оплаты тарифа. Выберите тариф, чтобы вступить в группу, видеть уроки и общаться с одногруппниками.',
   'Billing': 'Оплата', 'Your access': 'Ваш доступ', 'Active until': 'Активен до', 'No active access': 'Нет активного доступа',
@@ -76,6 +78,7 @@ const ru = {
   'Pay to see this section.': 'Чтобы увидеть этот раздел, оплатите доступ.',
 };
 const ar = {
+  'Open access': 'وصول مفتوح', 'Open': 'مفتوح',
   'Opening checkout…': 'جارٍ فتح صفحة الدفع…',
   'You are not subscribed': 'أنت غير مشترك', 'Your group opens after you pay for a plan. Choose a plan to join your group, see the lessons and chat with your classmates.': 'تُفتح مجموعتك بعد دفع الخطة. اختر خطة للانضمام إلى مجموعتك ومشاهدة الدروس والدردشة مع زملائك.',
   'Billing': 'المدفوعات', 'Your access': 'وصولك', 'Active until': 'فعّال حتى', 'No active access': 'لا يوجد وصول فعّال',

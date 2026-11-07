@@ -205,7 +205,7 @@ export default function HomeView({ onNavigate }) {
                 <div className="empty-state">{t('No tasks assigned yet.')}</div>
                 /* English in the original, never run through TT() */
               ) : tasks.map((task) => (
-                <div key={task.id} className={'sched-row ' + (task.sub ? 'done' : task.overdue ? 'live' : 'upcoming')}
+                <div key={task.id} className={'sched-row ' + (task.sub ? 'done' : task.overdue ? 'overdue' : 'upcoming')}
                      style={{ cursor: 'pointer' }} onClick={goto('tasks')}>
                   <span className="t">{fmtDueDate(task.due)}</span>
                   <span className="title">{task.title}</span>
@@ -265,7 +265,8 @@ export default function HomeView({ onNavigate }) {
           ) : monthStats === null ? null : (
             <div className={'hp-body am-home lvl-' + monthStats.level} id="gateAttendance" style={{ '--am-color': LEVEL_COLORS[monthStats.level] }}>
               <div>
-                <div className="hp-big am-home-big">{fmtPct(monthStats.rate)}%</div>
+                {/* Nothing marked yet this month: show a dash instead of a "100%" that no lesson backs up. */}
+                <div className="hp-big am-home-big">{monthStats.marked ? fmtPct(monthStats.rate) + '%' : '—'}</div>
                 <div className="hp-sub">{t('Attendance this month')}</div>
                 {monthStats.total > 0 && <LessonBlocks lessons={monthStats.lessons} thin />}
               </div>

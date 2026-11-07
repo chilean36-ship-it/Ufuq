@@ -35,7 +35,7 @@ function newGroupKey() {
 }
 
 export default function GroupsPage() {
-  const { t, allGroups: myGroups, toast, reloadGroups } = usePanel();   // all groups, inactive ones too: this is the only page that shows them
+  const { t, allGroups: myGroups, toast, reloadGroups, askConfirm } = usePanel();   // all groups, inactive ones too: this is the only page that shows them
   const [modal, setModal] = useState({ open: false, group: null });
   const { joinCodes } = useJoinCodes(myGroups.map((g) => g.code));
   const [counts, setCounts] = useState(null);
@@ -86,7 +86,14 @@ export default function GroupsPage() {
   const showSeries = fType !== 'individual' && (fStatus === 'inactive' || fStatus === 'all');
   const showGroups = fStatus !== 'inactive' || fType !== 'class';
 
-  async function toggleActive(g) {
+  // Switching a group OFF is one click on the card's switch, so ask first; switching it back on stays instant.
+  function toggleActive(g) {
+    if (!g.is_active) { saveActive(g); return; }
+    askConfirm(t('Switch off group'),
+      t('Switch off {name}? It moves to the inactive groups. You can switch it back on at any time.').replace('{name}', g.name),
+      () => saveActive(g));
+  }
+  async function saveActive(g) {
     const { error } = await supabase.from('groups').update({ is_active: !g.is_active }).eq('code', g.code);
     if (error) { toast(error.message, 'err'); return; }
     toast(t('Group updated.'), 'ok');

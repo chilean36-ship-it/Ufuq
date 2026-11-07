@@ -268,6 +268,14 @@
   @media (max-width:420px){
     .top-right{gap:8px;}
     .icon-btn, .top-avatar{width:32px; height:32px;}
+    /* Phones: the topbar overflowed (theme toggle and avatar ran off-screen). Keep only the page name from the
+       "Cabinet / Page" crumb, let it shrink, and drop the profile chevron. */
+    .topbar{gap:8px;}
+    .crumb{font-size:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto;}
+    .crumb b{font-size:14px;}
+    .top-right{flex:0 0 auto;}
+    .top-profile .top-chevron{display:none;}
+    .top-profile{padding-left:0;}
   }
   .welcome{margin-bottom:28px;}
   .welcome .eyebrow{display:inline-flex; align-items:center; gap:10px; font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); font-weight:600; margin-bottom:10px;}
@@ -377,6 +385,9 @@
   .sched-row .status-txt{font-size:10.5px; font-weight:700; letter-spacing:0.02em; color:var(--text-muted); flex-shrink:0; text-transform:uppercase;}
   .sched-row.live .status-txt{color:#6FCF97;}
   .sched-row.upcoming .status-txt{color:var(--gold-bright);}
+  /* Overdue homework reads as a warning, not as "live" green. */
+  .sched-row.overdue{border-left-color:#E4544C;}
+  .sched-row.overdue .status-txt{color:#E4544C;}
 
   /* Tasks */
   .task-list{display:flex; flex-direction:column; gap:2px;}
@@ -1954,6 +1965,11 @@
   .home-panel #scheduleContent{display:flex; flex-direction:column;}
   .home-panel #scheduleContent .panel-body-scroll{flex:1 1 auto; min-height:0;}
   .home-panel .coming-soon-panel{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;}
+  /* Phones stack the windows in one column, where equal heights buy nothing: a window with one task was half a screen
+     of empty space. Let each window fit its content, capped at the desktop height (the body still scrolls inside). */
+  @media (max-width:640px){
+    .home-panel{height:auto; max-height:460px;}
+  }
 
   /* Performance / Attendance / Progress bodies (all real numbers) */
   .hp-body{display:flex; flex-direction:column; gap:20px; overflow-y:auto; padding-right:4px;}

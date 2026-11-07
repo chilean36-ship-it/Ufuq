@@ -251,7 +251,15 @@ export default function StudentsPage() {
                     </td>
                     <td>
                       <LevelStepper value={m.level} max={MAX_LEVEL} label={t('Level')}
-                        onCommit={async (n) => { if (await changeLevel(m.user_id, n)) { toast(t('Level updated.'), 'ok'); return true; } return false; }} />
+                        onCommit={(n) => {
+                          // A level change also moves the student to that level's group, so a stray +/− click must not do it
+                          // silently. Returning false resets the stepper; the row updates only after "Yes" saves it.
+                          askConfirm(t('Change level'),
+                            t('{name}: level {from} → {to}. The student also moves to the group of level {to}. Continue?')
+                              .replace('{name}', m.name || t('Student')).replace('{from}', m.level).split('{to}').join(n),
+                            async () => { if (await changeLevel(m.user_id, n)) toast(t('Level updated.'), 'ok'); });
+                          return false;
+                        }} />
                     </td>
                     <td className="muted">{fmtDate(m.joined_at)}</td>
                     <td className="a-actions">
