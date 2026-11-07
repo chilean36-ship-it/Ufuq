@@ -268,12 +268,11 @@
   @media (max-width:420px){
     .top-right{gap:8px;}
     .icon-btn, .top-avatar{width:32px; height:32px;}
-    /* Phones: the topbar overflowed (theme toggle and avatar ran off-screen). Keep only the page name from the
-       "Cabinet / Page" crumb, let it shrink, and drop the profile chevron. */
+    /* Phones: the topbar overflowed (theme toggle and avatar ran off-screen). The "Cabinet / Page" crumb only had room
+       for two letters, so it goes (the menu marks the open page), and the profile chevron goes too. */
     .topbar{gap:8px;}
-    .crumb{font-size:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto;}
-    .crumb b{font-size:14px;}
-    .top-right{flex:0 0 auto;}
+    .crumb{display:none;}
+    .top-right{flex:0 0 auto; margin-left:auto;}
     .top-profile .top-chevron{display:none;}
     .top-profile{padding-left:0;}
   }
