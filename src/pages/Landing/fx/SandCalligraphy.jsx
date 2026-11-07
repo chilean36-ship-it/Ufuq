@@ -65,15 +65,19 @@ export default function SandCalligraphy({ text = 'أُفُق' }) {
       const shiftX = r.x1 > r.x0 ? W / 2 - (r.x0 + r.x1) / 2 : 0;
       const shiftY = r.y1 > r.y0 ? H / 2 - (r.y0 + r.y1) / 2 : 0;
 
-      const MAX = W < 700 ? 7000 : 11000;
-      let step = W < 700 ? 1.7 : 1.35;               // CSS px between grains
+      const MAX = W < 700 ? 9000 : 14000;
+      let step = W < 700 ? 1.45 : 1.2;               // CSS px between grains
       let pts = [];
       for (let tries = 0; tries < 8; tries++) {
         pts = [];
         const sd = step * dpr;
-        for (let y = 0; y < off.height; y += sd) for (let x = 0; x < off.width; x += sd) {
+        let row = 0;
+        for (let y = 0; y < off.height; y += sd * 0.87, row++) for (let x = (row & 1) * sd * 0.5; x < off.width; x += sd) {
           const ix = Math.round(x), iy = Math.round(y);
-          if (img[(iy * off.width + ix) * 4 + 3] > 150) pts.push([ix / dpr + shiftX + (Math.random() - 0.5) * step * 0.5, iy / dpr + shiftY + (Math.random() - 0.5) * step * 0.5]);
+          if (ix >= off.width || iy >= off.height) continue;
+          // soft edge: grains thin out where the glyph edge is only partly covered, so outlines stay crisp, not furry
+          const a = img[(iy * off.width + ix) * 4 + 3];
+          if (a > 150 || (a > 60 && Math.random() < (a - 60) / 90)) pts.push([ix / dpr + shiftX + (Math.random() - 0.5) * step * 0.9, iy / dpr + shiftY + (Math.random() - 0.5) * step * 0.9]);
         }
         if (pts.length <= MAX) break;
         step *= 1.12;
@@ -83,7 +87,7 @@ export default function SandCalligraphy({ text = 'أُفُق' }) {
         x: still ? hx : hx + (Math.random() - 0.5) * W * 0.5,
         y: still ? hy : -20 - Math.random() * H * 0.7,
         vx: 0, vy: 0,
-        s: 0.95 + Math.random() * 0.85,
+        s: 0.8 + Math.random() * 0.7,
         c: (Math.random() * palette.length) | 0,
         ph: Math.random() * 6.283,
         delay: Math.random() * 1100,
@@ -109,8 +113,8 @@ export default function SandCalligraphy({ text = 'أُفُق' }) {
       const R = 95, R2 = R * R, k = 0.045, damp = 0.86, el = now - t0;
       for (const p of parts) {
         if (el < p.delay) continue;
-        p.vx += (p.hx - p.x) * k * dt + Math.sin(now * 0.0016 + p.ph) * 0.018;
-        p.vy += (p.hy - p.y) * k * dt + Math.cos(now * 0.0013 + p.ph) * 0.018;
+        p.vx += (p.hx - p.x) * k * dt + Math.sin(now * 0.0016 + p.ph) * 0.011;
+        p.vy += (p.hy - p.y) * k * dt + Math.cos(now * 0.0013 + p.ph) * 0.011;
         if (ptr.active) {
           const dx = p.x - ptr.x, dy = p.y - ptr.y, d2 = dx * dx + dy * dy;
           if (d2 < R2) {
@@ -128,22 +132,23 @@ export default function SandCalligraphy({ text = 'أُفُق' }) {
       }
     }
 
-    const sn = (v) => Math.round(v * dpr) / dpr;
-    const sz = (v) => Math.max(1, Math.round(v * dpr)) / dpr;
+    const TAU = Math.PI * 2;
+    // round, sub-pixel dots (anti-aliased) — pixel-snapped squares made neighbouring grains fuse into streaks
     function draw(now) {
       ctx.clearRect(0, 0, W, H);
       const el = now - t0;
       for (let c = 0; c < palette.length; c++) {
-        ctx.fillStyle = palette[c]; ctx.globalAlpha = 1;
-        for (const p of parts) if (p.c === c && !p.spark && el >= p.delay) ctx.fillRect(sn(p.x), sn(p.y), sz(p.s), sz(p.s));
+        ctx.fillStyle = palette[c]; ctx.globalAlpha = 1; ctx.beginPath();
+        for (const p of parts) if (p.c === c && !p.spark && el >= p.delay) { const r = p.s * 0.62; ctx.moveTo(p.x + r, p.y); ctx.arc(p.x, p.y, r, 0, TAU); }
+        ctx.fill();
       }
       ctx.fillStyle = palette[1];
       for (const p of parts) if (p.spark && el >= p.delay) {
         ctx.globalAlpha = still ? 0.9 : 0.35 + 0.65 * Math.abs(Math.sin(now * 0.003 + p.ph));
-        ctx.fillRect(sn(p.x - 0.4), sn(p.y - 0.4), sz(p.s + 0.9), sz(p.s + 0.9));
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.s * 0.8 + 0.3, 0, TAU); ctx.fill();
       }
       ctx.fillStyle = palette[2];
-      for (const w of wind) { ctx.globalAlpha = w.a; ctx.fillRect(sn(w.x), sn(w.y), sz(w.s), sz(w.s)); }
+      for (const w of wind) { ctx.globalAlpha = w.a; ctx.beginPath(); ctx.arc(w.x, w.y, w.s * 0.6, 0, TAU); ctx.fill(); }
       ctx.globalAlpha = 1;
     }
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from '../../components/panel/PanelContext';
 import { Ico, PageHeader, Skeleton, StatCard } from './ui';
+import CardVideo from '../Landing/CardVideo';
 import {
   LANDING_BUCKET, LANDING_GROUPS, LANDING_LINKS, LANDING_SLOTS, IMAGE_MAX_MB, VIDEO_MAX_MB, fetchLandingMedia,
 } from '../../lib/landingMedia';
@@ -28,6 +29,21 @@ const CSS = `
 
 const ext = (f) => ((f.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin');
 const mb = (n) => Math.round((n / 1048576) * 10) / 10;
+
+/** Opens the picked video locally: resolves { w, h } if this browser can play it, or null if it cannot (e.g. HEVC .mov). */
+function probeVideo(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    let done = false;
+    const end = (r) => { if (done) return; done = true; clearTimeout(timer); URL.revokeObjectURL(url); v.removeAttribute('src'); v.load(); resolve(r); };
+    const timer = setTimeout(() => end(null), 8000);
+    v.preload = 'metadata'; v.muted = true;
+    v.onloadedmetadata = () => end(v.videoWidth > 0 ? { w: v.videoWidth, h: v.videoHeight } : null);
+    v.onerror = () => end(null);
+    v.src = url;
+  });
+}
 
 /** Main admin: replace the images / videos shown on the public landing page. */
 export default function LandingMediaPage() {
@@ -66,7 +82,7 @@ export default function LandingMediaPage() {
 
   function pick(slot, kind) {
     pending.current = { slot, kind };
-    if (fileRef.current) { fileRef.current.accept = kind === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/jpeg,image/png,image/webp,image/avif,image/gif'; fileRef.current.value = ''; fileRef.current.click(); }
+    if (fileRef.current) { fileRef.current.accept = kind === 'video' ? 'video/mp4,video/webm' : 'image/jpeg,image/png,image/webp,image/avif,image/gif'; fileRef.current.value = ''; fileRef.current.click(); }
   }
 
   async function onFile(e) {
@@ -76,6 +92,12 @@ export default function LandingMediaPage() {
     const { slot, kind } = job;
     const limit = kind === 'video' ? VIDEO_MAX_MB : IMAGE_MAX_MB;
     if (!file.type.startsWith(kind + '/')) { toast(t('Wrong file type.'), 'err'); return; }
+    if (kind === 'video') {
+      if (file.type === 'video/quicktime' || /.mov$/i.test(file.name)) { toast(t('MOV videos do not play on every phone. Please convert it to MP4 (H.264) and upload again.'), 'err'); return; }
+      const info = await probeVideo(file);
+      if (!info) { toast(t('This video cannot be played in the browser. Please export it as MP4 (H.264 video, AAC audio) and upload again.'), 'err'); return; }
+      if (info.w > info.h * 1.15 && /^(stories|morals|culture)_/.test(slot)) toast(t('This video is landscape, the cards are vertical (4:5). It will be shown whole on a blurred background. For the best look upload a vertical video, for example 1080×1350.'), 'ok');
+    }
     if (file.size > limit * 1048576) {
       toast(t('File is too large ({a} MB). Maximum is {b} MB.').replace('{a}', mb(file.size)).replace('{b}', limit) + (kind === 'video' ? ' ' + t('For bigger videos paste a direct link instead.') : ''), 'err');
       return;
@@ -150,7 +172,7 @@ export default function LandingMediaPage() {
     <section className="page active" id="page-landing">
       <style>{CSS}</style>
       <input ref={fileRef} type="file" hidden onChange={onFile} />
-      <PageHeader title={t('Landing page')} sub={t('Change the photos and videos on the public home page. Images up to {a} MB, videos up to {b} MB (or paste a direct link).').replace('{a}', IMAGE_MAX_MB).replace('{b}', VIDEO_MAX_MB)}>
+      <PageHeader title={t('Landing page')} sub={t('Change the photos and videos on the public home page. Images up to {a} MB, videos up to {b} MB (or paste a direct link). Videos: MP4 (H.264), vertical 4:5 such as 1080×1350 fits the cards best.').replace('{a}', IMAGE_MAX_MB).replace('{b}', VIDEO_MAX_MB)}>
         <a className="btn btn-ghost" href="/index" target="_blank" rel="noreferrer">{t('Open landing page')} {'\u2197'}</a>
       </PageHeader>
       <div className="a-stats a-stats-sm">
@@ -187,6 +209,7 @@ export default function LandingMediaPage() {
                 <div className="lm-card" key={s.slot}>
                   <div className="lm-thumb">
                     <img src={(r.image_url || s.defaultImage) + (imgCustom ? '?v=' + new Date(r.updated_at).getTime() : '')} alt={s.label} loading="lazy" onError={(e) => { e.currentTarget.style.opacity = 0.15; }} />
+                    {hasVideo && <CardVideo src={r.video_url || s.defaultVideo} poster={(r.image_url || s.defaultImage)} />}
                     <span className={'lm-badge' + (imgCustom ? ' custom' : '')}>{imgCustom ? t('Custom image') : t('Default image')}</span>
                     {hasVideo && <span className="lm-vid">{'\u25B6'} {vidCustom ? t('Custom video') : t('Default video')}</span>}
                     {busy[s.slot] && <div className="lm-busy">{t('Working…')}</div>}

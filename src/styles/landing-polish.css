@@ -81,3 +81,43 @@
 @media (max-width:480px){ .pricing .price-card{ padding-left:0; padding-right:0; } .pricing .price-card .amount{ font-size:40px; } }
 html[data-theme="light"] .explore .ex-card{ box-shadow:0 10px 26px -18px rgba(60,40,10,.25); }
 html[data-theme="light"] .pricing .price-card{ box-shadow:0 24px 50px -30px rgba(60,40,10,.3); }
+
+/* ---------- Interactive polish (additive; nothing here moves buttons or tilts cards) ---------- */
+/* staggered entrance inside grids */
+.explore-grid > .reveal:nth-child(2), .prog-grid > .reveal:nth-child(2), .discover-grid > .reveal:nth-child(2){ transition-delay:.08s; }
+.explore-grid > .reveal:nth-child(3), .prog-grid > .reveal:nth-child(3), .discover-grid > .reveal:nth-child(3){ transition-delay:.16s; }
+.explore-grid > .reveal:nth-child(4){ transition-delay:.08s; } .explore-grid > .reveal:nth-child(5){ transition-delay:.16s; } .explore-grid > .reveal:nth-child(6){ transition-delay:.24s; }
+@media (max-width:900px){ .explore-grid > .reveal, .prog-grid > .reveal, .discover-grid > .reveal{ transition-delay:0s !important; } }
+
+/* section eyebrow: the gold dash draws itself when the heading scrolls in */
+.section-head.reveal .eyebrow::before{ width:0; transition:width .7s .25s cubic-bezier(.2,.8,.2,1); }
+.section-head.reveal.in .eyebrow::before{ width:22px; }
+
+/* header links: gold underline slides in */
+#site-header .nav-links a{ position:relative; }
+#site-header .nav-links a::after{ content:''; position:absolute; inset-inline:0; bottom:-6px; height:1px; background:var(--gold-bright); transform:scaleX(0); transform-origin:left; transition:transform .3s ease; }
+[dir="rtl"] #site-header .nav-links a::after{ transform-origin:right; }
+#site-header .nav-links a:hover::after, #site-header .nav-links a.active::after{ transform:scaleX(1); }
+
+/* video / story cards: gold glow, breathing play button, live video gets a soft vignette */
+.disc-card{ transition:transform .3s ease, border-color .3s ease, box-shadow .3s ease; }
+.disc-card:hover, .disc-card:focus-visible{ box-shadow:0 22px 44px -22px rgba(0,0,0,.7), 0 0 0 1px color-mix(in srgb, var(--gold) 35%, transparent), 0 0 38px -12px color-mix(in srgb, var(--gold) 45%, transparent); }
+.disc-card:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; }
+.disc-play{ box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 50%, transparent); animation:discPulse 2.8s ease-out infinite; }
+@keyframes discPulse{ 0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--gold) 45%, transparent); } 70%,100%{ box-shadow:0 0 0 16px transparent; } }
+.disc-card:hover .disc-play{ animation:none; }
+
+/* programs + student cards: same keyboard focus ring as the rest */
+.prog-card:focus-visible, .face-card:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; }
+
+/* pricing + FAQ: quiet hover feedback */
+.pricing .price-card{ transition:box-shadow .35s ease, border-color .35s ease; }
+.pricing .price-card:hover{ border-color:color-mix(in srgb, var(--gold) 55%, var(--line)); box-shadow:0 28px 64px -28px rgba(0,0,0,.75), 0 0 46px -16px color-mix(in srgb, var(--gold) 40%, transparent); }
+.faq-item{ transition:border-color .25s ease, background .25s ease; }
+.faq-item:hover{ border-color:color-mix(in srgb, var(--gold) 35%, var(--line)); }
+
+@media (prefers-reduced-motion: reduce){
+  .disc-play{ animation:none; }
+  .section-head.reveal .eyebrow::before{ transition:none; width:22px; }
+  .explore-grid > .reveal, .prog-grid > .reveal, .discover-grid > .reveal{ transition-delay:0s !important; }
+}

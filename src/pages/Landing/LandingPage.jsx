@@ -14,9 +14,11 @@ import { setPayIntent, afterAuthDestination } from '../../lib/payIntent';
 import fxCss from './fx/fx.css?inline';
 import LandingFX from './fx/LandingFX';
 import SandCalligraphy from './fx/SandCalligraphy';
+import HeroOrnament from './fx/HeroOrnament';
 import { SandDivider } from './fx/ornaments';
 import AuthModal from './AuthModal';
 import Lightbox from './Lightbox';
+import CardVideo from './CardVideo';
 import { LEGAL_DOCS, legalUi } from '../Legal/legalContent';
 import { useLandingMedia } from '../../lib/landingMedia';
 import usePlanPrices from '../../lib/usePlanPrices';
@@ -125,12 +127,7 @@ function Hero({ onOpenAuth }) {
         <Reveal className="hero-visual" initiallyIn>
           <div className="glow"></div>
           <div className="ring" aria-hidden="true"></div>
-          <svg className="ornament" viewBox="0 0 400 400" aria-hidden="true">
-            <g stroke="#C9A24B" strokeWidth="1" fill="none" opacity="0.5">
-              <circle cx="200" cy="200" r="150" strokeDasharray="2 6" />
-              <path d="M200 50 L235 165 L350 165 L258 233 L293 348 L200 278 L107 348 L142 233 L50 165 L165 165 Z" />
-            </g>
-          </svg>
+          <HeroOrnament />
           {FLOATING_LETTERS.map((l) => (
             <span key={l.ch} className="float-letter" style={l.style}>{l.ch}</span>
           ))}
@@ -183,7 +180,6 @@ function Explore() {
         <Reveal className="section-head">
           <div className="eyebrow">{t('explore.eyebrow')}</div>
           <h2>{t('explore.title')}</h2>
-          <p>{t('explore.sub')}</p>
         </Reveal>
         <div className="explore-grid">
           {EXPLORE_CARDS.map((c) => (
@@ -280,6 +276,7 @@ function Discover({ onOpenLightbox }) {
                   >
                     <div className={'disc-art' + (c.moral ? ' moral-photo' : '') + ' prog-media'}>
                       <img src={c.img} alt={c.alt} style={c.imgStyle} />
+                      <CardVideo src={c.video} poster={c.img} />
                     </div>
                     <span className="disc-play" aria-hidden="true">{PLAY_ICON}</span>
                     <div className="disc-scrim"></div>

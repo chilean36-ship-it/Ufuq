@@ -3,7 +3,7 @@
 .fx-progress i{display:block; height:100%; transform-origin:0 50%; transform:scaleX(0); background:linear-gradient(90deg,var(--gold),var(--gold-bright));}
 
 /* ---------- hero: sand-grain calligraphy (original look) ---------- */
-.fx-sand{position:absolute; left:-80px; top:-80px; width:calc(100% + 160px); height:calc(100% + 160px); z-index:3; pointer-events:none;}
+.fx-sand{position:absolute; left:-80px; top:-80px; width:calc(100% + 160px); height:calc(100% + 160px); max-width:none; z-index:3; pointer-events:none;} /* max-width:none: the global `canvas{max-width:100%}` squeezed the canvas sideways, squashing and blurring the word */
 .hero-visual .calligraphy{transition:opacity .6s ease;}
 .hero-visual.fx-ready .calligraphy{opacity:0;}
 
@@ -35,4 +35,50 @@
 
 @media (prefers-reduced-motion:reduce){
   .fx-dunes .d, .fx-dunes .g, .btn-primary::after{animation:none !important;}
+}
+
+/* ---------- hero emblem (HeroOrnament.jsx) ---------- */
+.hero-visual{ --px:0; --py:0; }
+.ornament.ho{ opacity:1; color:var(--gold); overflow:visible; }
+.ho-depth{ transition:transform .25s ease-out; }
+.ho-d1{ transform:translate(calc(var(--px) * -6px), calc(var(--py) * -6px)); }
+.ho-d2{ transform:translate(calc(var(--px) * 10px), calc(var(--py) * 10px)); }
+.ho-d3{ transform:translate(calc(var(--px) * 18px), calc(var(--py) * 18px)); }
+.ho-spin{ transform-box:view-box; transform-origin:200px 200px; }
+.ho-spin-a{ animation:hoSpin 140s linear infinite; }
+.ho-spin-b{ animation:hoSpin 110s linear infinite reverse; }
+@keyframes hoSpin{ to{ transform:rotate(360deg); } }
+
+.ho-line{ fill:none; stroke:currentColor; stroke-width:1.1; opacity:.7; stroke-dasharray:1; stroke-dashoffset:1; animation:hoDraw 2.6s calc(var(--i, 0) * .22s + .2s) cubic-bezier(.3,.7,.2,1) forwards; vector-effect:non-scaling-stroke; }
+.ho-line.soft{ opacity:.34; }
+@keyframes hoDraw{ to{ stroke-dashoffset:0; } }
+.ho-tick{ stroke:currentColor; stroke-width:.8; opacity:.34; fill:none; vector-effect:non-scaling-stroke; }
+.ho-tick.long{ opacity:.7; }
+.ho-letter{ fill:currentColor; font-family:'Amiri', serif; font-size:15px; opacity:.5; }
+.ho-dash{ fill:none; stroke:currentColor; stroke-width:1; stroke-dasharray:2 7; opacity:.45; vector-effect:non-scaling-stroke; }
+.ho-diamond{ fill:var(--gold-bright); opacity:.85; animation:hoPulse 3.6s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+.ho-diamond:nth-of-type(2){ animation-delay:.9s; } .ho-diamond:nth-of-type(3){ animation-delay:1.8s; } .ho-diamond:nth-of-type(4){ animation-delay:2.7s; }
+@keyframes hoPulse{ 0%,100%{ opacity:.3; transform:scale(.7) rotate(45deg);} 50%{ opacity:1; transform:scale(1.15) rotate(45deg);} }
+.ho-orbit{ transform-box:view-box; transform-origin:200px 200px; animation:hoSpin 16s linear infinite; }
+.ho-tail{ fill:none; stroke:var(--gold-bright); stroke-width:1.6; stroke-linecap:round; opacity:.55; vector-effect:non-scaling-stroke; -webkit-mask-image:none; }
+.ho-spark{ fill:var(--gold-bright); filter:drop-shadow(0 0 6px var(--gold-bright)) drop-shadow(0 0 14px var(--gold)); }
+
+/* the glow and the floating letters lean toward the pointer too */
+.hero-visual .glow{ transform:translate(calc(var(--px) * 26px), calc(var(--py) * 26px)); transition:transform .25s ease-out; }
+.hero-visual .float-letter{ translate:calc(var(--px) * -16px) calc(var(--py) * -16px); transition:translate .25s ease-out; }
+.hero-visual .ring{ border-color:rgba(201,162,75,.18); }
+
+/* click ripple */
+.ho-ripple{ position:absolute; z-index:4; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; border:1.5px solid var(--gold-bright); pointer-events:none; animation:hoRipple .9s ease-out forwards; }
+@keyframes hoRipple{ from{ transform:scale(1); opacity:.85; } to{ transform:scale(16); opacity:0; } }
+
+/* caption becomes a quiet pill */
+.hero-visual .caption{ display:flex; align-items:center; gap:10px; padding:7px 16px; border-radius:99px; border:1px solid var(--line); background:color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter:blur(6px); z-index:4; }
+.hero-visual .caption::before, .hero-visual .caption::after{ content:''; width:5px; height:5px; background:var(--gold-bright); transform:rotate(45deg); flex:none; }
+
+@media (max-width:700px){ .ho-letter{ font-size:17px; } .ho-tick{ display:none; } }
+@media (prefers-reduced-motion:reduce){
+  .ho-spin-a, .ho-spin-b, .ho-orbit, .ho-diamond, .ho-ripple{ animation:none !important; }
+  .ho-line{ animation:none; stroke-dashoffset:0; }
+  .ho-depth, .hero-visual .glow, .hero-visual .float-letter{ transform:none; translate:none; }
 }
