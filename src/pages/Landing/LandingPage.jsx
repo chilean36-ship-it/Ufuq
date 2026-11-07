@@ -24,7 +24,7 @@ import { useLandingMedia } from '../../lib/landingMedia';
 import usePlanPrices from '../../lib/usePlanPrices';
 import {
   NAV_LINKS, ABOUT_CREDS, EXPLORE_CARDS, PROGRAMS, PROG_ARROW, DISCOVER_TABS,
-  FACES, QUOTES, PRICING_FEATURES, FAQ, FOOTER_COLUMNS, FLOATING_LETTERS,
+  FACES, QUOTES, PRICING_FEATURES, FAQ, FOOTER_COLUMNS,
 } from './landingData';
 
 const PLAY_ICON = (
@@ -128,9 +128,6 @@ function Hero({ onOpenAuth }) {
           <div className="glow"></div>
           <div className="ring" aria-hidden="true"></div>
           <HeroOrnament />
-          {FLOATING_LETTERS.map((l) => (
-            <span key={l.ch} className="float-letter" style={l.style}>{l.ch}</span>
-          ))}
           <div className="calligraphy" aria-hidden="true">أُفُق</div>
           <SandCalligraphy />
           <div className="caption">{t('hero.caption')}</div>

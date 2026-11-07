@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 
-/* Hero emblem behind the sand word: an eight-pointed geometric rosette, a slowly turning ring of the 28 Arabic letters,
+/* Hero emblem behind the sand word: a slowly turning ring of the 28 Arabic letters,
    a hairline tick dial and one orbiting spark. The lines draw themselves on load; the layers sit at different depths and
    drift a little with the pointer; a click sends a gold ripple out from the cursor. Pure SVG + CSS (see fx.css).
    Quiet under prefers-reduced-motion. */
@@ -13,9 +13,6 @@ export default function HeroOrnament() {
   const ref = useRef(null);
 
   const geo = useMemo(() => {
-    // {8/3} star: every third vertex of an octagon, one continuous line
-    const star = Array.from({ length: 8 }, (_, i) => pt(138, ((i * 3) % 8) * 45)).map(([x, y], i) => (i ? 'L' : 'M') + f(x) + ' ' + f(y)).join(' ') + 'Z';
-    const oct = Array.from({ length: 8 }, (_, i) => pt(138, i * 45)).map(([x, y], i) => (i ? 'L' : 'M') + f(x) + ' ' + f(y)).join(' ') + 'Z';
     const ticks = Array.from({ length: 96 }, (_, i) => {
       const long = i % 8 === 0, mid = i % 4 === 0;
       const [x1, y1] = pt(188, i * 3.75), [x2, y2] = pt(long ? 178 : mid ? 182 : 184.5, i * 3.75);
@@ -23,7 +20,7 @@ export default function HeroOrnament() {
     });
     const letters = LETTERS.map((ch, i) => ({ ch, deg: (i * 360) / LETTERS.length }));
     const diamonds = [0, 90, 180, 270].map((d) => pt(110, d));
-    return { star, oct, ticks, letters, diamonds };
+    return { ticks, letters, diamonds };
   }, []);
 
   useEffect(() => {
@@ -72,13 +69,6 @@ export default function HeroOrnament() {
 
   return (
     <svg ref={ref} className="ornament ho" viewBox="0 0 400 400" aria-hidden="true">
-      <defs>
-        <radialGradient id="ho-fade-g" gradientUnits="userSpaceOnUse" cx="200" cy="200" r="150">
-          <stop offset="0" stopColor="#000" /><stop offset=".34" stopColor="#000" /><stop offset=".74" stopColor="#fff" />
-        </radialGradient>
-        <mask id="ho-fade" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400"><rect width="400" height="400" fill="url(#ho-fade-g)" /></mask>
-      </defs>
-
       {/* depth 1 — outer dial + letters (slow turn) */}
       <g className="ho-depth ho-d1"><g className="ho-spin ho-spin-a">
         <circle className="ho-line" pathLength="1" cx={C} cy={C} r="192" style={{ '--i': 0 }} />
@@ -87,14 +77,6 @@ export default function HeroOrnament() {
           <text key={l.ch} className="ho-letter" x={C} y={C - 164} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${f(l.deg)} ${C} ${C})`}>{l.ch}</text>
         ))}
         <circle className="ho-line soft" pathLength="1" cx={C} cy={C} r="150" style={{ '--i': 1 }} />
-      </g></g>
-
-      {/* depth 2 — rosette (counter turn) */}
-      <g className="ho-depth ho-d2" mask="url(#ho-fade)"><g className="ho-spin ho-spin-b">
-        <path className="ho-line" pathLength="1" d={geo.star} style={{ '--i': 2 }} />
-        <path className="ho-line soft" pathLength="1" d={geo.oct} style={{ '--i': 3 }} />
-        <rect className="ho-line soft" pathLength="1" x="107" y="107" width="186" height="186" style={{ '--i': 4 }} />
-        <rect className="ho-line soft" pathLength="1" x="107" y="107" width="186" height="186" transform={`rotate(45 ${C} ${C})`} style={{ '--i': 5 }} />
       </g></g>
 
       {/* depth 3 — frame around the word */}
