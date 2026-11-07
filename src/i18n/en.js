@@ -11,6 +11,7 @@ const en = {
     "programs": "Programs",
     "contacts": "Contacts",
     "pricing": "Pricing",
+    "faq": "FAQ",
     "signin": "Sign In"
   },
   "hero": {

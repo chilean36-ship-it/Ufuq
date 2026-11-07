@@ -11,6 +11,7 @@ const ru = {
     "programs": "Программы",
     "contacts": "Контакты",
     "pricing": "Цены",
+    "faq": "Вопросы",
     "signin": "Войти"
   },
   "hero": {

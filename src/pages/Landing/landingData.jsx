@@ -4,6 +4,7 @@ export const NAV_LINKS = [
   { href: '#about-author', key: 'nav.about' },
   { href: '#programs', key: 'nav.programs' },
   { href: '#pricing', key: 'nav.pricing' },
+  { href: '#faq', key: 'nav.faq' },
   { href: '#contacts', key: 'nav.contacts' },
 ];
 

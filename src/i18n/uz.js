@@ -11,6 +11,7 @@ const uz = {
     "programs": "Dasturlar",
     "contacts": "Aloqa",
     "pricing": "Narxlar",
+    "faq": "Savol-javob",
     "signin": "Kirish"
   },
   "hero": {
