@@ -4,6 +4,25 @@ import PageStyle from '../../../components/PageStyle';
 import css from './notifications.css?inline';
 
 import { fmtDate, currentLang } from '../../../lib/dateLocale';
+
+/* The database triggers (notify_group_on_new_member / _lesson / _task) write these titles in Uzbek. Recognise them and
+   show them in the cabinet language; anything else goes through t() as before. */
+const SERVER_TITLES = [
+  [/^(.+) guruhga qo['‘’]shildi$/, '{name} joined the group', 'name'],
+  [/^Yangi video dars: (.+)$/, 'New video lesson: {title}', 'title'],
+  [/^Yangi vazifa: (.+)$/, 'New task: {title}', 'title'],
+];
+function localizeTitle(title, t) {
+  const s = String(title || '');
+  for (const [re, key, slot] of SERVER_TITLES) {
+    const m = s.match(re);
+    if (m) {
+      const val = slot === 'name' && m[1] === 'Yangi talaba' ? t('New student') : m[1];
+      return t(key).replace('{' + slot + '}', val);
+    }
+  }
+  return t(s);
+}
 // Icon bodies per notification kind (static markup from this file only — never user content).
 const NOTIF_ICONS = {
   group: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',
@@ -104,7 +123,7 @@ export default function NotificationsPanel({ open, onClose, items, onMarkRead, o
                   <button type="button" className={'nf-item t-' + type + (n.read ? '' : ' unread')} data-id={n.id} key={n.id} onClick={() => go(n)}>
                     <span className="nf-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML={{ __html: NOTIF_ICONS[type] }} /></span>
                     <span className="nf-body">
-                      <span className="nf-t">{t(n.title)}</span>
+                      <span className="nf-t">{localizeTitle(n.title, t)}</span>
                       <span className="nf-x2">{t(n.text)}</span>
                       <span className="nf-time">{timeAgo(n.time, t)}</span>
                     </span>
