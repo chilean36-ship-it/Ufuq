@@ -257,7 +257,8 @@ export default function StudentsPage() {
                           askConfirm(t('Change level'),
                             t('{name}: level {from} → {to}. The student also moves to the group of level {to}. Continue?')
                               .replace('{name}', m.name || t('Student')).replace('{from}', m.level).split('{to}').join(n),
-                            async () => { if (await changeLevel(m.user_id, n)) toast(t('Level updated.'), 'ok'); });
+                            async () => { if (await changeLevel(m.user_id, n)) toast(t('Level updated.'), 'ok'); },
+                            t('Change level'));
                           return false;
                         }} />
                     </td>

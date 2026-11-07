@@ -96,7 +96,7 @@ export function ConfirmModal({ state, onClose }) {
       <div className="modal-actions">
         <button type="button" className="btn btn-ghost" onClick={onClose}>{t('Cancel')}</button>
         <button type="button" className="btn btn-danger" id="confirmYesBtn"
-                onClick={async () => { const cb = state.cb; onClose(); if (cb) await cb(); }}>{t('Yes, delete')}</button>
+                onClick={async () => { const cb = state.cb; onClose(); if (cb) await cb(); }}>{state.okLabel || t('Yes, delete')}</button>
       </div>
     </Modal>
   );
@@ -129,7 +129,8 @@ export function useToasts() {
 /** `const [confirm, askConfirm, closeConfirm] = useConfirm()` */
 export function useConfirm() {
   const [state, setState] = useState({ open: false, title: '', msg: '', cb: null });
-  const ask = useCallback((title, msg, cb) => setState({ open: true, title, msg, cb }), []);
+  // okLabel (optional): the confirm button's text when the action is not a delete (default "Yes, delete").
+  const ask = useCallback((title, msg, cb, okLabel) => setState({ open: true, title, msg, cb, okLabel }), []);
   const close = useCallback(() => setState((s) => ({ ...s, open: false })), []);
   return [state, ask, close];
 }

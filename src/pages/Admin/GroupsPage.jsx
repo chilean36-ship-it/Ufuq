@@ -91,7 +91,7 @@ export default function GroupsPage() {
     if (!g.is_active) { saveActive(g); return; }
     askConfirm(t('Switch off group'),
       t('Switch off {name}? It moves to the inactive groups. You can switch it back on at any time.').replace('{name}', g.name),
-      () => saveActive(g));
+      () => saveActive(g), t('Switch off group'));
   }
   async function saveActive(g) {
     const { error } = await supabase.from('groups').update({ is_active: !g.is_active }).eq('code', g.code);
