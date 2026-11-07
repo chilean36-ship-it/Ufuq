@@ -53,12 +53,15 @@ createRoot(document.getElementById('root')).render(
 );
 
 // Hide the first-paint loader once React has painted (the app's own loaders take over from here).
-requestAnimationFrame(() => requestAnimationFrame(() => {
+// requestAnimationFrame never fires in a background tab, so a timer removes the loader as a fallback.
+const hideBoot = () => {
   const b = document.getElementById('boot');
-  if (!b) return;
+  if (!b || b.classList.contains('out')) return;
   b.classList.add('out');
   setTimeout(() => b.remove(), 400);
-}));
+};
+requestAnimationFrame(() => requestAnimationFrame(hideBoot));
+setTimeout(hideBoot, 1500);
 
 // Offline rejim: sahifalar va (bir marta ochilgan) audio/rasmlarni keshlab,
 // internet bo'lmaganda ham ishlashi uchun Service Worker (port of the
