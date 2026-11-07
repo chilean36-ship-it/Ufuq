@@ -109,10 +109,10 @@ export const DISCOVER_TABS = [
   },
 ];
 
-// Official CEFR certificates of Ustaz Ali's students (from the teacher's Telegram channel). Names, ID numbers, photos and QR codes
+// Official CEFR and Al-Tanal certificates of Ustaz Ali's students (from the teacher's Telegram channel). Names, ID numbers, photos and QR codes
 // are painted over in the image files, so only the level and the scores show.
 export const FACES = [
-  { name: 'CEFR C1', level: 'Arab tili · 75.7%', initial: 'C1', cls: 'face-photo-1', file: 'cert-1.jpg' },
+  { name: 'Al-Tanal', level: 'Arab tili · 75.7%', initial: 'T', cls: 'face-photo-1', file: 'cert-1.jpg' },
   { name: 'CEFR B2', level: 'Arab tili · 63', initial: 'B2', cls: 'face-photo-2', file: 'cert-2.jpg' },
   { name: 'CEFR B2', level: 'Arab tili · 56', initial: 'B2', cls: 'face-photo-3', file: 'cert-3.jpg' },
   { name: 'CEFR B2', level: 'Arab tili · 53', initial: 'B2', cls: 'face-photo-4', file: 'cert-4.jpg' },

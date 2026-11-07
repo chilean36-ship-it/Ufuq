@@ -81,8 +81,8 @@ const en = {
     "c3": "Calligraphy Pen"
   },
   "testi": {
-    "eyebrow": "Student Stories",
-    "title": "What our students say.",
+    "eyebrow": "Student Results",
+    "title": "Our students' results.",
     "q1": "Ufuq made Arabic feel possible for the first time. The lessons are clear and I always know what to study next.",
     "l1": "Beginner level",
     "q2": "The AI assistant is what keeps me consistent — I can practice at midnight and still get real feedback.",

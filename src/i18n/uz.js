@@ -81,8 +81,8 @@ const uz = {
     "c3": "Kalligrafiya qalami"
   },
   "testi": {
-    "eyebrow": "Talabalar fikri",
-    "title": "Talabalarimiz nima deydi.",
+    "eyebrow": "Talabalar natijalari",
+    "title": "Talabalarimiz natijalari.",
     "q1": "Ufuq arab tilini birinchi marta imkon qadar oson qildi. Darslar tushunarli va men doim keyingi qadamni bilaman.",
     "l1": "Boshlang'ich daraja",
     "q2": "AI-yordamchi meni izchil qiladi — yarim tunda ham mashq qilib, real fikr-mulohaza olaman.",
