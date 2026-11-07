@@ -121,3 +121,7 @@ html[data-theme="light"] .pricing .price-card{ box-shadow:0 24px 50px -30px rgba
   .section-head.reveal .eyebrow::before{ transition:none; width:22px; }
   .explore-grid > .reveal, .prog-grid > .reveal, .discover-grid > .reveal{ transition-delay:0s !important; }
 }
+
+/* Student certificates in the lightbox: show the whole sheet (level and scores are at the bottom), never crop it. */
+html body .prog-lightbox-media.face-fallback{ aspect-ratio:3/4; max-height:72vh; background:#14110d; }
+html body .prog-lightbox-media.face-fallback img{ object-fit:contain; }

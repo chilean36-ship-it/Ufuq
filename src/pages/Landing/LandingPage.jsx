@@ -351,7 +351,7 @@ function Testimonials({ onOpenLightbox }) {
             const f = { ...fRaw, src: media.img('student_' + (i + 1), '/assets/students/' + fRaw.file) };
             const open = () => onOpenLightbox({
               img: { className: 'face-photo-img', src: f.src, alt: f.name, lazy: true, hideOnError: true },
-              initial: f.initial, gradientClass: f.cls, labelKey: f.levelKey, title: f.name,
+              initial: f.initial, gradientClass: f.cls, label: f.level, title: f.name,
             });
             return (
               <div
@@ -370,7 +370,7 @@ function Testimonials({ onOpenLightbox }) {
                 <div className="face-scrim"></div>
                 <div className="face-info">
                   <div className="face-name">{f.name}</div>
-                  <div className="face-level">{t(f.levelKey)}</div>
+                  <div className="face-level">{f.level}</div>
                 </div>
               </div>
             );

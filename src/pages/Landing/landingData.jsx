@@ -109,13 +109,15 @@ export const DISCOVER_TABS = [
   },
 ];
 
+// Official CEFR certificates of Ustaz Ali's students (from the teacher's Telegram channel). Names, ID numbers, photos and QR codes
+// are painted over in the image files, so only the level and the scores show.
 export const FACES = [
-  { name: 'Sarvar A.', initial: 'S', cls: 'face-photo-1', file: 'sarvar-a.jpg', levelKey: 'testi.l1' },
-  { name: 'Dilnoza K.', initial: 'D', cls: 'face-photo-2', file: 'dilnoza-k.jpg', levelKey: 'testi.l2' },
-  { name: 'Jasur M.', initial: 'J', cls: 'face-photo-3', file: 'jasur-m.jpg', levelKey: 'testi.l3' },
-  { name: 'Madina T.', initial: 'M', cls: 'face-photo-4', file: 'madina-t.jpg', levelKey: 'testi.l4' },
-  { name: 'Otabek R.', initial: 'O', cls: 'face-photo-5', file: 'otabek-r.jpg', levelKey: 'testi.l5' },
-  { name: 'Aziza N.', initial: 'A', cls: 'face-photo-6', file: 'aziza-n.jpg', levelKey: 'testi.l6' },
+  { name: 'CEFR C1', level: 'Arab tili · 75.7%', initial: 'C1', cls: 'face-photo-1', file: 'cert-1.jpg' },
+  { name: 'CEFR B2', level: 'Arab tili · 63', initial: 'B2', cls: 'face-photo-2', file: 'cert-2.jpg' },
+  { name: 'CEFR B2', level: 'Arab tili · 56', initial: 'B2', cls: 'face-photo-3', file: 'cert-3.jpg' },
+  { name: 'CEFR B2', level: 'Arab tili · 53', initial: 'B2', cls: 'face-photo-4', file: 'cert-4.jpg' },
+  { name: 'CEFR B2', level: 'Arab tili · 53', initial: 'B2', cls: 'face-photo-5', file: 'cert-5.jpg' },
+  { name: 'CEFR B2', level: 'Arab tili · 51', initial: 'B2', cls: 'face-photo-6', file: 'cert-6.jpg' },
 ];
 
 export const QUOTES = [

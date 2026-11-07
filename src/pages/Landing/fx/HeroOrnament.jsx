@@ -81,7 +81,6 @@ export default function HeroOrnament() {
 
       {/* depth 3 — frame around the word */}
       <g className="ho-depth ho-d3">
-        <circle className="ho-line" pathLength="1" cx={C} cy={C} r="96" style={{ '--i': 6 }} />
         <circle className="ho-dash" cx={C} cy={C} r="84" />
         {geo.diamonds.map(([x, y], i) => <rect key={i} className="ho-diamond" x={f(x - 3.2)} y={f(y - 3.2)} width="6.4" height="6.4" transform={`rotate(45 ${f(x)} ${f(y)})`} />)}
       </g>
