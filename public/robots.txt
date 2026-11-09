@@ -57,4 +57,4 @@ Disallow: /invoice
 Disallow: /zoom-meeting.html
 Disallow: /listening/
 
-Sitemap: https://ufuq-com.vercel.app/sitemap.xml
+Sitemap: https://ufuqtaleem.com/sitemap.xml

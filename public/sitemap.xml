@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://ufuq-com.vercel.app/index</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://ufuq-com.vercel.app/about-author</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://ufuq-com.vercel.app/terms</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
-  <url><loc>https://ufuq-com.vercel.app/privacy</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
-  <url><loc>https://ufuq-com.vercel.app/cookies</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
-  <url><loc>https://ufuq-com.vercel.app/refund</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://ufuqtaleem.com/index</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://ufuqtaleem.com/about-author</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ufuqtaleem.com/terms</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://ufuqtaleem.com/privacy</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://ufuqtaleem.com/cookies</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://ufuqtaleem.com/refund</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
 </urlset>
