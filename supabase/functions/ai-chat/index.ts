@@ -26,6 +26,8 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const ALLOWED_ORIGINS = new Set([
   "https://ufuq-com.vercel.app",
+  "https://ufuqtaleem.com",
+  "https://www.ufuqtaleem.com",
   "https://ufuq-com.netlify.app",
   "http://localhost:3000",
   "http://localhost:5173",

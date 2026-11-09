@@ -28,6 +28,8 @@ const ELEVEN_LANGS = new Set(["ar", "en", "ru"]);
 
 const ALLOWED_ORIGINS = new Set([
   "https://ufuq-com.vercel.app",
+  "https://ufuqtaleem.com",
+  "https://www.ufuqtaleem.com",
   "https://ufuq-com.netlify.app",
   "http://localhost:3000",
   "http://localhost:5173",

@@ -7,6 +7,8 @@
 
 const DEFAULT_ORIGINS = [
   "https://ufuq-com.vercel.app",
+  "https://ufuqtaleem.com",
+  "https://www.ufuqtaleem.com",
   "https://ufuq-com.netlify.app",
   "http://localhost:3000",
   "http://localhost:5173",
