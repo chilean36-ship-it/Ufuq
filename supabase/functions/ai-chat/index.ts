@@ -25,7 +25,6 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const ALLOWED_ORIGINS = new Set([
-  "https://ufuq-com.vercel.app",
   "https://ufuqtaleem.com",
   "https://www.ufuqtaleem.com",
   "https://ufuq-com.netlify.app",
@@ -36,7 +35,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 function corsHeadersFor(req: Request) {
   const origin = req.headers.get("Origin") ?? "";
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : "https://ufuq-com.vercel.app";
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : "https://ufuqtaleem.com";
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

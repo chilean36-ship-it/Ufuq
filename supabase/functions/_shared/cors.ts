@@ -6,7 +6,6 @@
 // CORS is not the only gate: every function still verifies the caller's JWT.
 
 const DEFAULT_ORIGINS = [
-  "https://ufuq-com.vercel.app",
   "https://ufuqtaleem.com",
   "https://www.ufuqtaleem.com",
   "https://ufuq-com.netlify.app",

@@ -11,6 +11,6 @@ SUPABASE_URL = "https://ldbthwpikixtykwmvudy.supabase.co"
 # public/publishable key (same one that is in .env.example) — never the service_role key
 SUPABASE_ANON_KEY = "sb_publishable_872FZikCbCvaFfeao1azmQ_20FnUjJy"
 # Comma-separated list of the exact origins your site runs on. ADD YOUR PRODUCTION DOMAIN, e.g. "https://ufuq.uz,http://localhost:5173"
-ALLOWED_ORIGINS = "https://ufuq-com.vercel.app,https://ufuqtaleem.com,https://www.ufuqtaleem.com,http://localhost:5173"
+ALLOWED_ORIGINS = "https://ufuqtaleem.com,https://www.ufuqtaleem.com,http://localhost:5173"
 
 # Secret (not stored in this file):  npx wrangler secret put SIGNING_SECRET   (paste: openssl rand -base64 48)

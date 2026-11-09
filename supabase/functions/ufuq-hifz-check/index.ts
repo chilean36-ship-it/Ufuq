@@ -16,13 +16,12 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const SITE = "https://ufuq-com.vercel.app";
+const SITE = "https://ufuqtaleem.com";
 const QURAN_BASE_URL = (Deno.env.get("QURAN_BASE_URL") ?? `${SITE}/quran`).replace(/\/$/, "");
 const PRIMARY_MODEL = Deno.env.get("HIFZ_GEMINI_MODEL") ?? "gemini-3-flash-preview";
 const FALLBACK_MODEL = "gemini-3.1-flash-lite";
 
 const ALLOWED_ORIGINS = new Set([
-  "https://ufuq-com.vercel.app",
   "https://ufuqtaleem.com",
   "https://www.ufuqtaleem.com",
   "https://ufuq-com.netlify.app",
