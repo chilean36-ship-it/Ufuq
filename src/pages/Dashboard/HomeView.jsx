@@ -43,13 +43,14 @@ const HOME_CSS = `
 `;
 
 /** Unified lock state for every Home panel: no buttons, just the reason and where to see it. */
-function Locked() {
+function Locked({ noGroup }) {
   const { t } = useCabinetI18n();
+  // A paid student who is in no running group (removed, or his group was switched off) is not asked to pay again.
   return (
     <div className="hp-locked" role="status">
       <span className="hp-locked-orb" aria-hidden="true">{LOCK_ICON}</span>
-      <p className="hp-locked-title">{t('Payment not made')}</p>
-      <p className="hp-locked-sub">{t('Pay to see this section.')}</p>
+      <p className="hp-locked-title">{noGroup ? t('No group yet') : t('Payment not made')}</p>
+      <p className="hp-locked-sub">{noGroup ? t('You will see this section as soon as you are in a running group.') : t('Pay to see this section.')}</p>
     </div>
   );
 }
@@ -71,8 +72,9 @@ function PanelHead({ title, note }) {
 /** Home dashboard — welcome banner + Tasks / Schedule / Attendance / Ranking / Progress panels. */
 export default function HomeView({ onNavigate }) {
   const { t, lang } = useCabinetI18n();
-  const { user, name, level, groupCode, groupData, groupReady, refreshGroup, locked } = useDashboardData();
+  const { user, name, level, groupCode, groupData, groupReady, refreshGroup, locked, isPaid } = useDashboardData();
   const joined = !!groupCode && !locked; // unpaid (expired) members stay in the group, but its content stays closed until they pay
+  const noGroup = groupReady && !groupCode && !locked && !!isPaid;   // paid, but in no running group
   const userId = user && user.id;
 
   // Re-render once a minute so "Now / Done / Upcoming" and the week strip follow the clock (and midnight).
@@ -198,7 +200,7 @@ export default function HomeView({ onNavigate }) {
         <div className="panel panel-compact home-panel">
           <PanelHead title={t('Tasks')} note={joined && tasks && tasks.length ? `${tasks.filter((x) => x.sub).length}/${tasks.length}` : t('Homework')} />
           {!joined ? (
-            <Locked />
+            <Locked noGroup={noGroup} />
           ) : (
             <div className="schedule-list-simple panel-body-scroll" id="homeTasksList">
               {tasks === null ? null : tasks.length === 0 ? (
@@ -220,7 +222,7 @@ export default function HomeView({ onNavigate }) {
         <div className="panel panel-compact home-panel">
           <PanelHead title={t("Today's schedule")} />
           {!joined ? (
-            <Locked />
+            <Locked noGroup={noGroup} />
           ) : (
             <div id="scheduleContent">
               <div className="group-week-strip" id="homeWeekStrip">
@@ -261,7 +263,7 @@ export default function HomeView({ onNavigate }) {
         <div className={'panel panel-compact home-panel' + (joined ? ' is-link' : '')} {...linkProps(onNavigate, joined, 'attendance')}>
           <PanelHead title={t('Attendance')} note={`${t(MONTH_NAMES[today.getMonth()])} ${today.getFullYear()}`} />
           {!joined ? (
-            <Locked />
+            <Locked noGroup={noGroup} />
           ) : monthStats === null ? null : (
             <div className={'hp-body am-home lvl-' + monthStats.level} id="gateAttendance" style={{ '--am-color': LEVEL_COLORS[monthStats.level] }}>
               <div>
@@ -296,7 +298,7 @@ export default function HomeView({ onNavigate }) {
         <div className={'panel panel-compact home-panel' + (joined ? ' is-link' : '')} {...linkProps(onNavigate, joined, 'myGroup')}>
           <PanelHead title={t('Class ranking')} />
           {!joined ? (
-            <Locked />
+            <Locked noGroup={noGroup} />
           ) : (
             <div className="hr-list panel-body-scroll" id="homeRankingList" ref={rankRef}>
               {members === null ? null : sortedMembers.length === 0 ? (
@@ -323,7 +325,7 @@ export default function HomeView({ onNavigate }) {
         <div className="panel panel-compact home-panel">
           <PanelHead title={t('Progress')} />
           {!joined ? (
-            <Locked />
+            <Locked noGroup={noGroup} />
           ) : examHistory === null ? null : (
             <div className="hp-body" id="homeProgress">
               <ProgressLine items={examHistory} compact />

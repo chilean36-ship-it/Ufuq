@@ -28,7 +28,7 @@ export default function AccessTab() {
 
   const loadGroups = useCallback(async () => {
     const [g, m] = await Promise.all([
-      supabase.from('groups').select('code, name').order('name'),
+      supabase.from('groups').select('code, name, is_active').order('name'),
       supabase.from('group_members').select('user_id, group_code'),
     ]);
     if (!g.error) setGroups((g.data || []).slice().sort((x, y) => String(x.name || x.code).localeCompare(String(y.name || y.code), undefined, { numeric: true, sensitivity: 'base' })));
@@ -59,7 +59,8 @@ export default function AccessTab() {
   const sections = useMemo(() => {
     const byUser = new Map();
     members.forEach((m) => { if (!byUser.has(m.user_id)) byUser.set(m.user_id, []); byUser.get(m.user_id).push(m.group_code); });
-    const out = groups.map((g) => ({ code: g.code, name: g.name || g.code, rows: [] }));
+    // running groups only: a switched-off level group is not a place where anybody studies (its students fall under "No group")
+    const out = groups.filter((g) => g.is_active !== false).map((g) => ({ code: g.code, name: g.name || g.code, rows: [] }));
     const idx = new Map(out.map((x, i) => [x.code, i]));
     const none = { code: '__none', name: null, rows: [] };
     list.forEach((r) => {

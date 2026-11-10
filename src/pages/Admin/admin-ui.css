@@ -529,3 +529,8 @@ body.adm .a-lv-name{ flex:1 1 120px; min-width:0; display:grid; }
 body.adm .a-lv-name small{ color:var(--text-muted); }
 body.adm .a-lv-n{ font-weight:700; white-space:nowrap; }
 body.adm .a-lv-n small{ font-weight:400; color:var(--text-muted); }
+body.adm .a-lv-n.warn{ color:var(--a-amber); }
+body.adm .a-stranded{ margin-bottom:16px; border-color:var(--a-amber); }
+body.adm .a-stranded .panel-head h3{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+body.adm .a-stranded .a-lv-list{ max-height:320px; }
+body.adm .a-stranded .a-select{ min-width:150px; }

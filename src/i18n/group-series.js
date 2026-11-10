@@ -1,3 +1,4 @@
+import lifecycle from './level-lifecycle';
 // Strings of the group series model (letter A-G + level, individual promotion, deadline closes the group). Key = English text.
 const uz = {
   'This letter is already used by another group. Choose a free letter.': 'Bu harf boshqa guruhda ishlatilgan. Bo\'sh harfni tanlang.',
@@ -104,4 +105,4 @@ const ar = {
   'Correct answers': 'الإجابات الصحيحة',
   'No exams in this filter.': 'لا توجد اختبارات في هذا التصفية.',
 };
-export default { UZ: uz, RU: ru, EN: {}, AR: ar };
+export default { UZ: { ...uz, ...lifecycle.UZ }, RU: { ...ru, ...lifecycle.RU }, EN: {}, AR: { ...ar, ...lifecycle.AR } };

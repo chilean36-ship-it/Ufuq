@@ -4,6 +4,7 @@ Arabic-learning platform (teacher: Ustaz Ali Hifniy). React 18 + Vite SPA, Supab
 
 ## Commands
 - `npm install` · `npm run dev` (5173) · `npm run build` · `npm test` (plain Node tests in `test/`, no framework) · `npm run lint` (ESLint; must stay at 0 errors, warnings are tolerated)
+- `npm run test:sql` — level-system SQL test on a throw-away local Postgres (`test/sql/`, needs `initdb`; skips when Postgres is not installed). Run it after touching any level / group function.
 - CI: `.github/workflows/ci.yml` runs lint + test + build on every push / PR. Deploys are done by Vercel's GitHub integration (production branch `main`).
 
 ## Layout
@@ -23,3 +24,4 @@ Arabic-learning platform (teacher: Ustaz Ali Hifniy). React 18 + Vite SPA, Supab
 - Payment enforcement at RLS level is intentionally NOT done yet (`payments_enforced = false`); leave it unless asked.
 - CSP is in report-only mode in `vercel.json` until verified on the live site.
 - Level system: 14 levels, exams 150 points (midterm 50 + final 100), pass mark 75; groups are letter + level (e.g. `Group A7`).
+- Level groups (rules in the header of `supabase/migrations/20261201_level_groups_lifecycle.sql`): students move one by one; only RUNNING groups (`is_active`) are ever a target; a group closes itself when its last real student leaves and its letter runs elsewhere (`moved_on_at`) or on the final-exam deadline (`deadline_closed_at`). Every page except Admin > Groups lists running groups only. `profiles.level_free` = test account: never moved, never counted.

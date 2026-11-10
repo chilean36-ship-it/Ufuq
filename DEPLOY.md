@@ -142,3 +142,17 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 - Re-register the webhook + command menu without handling the token (SQL editor):
   `select net.http_post(url := 'https://ldbthwpikixtykwmvudy.supabase.co/functions/v1/cron-monitor', headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',(select decrypted_secret from vault.decrypted_secrets where name = 'bot_cron_secret')), body := '{"action":"set_webhook"}'::jsonb);`
 - APPLIED (2026-11-07): `supabase/migrations/20261125_level1_listening_full_gemini.sql`: data only. Level 1 midterm and final now carry the full 5 listening questions each (all 16 papers) with the Gemini fusha audio in `public/listening/level1/g/` (old Azure files removed). Levels 2-14: text ready in `Ufuq web/listening-all-levels`, audio pending (Gemini free quota ~10 requests/day, ElevenLabs free tier blocked).
+
+## Level groups: one life cycle (audit of 2026-11-10) — NOT APPLIED YET
+`supabase/migrations/20261201_level_groups_lifecycle.sql` (safe to run twice). Site changes work before and after it.
+- An old level group switches itself off (`groups.moved_on_at`) when its last real student leaves and another group of the same letter runs. The final-exam deadline still closes a group as before.
+- Pass: next level of the student's own letter; it opens for the first passer and takes over the CURRENT schedule, Zoom link and teachers. A level the cohort already left is not re-opened while another group runs on that level.
+- Fail / "Lower level": nearest lower level that has a RUNNING group (own letter first). Nothing below: stays and retakes.
+- Manual level change: one level up = like a pass. Any other level needs a running group there (`NO_ACTIVE_GROUP_AT_LEVEL`); a switched-off group is never switched on silently.
+- A real student is in one class group. The level of a group with students cannot be edited (`GROUP_LEVEL_LOCKED`).
+- New RPCs: `staff_stranded_students()`, `staff_group_student_counts()`, `admin_move_student_to_group(user, group)`. Admin > Groups lists "Students in switched-off groups" and moves them.
+- Level exams need a class group of that level (an account with no group no longer sees level-1 exams); "did not submit" lists the level's students.
+- Teachers: a new group is linked to MAIN admins only; `ufuq_teaches_level_exam` ignores switched-off empty groups. One-time clean-up deletes the links of ordinary admins to class groups that never ran (on 2026-11-10: 62 links each for the two ordinary admins; their links to A8 / D9 and to groups that have run stay).
+- Removed: `ufuq_group_for_level`, `ufuq_level_group_name` (unused).
+- Test: `npm run test:sql` (throw-away local Postgres; fixture `test/sql/level_system_baseline.sql`).
+- After applying: open Admin > Groups and place the students listed under "Students in switched-off groups" (4 on 2026-11-10: Group A7 x2, A6, E4).

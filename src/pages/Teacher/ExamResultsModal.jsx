@@ -35,6 +35,9 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
       if (subRes.error) throw subRes.error;
       const viewCode = g ? g.code : exam.group_code;
       const ownView = viewCode === exam.group_code;
+      // A midterm / final belongs to a LEVEL: only the students on that level are expected to take it, wherever the row is stored.
+      const levelExam = !!(exam.exam_kind && exam.level);
+      const onLevel = (lv) => Number(lv) === Number(exam.level);
       const viewRes = await supabase.from('group_members').select('user_id, name').eq('group_code', viewCode);
       const viewMembers = viewRes.data || [];
       const viewSet = new Set(viewMembers.map((m) => m.user_id));
@@ -47,14 +50,27 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
         if (!rr.error && Array.isArray(rr.data)) {
           haveRpc = true;
           // viewed from a sibling group, the exam group's students who did not take it are not part of this list
-          rr.data.forEach((r) => { if (ownView || submitters.has(r.user_id) || viewSet.has(r.user_id)) put(r.user_id, r.name, r.current_group); });
+          rr.data.forEach((r) => {
+            if (levelExam && !submitters.has(r.user_id) && !onLevel(r.level)) return;   // e.g. a level-8 member of the group that stores the level-7 final
+            if (ownView || submitters.has(r.user_id) || viewSet.has(r.user_id)) put(r.user_id, r.name, r.current_group);
+          });
         }
       } catch (e) { /* function missing: the tables below give the same answer */ }
       if (!haveRpc && ownView) {
         const memRes = await supabase.from('group_members').select('user_id, name').eq('group_code', exam.group_code);
         (memRes.data || []).forEach((m) => put(m.user_id, m.name, null));
       }
-      viewMembers.forEach((m) => put(m.user_id, m.name, null));
+      if (levelExam && haveRpc) {
+        // members of the open group the server did not list: keep only real students who are on the exam's level
+        const rest = viewMembers.filter((m) => !byId.has(m.user_id));
+        if (rest.length) {
+          const pr = await supabase.from('profiles').select('id, role, level, level_free').in('id', rest.map((m) => m.user_id));
+          const keep = new Set((pr.data || []).filter((p) => p.role === 'student' && !p.level_free && onLevel(p.level)).map((p) => p.id));
+          rest.forEach((m) => { if (keep.has(m.user_id)) put(m.user_id, m.name, null); });
+        }
+      } else {
+        viewMembers.forEach((m) => put(m.user_id, m.name, null));
+      }
       const unnamed = [...submitters].filter((id) => !byId.has(id) || !byId.get(id).name);
       if (unnamed.length) {
         const pr = await supabase.from('profiles').select('id, full_name').in('id', unnamed);

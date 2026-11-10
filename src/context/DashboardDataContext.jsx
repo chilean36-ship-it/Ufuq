@@ -84,8 +84,11 @@ export function DashboardDataProvider({ children }) {
         .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' }));
       setGroups((cur) => (JSON.stringify(cur) === JSON.stringify(list) ? cur : list));
 
-      // Active group = the one picked last time (if still a member), else the earliest joined.
-      const candidates = list.length ? list.map((g) => g.code) : codes;
+      // Working group = the one picked last time (if still a member and running), else the first running one.
+      // Only RUNNING groups count: a student whose group is switched off has no working group at all, so nothing of the
+      // closed group is shown (Home explains why with the "Your group is closed" card). It used to fall back to the
+      // switched-off group's code, which kept its tasks, lessons and chat on screen.
+      const candidates = list.map((g) => g.code);
       const preferred = readActiveGroup(user.id);
       const code = candidates.includes(preferred) ? preferred : (candidates[0] || null);
       writeActiveGroup(user.id, code);
