@@ -31,7 +31,7 @@ trap cleanup EXIT
 
 PSQL=("$PG_BIN/psql" -h "$WORK" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q)
 "${PSQL[@]}" -f "$ROOT/test/sql/level_system_baseline.sql" >/dev/null
-MIGRATION="$ROOT/supabase/migrations/20261201_level_groups_lifecycle.sql"
+MIGRATION="${MIGRATION_FILE:-$ROOT/supabase/migrations/20261201_level_groups_lifecycle.sql}"
 "${PSQL[@]}" -f "$MIGRATION" >/dev/null
 "${PSQL[@]}" -f "$MIGRATION" >/dev/null          # a migration must be safe to run twice
 "${PSQL[@]}" -f "$ROOT/test/sql/level_system.test.sql" 2>&1 | sed -e 's/^psql:[^ ]* NOTICE:  //'
