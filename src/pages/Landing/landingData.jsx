@@ -155,7 +155,7 @@ export const FOOTER_COLUMNS = [
     links: [
       { href: '', text: 'YouTube', linkSlot: 'link_youtube' },
       { href: '', text: 'Instagram', linkSlot: 'link_instagram' },
-      { href: 'https://t.me/kanal_ustaz_ali', text: 'Telegram', external: true, linkSlot: 'link_telegram' },
+      { href: 'https://t.me/Arabic_UstazAli', text: 'Telegram', external: true, linkSlot: 'link_telegram' },
     ],
   },
 ];

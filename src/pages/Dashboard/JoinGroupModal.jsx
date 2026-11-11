@@ -47,6 +47,8 @@ export default function JoinGroupModal({ open, onClose, onJoined }) {
           ? 'You need an active subscription to join a group. Please choose a plan first.' // English in the original, not run through TT()
           : m.includes('TOO_MANY_ATTEMPTS')
             ? t('Too many wrong attempts. Please wait 15 minutes and try again.')
+            : m.includes('MISSED_DEADLINE')
+              ? t('Your group was closed before you passed. Your teacher or admin will decide where you go next; you cannot join another group yourself.')
             : m.includes('ALREADY_IN_GROUP')
               ? t('You are already in an Arabic group. You cannot join two Arabic groups (a Qur\'an group is allowed).')
             : m.includes('LEVEL_MISMATCH')
