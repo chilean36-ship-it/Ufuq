@@ -1,4 +1,4 @@
-// Ufuq — resource-usage: Admin → Administration → Resources (main admin only).
+// Ufuq — resource-usage: Admin → Administration → Resources (main admin only). (admin only)
 // Reports how full Supabase (database + file storage), Cloudflare R2  are.
 // Everything optional: a part whose secret is missing answers { configured:false } and the page shows how to switch it on.
 //   Supabase  : nothing to set (limits default to the Free plan; override with SUPABASE_DB_LIMIT_MB / SUPABASE_STORAGE_LIMIT_MB)
