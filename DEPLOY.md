@@ -143,8 +143,8 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
   `select net.http_post(url := 'https://ldbthwpikixtykwmvudy.supabase.co/functions/v1/cron-monitor', headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',(select decrypted_secret from vault.decrypted_secrets where name = 'bot_cron_secret')), body := '{"action":"set_webhook"}'::jsonb);`
 - APPLIED (2026-11-07): `supabase/migrations/20261125_level1_listening_full_gemini.sql`: data only. Level 1 midterm and final now carry the full 5 listening questions each (all 16 papers) with the Gemini fusha audio in `public/listening/level1/g/` (old Azure files removed). Levels 2-14: text ready in `Ufuq web/listening-all-levels`, audio pending (Gemini free quota ~10 requests/day, ElevenLabs free tier blocked).
 
-## Level groups: one life cycle (audit of 2026-11-10) — NOT APPLIED YET
-`supabase/migrations/20261201_level_groups_lifecycle.sql` (safe to run twice). Site changes work before and after it.
+## Level groups: one life cycle (audit of 2026-11-10) — APPLIED to live ldbthwpikixtykwmvudy on 2026-11-10
+`supabase/migrations/20261201_level_groups_lifecycle.sql` (safe to run twice), applied in four parts as `level_groups_lifecycle_1..4`; all 25 functions verified identical to this file. The site changes still have to go to `main` (Vercel); they work with the old and the new database.
 - An old level group switches itself off (`groups.moved_on_at`) when its last real student leaves and another group of the same letter runs. The final-exam deadline still closes a group as before.
 - Pass: next level of the student's own letter; it opens for the first passer and takes over the CURRENT schedule, Zoom link and teachers. A level the cohort already left is not re-opened while another group runs on that level.
 - Fail / "Lower level": nearest lower level that has a RUNNING group (own letter first). Nothing below: stays and retakes.
