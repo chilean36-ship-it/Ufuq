@@ -100,7 +100,7 @@ export default function ResourcesPage() {
   }, [t, toast]);
   useEffect(() => { load(); }, [load]);
 
-  const sb = d && d.supabase, cf = d && d.cloudflare;
+  const sb = d && d.supabase, cf = d && d.cloudflare, vc = d && d.vercel;
   const need = (arr) => (arr || []).map((k) => <code key={k} style={{ marginInlineEnd: 6 }}>{k}</code>);
 
   return (
@@ -138,10 +138,13 @@ export default function ResourcesPage() {
               ? <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{t('Not connected yet. Add these secrets to the Edge Function:')} {need(cf.need)}</Notice>
               : <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{(cf && cf.error) || '—'}</Notice>}
 
-          <Notice icon={IC_SITE} title={t('Website traffic (Vercel)')}>
-            {t('The free Vercel plan allows 100 GB of traffic per month; if it is used up the site is paused. Vercel gives no read-only API for this on the free plan, so check it here:')}{' '}
-            <a href="https://vercel.com/khalilov16122005-5171/~/usage" target="_blank" rel="noopener noreferrer">{t('Open Vercel usage')}</a>
-          </Notice>
+          {vc && vc.traffic ? <Gauge t={t} icon={IC_SITE} title={t('Website traffic (Vercel), this month')} used={vc.traffic.used} limit={vc.traffic.limit} />
+            : <Notice icon={IC_SITE} title={t('Website traffic (Vercel)')}>
+              {vc && vc.configured === false ? <>{t('Not connected yet. Add these secrets to the Edge Function:')} {need(vc.need)}</>
+                : vc && vc.error ? vc.error
+                : <>{t('No traffic line found in the Vercel feed.')} {(vc && vc.services || []).map((s) => s.name + ' ' + s.qty + ' ' + s.unit).join(', ')}</>}{' '}
+              <a href="https://vercel.com/khalilov16122005-5171/~/usage" target="_blank" rel="noopener noreferrer">{t('Open Vercel usage')}</a>
+            </Notice>}
         </div>
         <p className="hint">{t('Updated')}: {new Date(d.at).toLocaleString()}</p>
       </>)}

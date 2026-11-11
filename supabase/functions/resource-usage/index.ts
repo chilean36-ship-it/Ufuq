@@ -49,6 +49,42 @@ async function cloudflareUsage() {
   } catch (e) { return { configured: true, error: String((e as Error).message || e) }; }
 }
 
+// Vercel: this month's site traffic from the billing charges feed (FOCUS, one JSON object per line).
+//   VERCEL_TOKEN (account token, read) + VERCEL_TEAM (team slug or id, e.g. khalilov16122005-5171); limit VERCEL_BANDWIDTH_GB (default 100 = Hobby)
+async function vercelUsage() {
+  const token = key("VERCEL_TOKEN"), team = key("VERCEL_TEAM");
+  if (!token || !team) return { configured: false, need: ["VERCEL_TOKEN", "VERCEL_TEAM"].filter((k) => !key(k)) };
+  const now = new Date();
+  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const q = (team.startsWith("team_") ? "teamId=" : "slug=") + encodeURIComponent(team);
+  try {
+    const r = await fetch(`https://api.vercel.com/v1/billing/charges?${q}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(now.toISOString())}`, {
+      headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20_000),
+    });
+    const text = await r.text();
+    if (!r.ok) { let m = `HTTP ${r.status}`; try { m = JSON.parse(text)?.error?.message || m; } catch { /* keep */ } return { configured: true, error: m }; }
+    const services: Record<string, { qty: number; unit: string }> = {};
+    for (const line of text.split("
+")) {
+      if (!line.trim()) continue;
+      let o: Record<string, unknown>; try { o = JSON.parse(line); } catch { continue; }
+      const name = String(o.ServiceName || o.ChargeDescription || "other");
+      const qty = Number(o.ConsumedQuantity ?? o.PricingQuantity ?? 0) || 0;
+      const unit = String(o.ConsumedUnit || o.PricingUnit || "");
+      if (!services[name]) services[name] = { qty: 0, unit };
+      services[name].qty += qty;
+    }
+    // bandwidth = the "Fast Data Transfer" / edge network line
+    const hit = Object.entries(services).find(([n]) => /fast data transfer|edge network|bandwidth|data transfer/i.test(n));
+    const toBytes = (qty: number, unit: string) => (/tb/i.test(unit) ? qty * 1024 * GB : /gb/i.test(unit) ? qty * GB : /mb/i.test(unit) ? qty * MB : qty);
+    return {
+      configured: true,
+      traffic: hit ? { name: hit[0], used: toBytes(hit[1].qty, hit[1].unit), limit: num("VERCEL_BANDWIDTH_GB", 100) * GB } : null,
+      services: Object.entries(services).map(([name, v]) => ({ name, qty: v.qty, unit: v.unit })).slice(0, 12),
+    };
+  } catch (e) { return { configured: true, error: String((e as Error).message || e) }; }
+}
+
 Deno.serve(withCors(async (req: Request) => {
   const URL_ = Deno.env.get("SUPABASE_URL")!;
   const asUser = createClient(URL_, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") || "" } } });
@@ -58,6 +94,6 @@ Deno.serve(withCors(async (req: Request) => {
   const { data: p } = await db.from("profiles").select("role, admin_tier").eq("id", u.user.id).maybeSingle();
   if (!p || p.role !== "admin" || (p.admin_tier || "super") !== "super") return json({ error: "Only the main admin" }, 403);
 
-  const [supabase, cloudflare] = await Promise.all([supabaseUsage(db), cloudflareUsage()]);
-  return json({ ok: true, at: new Date().toISOString(), supabase, cloudflare });
+  const [supabase, cloudflare, vercel] = await Promise.all([supabaseUsage(db), cloudflareUsage(), vercelUsage()]);
+  return json({ ok: true, at: new Date().toISOString(), supabase, cloudflare, vercel });
 }));
