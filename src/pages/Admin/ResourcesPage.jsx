@@ -4,7 +4,7 @@ import { usePanel } from '../../components/panel/PanelContext';
 import PageStyle from '../../components/PageStyle';
 import { PageHeader } from './ui';
 
-/** Admin → Administration → Resources (main admin only): how full Supabase, Cloudflare R2 and the Claude API are.
+/** Admin → Administration → Resources (main admin only): how full Supabase, Cloudflare R2 are.
  *  Data comes from the `resource-usage` Edge Function; a service without its secret shows what to set instead of a gauge. */
 
 const CSS = `
@@ -83,7 +83,6 @@ const I = (d) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" str
 const IC_DB = I(<><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>);
 const IC_FILES = I(<><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /></>);
 const IC_CLOUD = I(<path d="M18 10a6 6 0 0 0-11.6-1.5A4.5 4.5 0 0 0 7 18h11a4 4 0 0 0 0-8z" />);
-const IC_AI = I(<><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></>);
 
 export default function ResourcesPage() {
   const { t, toast } = usePanel();
@@ -100,13 +99,13 @@ export default function ResourcesPage() {
   }, [t, toast]);
   useEffect(() => { load(); }, [load]);
 
-  const sb = d && d.supabase, cf = d && d.cloudflare, cl = d && d.claude;
+  const sb = d && d.supabase, cf = d && d.cloudflare;
   const need = (arr) => (arr || []).map((k) => <code key={k} style={{ marginInlineEnd: 6 }}>{k}</code>);
 
   return (
     <section className="page active" id="page-resources">
       <PageStyle css={CSS} />
-      <PageHeader title={t('Resources')} sub={t('How much space and budget is left on Supabase, Cloudflare and Claude.')}>
+      <PageHeader title={t('Resources')} sub={t('How much space is left on Supabase and Cloudflare.')}>
         <button type="button" className="btn btn-ghost btn-sm" onClick={load} disabled={busy}>{busy ? t('Loading…') : t('Refresh')}</button>
       </PageHeader>
       {err && !d && <div className="panel" style={{ padding: 16 }}>{t('Could not load resource usage.')} <small style={{ opacity: .7 }}>{err}</small></div>}
@@ -126,31 +125,18 @@ export default function ResourcesPage() {
                 </div>) : null} />
           ) : <Notice icon={IC_FILES} title={t('Supabase file storage')}>—</Notice>}
 
-          {cf && cf.r2 ? <Gauge t={t} icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')} used={cf.r2.used} limit={cf.r2.limit} extra={<div className="rs-sub">{cf.r2.objects} {t('files')}</div>} />
+          {cf && cf.r2 ? <Gauge t={t} icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')} used={cf.r2.used} limit={cf.r2.limit} extra={(
+              <div className="rs-buckets">
+                <div className="rs-sub">{cf.r2.objects} {t('files')}</div>
+                {(cf.r2.buckets || []).map((b) => (
+                  <div className="rs-brow" key={b.name}><span>{b.name}</span><span className="rs-bbar"><i style={{ width: Math.max(2, (b.bytes / Math.max(1, cf.r2.used)) * 100) + '%' }} /></span><span>{size(b.bytes)}</span></div>
+                ))}
+              </div>
+            )} />
             : cf && cf.configured === false
               ? <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{t('Not connected yet. Add these secrets to the Edge Function:')} {need(cf.need)}</Notice>
               : <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{(cf && cf.error) || '—'}</Notice>}
 
-          {cl && cl.configured === false
-            ? <Notice icon={IC_AI} title={t('Claude API')}>{t('Not connected yet. Add these secrets to the Edge Function:')} {need(cl.need)}</Notice>
-            : cl && (
-              <div className="rs-card" role="group" aria-label={t('Claude API')}>
-                <h3>{IC_AI}{t('Claude API')}</h3>
-                {cl.spent != null && cl.budget ? <>
-                  <Ring pct={(cl.spent / cl.budget) * 100} />
-                  <div className="rs-nums"><b>${cl.spent.toFixed(2)}</b> / ${cl.budget.toFixed(2)} {t('this month')}</div>
-                  <div className="rs-sub">{t('Left')}: ${Math.max(0, cl.budget - cl.spent).toFixed(2)}</div>
-                </> : cl.spent != null ? <div className="rs-nums"><b>${cl.spent.toFixed(2)}</b> {t('this month')}<div className="rs-sub"><code>CLAUDE_MONTHLY_BUDGET_USD</code></div></div>
-                  : <div className="rs-note">{cl.spendNeed ? <code>{cl.spendNeed}</code> : cl.spendError}</div>}
-                {cl.rate && cl.rate.requests && cl.rate.requests.limit != null && (
-                  <div className="rs-nums">{t('Requests per minute left')}: <b>{cl.rate.requests.remaining}</b> / {cl.rate.requests.limit}</div>
-                )}
-                {cl.rate && cl.rate.tokens && cl.rate.tokens.limit != null && (
-                  <div className="rs-nums">{t('Tokens per minute left')}: <b>{cl.rate.tokens.remaining}</b> / {cl.rate.tokens.limit}</div>
-                )}
-                <div className="rs-sub">{t('Anthropic does not expose the prepaid credit balance through the API; check it in the Console.')}</div>
-              </div>
-            )}
         </div>
         <p className="hint">{t('Updated')}: {new Date(d.at).toLocaleString()}</p>
       </>)}
