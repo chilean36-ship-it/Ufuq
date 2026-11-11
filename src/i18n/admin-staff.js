@@ -13,6 +13,16 @@ const uz = {
   'Run the latest SQL migration first.': 'Avval oxirgi SQL migratsiyani ishga tushiring.', 'No admins or teachers yet.': 'Hozircha o‘qituvchi va adminlar yo‘q.',
   'Works in the teacher panel with the groups linked to them: lessons, tasks, exams, attendance and students.': 'O‘qituvchi panelida o‘ziga biriktirilgan guruhlar bilan ishlaydi: darslar, vazifalar, imtihonlar, davomat va talabalar.',
 };
+const uz2 = {
+  'Resources': 'Resurslar', 'How much space and budget is left on Supabase, Cloudflare and Claude.': 'Supabase, Cloudflare va Claude’da qancha joy va byudjet qolgan.',
+  'Storage and API budget left': 'Qolgan joy va API byudjeti', 'Refresh': 'Yangilash', 'Loading…': 'Yuklanmoqda…', 'Free': 'Bo‘sh', 'Plenty of room': 'Joy yetarli',
+  'Getting full': 'To‘lib bormoqda', 'Almost full': 'Deyarli to‘lgan', 'Supabase database': 'Supabase bazasi', 'Supabase file storage': 'Supabase fayl saqlash',
+  'files': 'ta fayl', 'this month': 'shu oy', 'Could not load resource usage.': 'Ma’lumotni yuklab bo‘lmadi.', 'Updated': 'Yangilandi', 'Left': 'Qoldi',
+  'Not connected yet. Add these secrets to the Edge Function:': 'Hali ulanmagan. Edge Function’ga shu secretlarni qo‘shing:',
+  'Anthropic does not expose the prepaid credit balance through the API; check it in the Console.': 'Anthropic oldindan to‘langan balansni API orqali bermaydi; uni Console’dan ko‘ring.',
+  'Missed the deadline': 'Muddatni o‘tkazib yuborganlar', 'Their group was closed before they passed. They cannot join another group until you decide.': 'Guruhi ular o‘tmasdan yopildi. Siz hal qilmaguningizcha boshqa guruhga qo‘shila olmaydi.', 'Decide': 'Hal qilish', 'Move to an active group': 'Faol guruhga o‘tkazish', 'Move one level down': 'Bir level pastga tushirish', 'Give more time for the final exam': 'Final imtihon uchun qo‘shimcha vaqt', 'Remove from the closed group': 'Yopiq guruhdan chiqarish', 'will be removed from the closed group. Continue?': 'yopiq guruhdan chiqariladi. Davom etasizmi?', 'Your group was closed before you passed. Your teacher or admin will decide where you go next; you cannot join another group yourself.': 'Guruhingiz siz o‘tmasdan yopildi. Keyingi qadamni ustoz yoki admin hal qiladi; o‘zingiz boshqa guruhga qo‘shila olmaysiz.',
+  'Requests per minute left': 'Daqiqadagi qolgan so‘rovlar', 'Tokens per minute left': 'Daqiqadagi qolgan tokenlar',
+};
 const ru = {
   'All': 'Все', 'Search by name or email…': 'Поиск по имени или email…',
   'Teacher': 'Учитель', 'Appoint': 'Назначить', 'Account type': 'Тип аккаунта', 'Groups': 'Группы', 'All groups': 'Все группы',
@@ -41,4 +51,4 @@ const ar = {
   'Run the latest SQL migration first.': 'شغّل أحدث ترحيل SQL أولًا.', 'No admins or teachers yet.': 'لا يوجد معلّمون أو مشرفون بعد.',
   'Works in the teacher panel with the groups linked to them: lessons, tasks, exams, attendance and students.': 'يعمل في لوحة المعلّم مع المجموعات المرتبطة به: الدروس والمهام والاختبارات والحضور والطلاب.',
 };
-export default { UZ: uz, RU: ru, AR: ar, EN: {} };
+export default { UZ: { ...uz, ...uz2 }, RU: ru, AR: ar, EN: {} };

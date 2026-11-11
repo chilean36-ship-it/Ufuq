@@ -3,7 +3,7 @@ import useLiveRefresh from '../../../lib/liveRefresh';
 import { supabase } from '../../../lib/supabaseClient';
 import { usePanel } from '../../../components/panel/PanelContext';
 import { Modal } from '../../../components/panel/ui';
-import { day, IC_INBOX, SearchBox, IC_CARET, IC_GROUP, PILL } from './paymentsShared';
+import { day, IC_INBOX, SearchBox, IC_GROUP, PILL } from './paymentsShared';
 
 export default function AccessTab() {
   const { t, toast, askConfirm, isSuper } = usePanel();
@@ -15,8 +15,7 @@ export default function AccessTab() {
   const [busy, setBusy] = useState(false);
   const [groups, setGroups] = useState([]);
   const [members, setMembers] = useState([]);
-  const [gFilter, setGFilter] = useState('all');
-  const [closed, setClosed] = useState(() => new Set());
+  const [gFilter, setGFilter] = useState(null);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('admin_list_access', { p_q: q || null });
@@ -71,10 +70,9 @@ export default function AccessTab() {
     return [...out, none].filter((x) => x.rows.length > 0);
   }, [groups, members, list]);
 
-  const visible = gFilter === 'all' ? sections : sections.filter((x) => x.code === gFilter);
-  const searching = q.trim().length > 0;
-  const toggle = (code) => setClosed((c) => { const n = new Set(c); if (n.has(code)) n.delete(code); else n.add(code); return n; });
-  const allClosed = visible.length > 0 && visible.every((x) => closed.has(x.code));
+  // Only the group picked in the tabs is shown (the first one until a tab is chosen).
+  const picked = sections.find((x) => x.code === gFilter) || sections[0];
+  const visible = picked ? [picked] : [];
   const nOn = list.filter(isOn).length;
   const secName = (x) => x.name || t('No group');
 
@@ -105,15 +103,13 @@ export default function AccessTab() {
         <SearchBox value={q} onChange={setQ} placeholder={t('Search students by name or email')} />
         {sections.length > 0 && (
           <div className="acc-chips" role="tablist" aria-label={t('Groups')}>
-            <button type="button" className={'acc-chip' + (gFilter === 'all' ? ' is-active' : '')} onClick={() => setGFilter('all')}>{t('All')}<span className="acc-chip-n">{list.length}</span></button>
             {sections.map((x) => (
-              <button key={x.code} type="button" className={'acc-chip' + (gFilter === x.code ? ' is-active' : '')} onClick={() => setGFilter(x.code)}>{secName(x)}<span className="acc-chip-n">{x.rows.length}</span></button>
+              <button key={x.code} type="button" className={'acc-chip' + (picked && picked.code === x.code ? ' is-active' : '')} onClick={() => setGFilter(x.code)}>{secName(x)}<span className="acc-chip-n">{x.rows.length}</span></button>
             ))}
           </div>
         )}
         <div className="acc-toolbar">
           <span className="hint"><b>{list.length}</b> {t('students')} · <b>{nOn}</b> {t('with access')}</span>
-          {visible.length > 1 && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setClosed(allClosed ? new Set() : new Set(visible.map((x) => x.code)))}>{allClosed ? t('Expand all') : t('Collapse all')}</button>}
         </div>
       </div>
 
@@ -124,15 +120,14 @@ export default function AccessTab() {
       ) : visible.length === 0 ? (
         <div className="panel pay-table-wrap"><div className="pay-empty">{IC_INBOX}<div>{t('No students.')}</div></div></div>
       ) : visible.map((x) => {
-        const open = searching || !closed.has(x.code);
+        const open = true;
         const on = x.rows.filter(isOn).length;
         return (
           <div key={x.code} className={'panel acc-group' + (open ? ' is-open' : '')}>
-            <button type="button" className="acc-group-head" aria-expanded={open} onClick={() => toggle(x.code)}>
+            <div className="acc-group-head" style={{ cursor: 'default' }}>
               <span className="acc-group-ic">{IC_GROUP}</span>
               <span className="acc-group-title"><b>{secName(x)}</b><span>{x.rows.length} {t('students')} · {on} {t('with access')}</span></span>
-              <span className="acc-caret">{IC_CARET}</span>
-            </button>
+              </div>
             <div className="acc-group-body">{open && tableFor(x.rows)}</div>
           </div>
         );

@@ -1,0 +1,24 @@
+/* Form fields must never turn white (or yellow) on the site's dark surfaces.
+   Browsers paint autofilled / remembered e-mail and password fields with their own light colour; this pins them to the
+   field's own theme colours. Works for light and dark theme because it reads the same variables the fields already use. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill{
+  -webkit-text-fill-color:var(--text, #EDEAE3);
+  caret-color:var(--text, #EDEAE3);
+  -webkit-box-shadow:0 0 0 1000px var(--bg-3, var(--bg, #1A1A1A)) inset;
+  box-shadow:0 0 0 1000px var(--bg-3, var(--bg, #1A1A1A)) inset;
+  border-color:rgba(237,234,227,.14);
+  transition:background-color 99999s ease-out 0s;
+}
+.auth-modal input:-webkit-autofill,
+.auth-modal input:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px var(--bg, #121212) inset;
+  box-shadow:0 0 0 1000px var(--bg, #121212) inset;
+}
+/* native widgets (date pickers, number spinners, select arrows) follow the theme */
+html[data-theme="light"]{ color-scheme:light; }
+html:not([data-theme="light"]){ color-scheme:dark; }
+.auth-field input::placeholder{ color:var(--text-muted, #A8A29B); opacity:.7; }

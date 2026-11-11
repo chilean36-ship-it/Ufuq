@@ -193,3 +193,11 @@ button.pbx-chip{font:inherit; cursor:pointer;}
 .xl-empty-soft{padding:22px 16px; margin-bottom:18px;}
 .xl-sec-prev{margin-top:26px; padding-top:18px; border-top:1px dashed var(--line);}
 .xl-prev-tag{display:inline-block; margin-left:8px; padding:2px 9px; border-radius:99px; font-size:11px; font-weight:600; letter-spacing:.02em; color:var(--gold-bright,#E5C878); background:var(--gold-dim,rgba(201,162,75,.14)); vertical-align:middle;}
+
+/* Time-limit field: the panel's global input rule (admin.css `input[type=number]`) is more specific than .pbx-select, so the
+   number could end up dark on dark. Pin it to the editor's own surface / ink in both themes. */
+.pbx{ color-scheme:light; }
+html:not([data-theme="light"]) .pbx{ color-scheme:dark; }
+.pbx .pbx-dur input.pbx-dur-in{ background:var(--p-surface); color:var(--p-ink); -webkit-text-fill-color:var(--p-ink); caret-color:var(--p-ink); border:1.5px solid var(--p-line); }
+.pbx .pbx-dur input.pbx-dur-in::placeholder{ color:var(--p-mut); -webkit-text-fill-color:var(--p-mut); }
+.pbx .pbx-dur input.pbx-dur-in.bad{ border-color:var(--p-bad); }

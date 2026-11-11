@@ -8,6 +8,34 @@ import { Avatar, EmptyState, Ico, PageHeader, Skeleton, StatCard } from './ui';
 // Kind of staff member: main admin / ordinary admin / teacher. Every change goes through SECURITY DEFINER RPCs
 // (supabase/migrations/20261026_staff_teacher_groups.sql) that re-check on the server that the caller is a main admin.
 const KINDS = [['super', 'Main admin'], ['standard', 'Admin'], ['teacher', 'Teacher']];
+/** One entry per group SERIES (letter), not per level: "Group A" covers A7, A8, ... so the link survives promotions.
+ *  Only levels that run or have run belong to a series (pre-created, never-run groups are not linked: they get their staff
+ *  from the series when they are created, see 20261201c). Other groups (individual / legacy) stay single entries.
+ *  extra = codes the person is already linked to that no entry covers, so such a link stays visible and removable. */
+const hasRun = (g) => g.is_active !== false || !!(g.reopened_at || g.deadline_closed_at || g.moved_on_at);
+function buildUnits(groups, extra) {
+  const byLetter = new Map();
+  const out = [];
+  const covered = new Set();
+  groups.forEach((g) => {
+    if (g.type === 'class' && g.letter) {
+      if (!hasRun(g)) return;
+      if (!byLetter.has(g.letter)) { const u = { key: 'L' + g.letter, name: 'Group ' + g.letter, codes: [], activeLevel: null }; byLetter.set(g.letter, u); out.push(u); }
+      const u = byLetter.get(g.letter);
+      u.codes.push(g.code); covered.add(g.code);
+      if (g.is_active !== false && g.level != null && (u.activeLevel == null || g.level > u.activeLevel)) u.activeLevel = g.level;
+    } else if (g.is_active !== false) {
+      out.push({ key: 'C' + g.code, name: g.name || '\u2014', codes: [g.code], activeLevel: null }); covered.add(g.code);
+    }
+  });
+  const names = new Map(groups.map((g) => [g.code, g.name]));
+  (extra || []).forEach((c) => { if (!covered.has(c) && names.has(c)) out.push({ key: 'X' + c, name: names.get(c) || '\u2014', codes: [c], activeLevel: null, off: true }); });
+  return out.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+}
+const unitOn = (u, sel) => u.codes.some((c) => sel.has(c));
+const unitToggle = (u, cur) => { const n = new Set(cur); if (unitOn(u, cur)) u.codes.forEach((c) => n.delete(c)); else u.codes.forEach((c) => n.add(c)); return n; };
+const UnitName = ({ u, t }) => <span className="a-gp-name">{u.name}{u.activeLevel != null ? <small style={{ opacity: .65, marginInlineStart: 6 }}>{t('now')} L{u.activeLevel}</small> : null}{u.off ? <small className="muted"> · {t('switched off')}</small> : null}</span>;
+
 const kindOf = (a) => (a.role === 'teacher' ? 'teacher' : a.admin_tier === 'standard' ? 'standard' : 'super');
 
 /** Main admin only: appoint teachers / admins, change their type, link them to groups, remove their rights. */
@@ -20,6 +48,7 @@ export default function AdminsPage() {
   const [newGroups, setNewGroups] = useState(() => new Set()); // groups the new teacher / admin will work with
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const units = useMemo(() => buildUnits(groups), [groups]);
   const [picker, setPicker] = useState(null); // staff row whose groups are being edited
   const [rolePerson, setRolePerson] = useState(null); // staff row whose role is being changed
   const [q, setQ] = useState('');
@@ -28,7 +57,7 @@ export default function AdminsPage() {
   const load = useCallback(async (opts) => {
     const [st, gr] = await Promise.all([
       supabase.rpc('admin_list_staff'),
-      supabase.from('groups').select('code, name, is_active').order('name'),
+      supabase.from('groups').select('code, name, is_active, type, letter, level, reopened_at, deadline_closed_at, moved_on_at').order('name'),
     ]);
     if (st.error) { if (!(opts && opts.silent)) setRows({ error: st.error.message }); return; }
     setRows(st.data || []);
@@ -88,8 +117,6 @@ export default function AdminsPage() {
   const count = (k) => list.filter((a) => kindOf(a) === k).length;
   const nameOf = useMemo(() => { const m = {}; groups.forEach((g) => { m[g.code] = g.name || ''; }); return m; }, [groups]);
   // Only running groups can be given to somebody; a switched-off level group gets its teachers when the cohort reaches it.
-  const liveGroups = useMemo(() => groups.filter((g) => g.is_active !== false), [groups]);
-  const isLive = useMemo(() => { const m = {}; groups.forEach((g) => { m[g.code] = g.is_active !== false; }); return m; }, [groups]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     return list.filter((a) => (filter === 'all' || kindOf(a) === filter)
@@ -128,19 +155,19 @@ export default function AdminsPage() {
           <div className="a-appoint-groups">
             <div className="a-appoint-gh">
               <b>{t('Groups this person can work with')}</b>
-              <span className="a-gp-count">{newGroups.size} {t('selected')}</span>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set(liveGroups.map((g) => g.code)))}>{t('Select all')}</button>
+              <span className="a-gp-count">{units.filter((u) => unitOn(u, newGroups)).length} {t('selected')}</span>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set(units.flatMap((u) => u.codes)))}>{t('Select all')}</button>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set())}>{t('Clear')}</button>
             </div>
             <div className="a-gp-list a-appoint-glist" role="group" aria-label={t('Groups')}>
-              {liveGroups.length === 0 ? <p className="hint">{t('No groups yet')}</p> : liveGroups.map((g) => (
-                <label key={g.code} className={'a-gp-item' + (newGroups.has(g.code) ? ' on' : '')}>
-                  <input type="checkbox" checked={newGroups.has(g.code)} onChange={() => setNewGroups((cur) => { const n = new Set(cur); if (n.has(g.code)) n.delete(g.code); else n.add(g.code); return n; })} />
-                  <span className="a-gp-name">{g.name || '—'}</span>
+              {units.length === 0 ? <p className="hint">{t('No groups yet')}</p> : units.map((u) => (
+                <label key={u.key} className={'a-gp-item' + (unitOn(u, newGroups) ? ' on' : '')}>
+                  <input type="checkbox" checked={unitOn(u, newGroups)} onChange={() => setNewGroups((cur) => unitToggle(u, cur))} />
+                  <UnitName u={u} t={t} />
                 </label>
               ))}
             </div>
-            <p className="hint" style={{ margin: '8px 0 0' }}>{t('The person sees and manages only these groups. You can change them later with "Groups" in the list below.')}</p>
+            <p className="hint" style={{ margin: '8px 0 0' }}>{t('The person stays linked to the group even when its level changes. You can change this later with "Groups" in the list below.')}</p>
           </div>
         )}
         <p className="hint" role="alert" style={{ display: error ? 'block' : 'none', color: 'var(--danger-bright)', margin: '6px 0 0' }}>{error}</p>
@@ -168,8 +195,10 @@ export default function AdminsPage() {
                   const me = user && a.id === user.id;
                   const k = kindOf(a);
                   // running groups first; links to switched-off groups only as a number
-                  const names = (a.group_codes || []).filter((c) => isLive[c]).map((c) => nameOf[c]).filter(Boolean);
-                  const offCount = (a.group_codes || []).filter((c) => nameOf[c] && !isLive[c]).length;
+                  const own = new Set(a.group_codes || []);
+                  const names = units.filter((u) => unitOn(u, own)).map((u) => u.name);
+                  const covered = new Set(units.flatMap((u) => u.codes));
+                  const offCount = (a.group_codes || []).filter((c) => nameOf[c] && !covered.has(c)).length;
                   return (
                     <tr key={a.id}>
                       <td data-label={t('Name')}><div className="a-cell-user"><Avatar name={a.full_name || a.email || '?'} /><span className="a-who"><b>{a.full_name || '\u2014'}{me ? <span className="u-pill gold" style={{ marginLeft: 8 }}>{t('You')}</span> : null}</b><small>{a.email}</small></span></div></td>
@@ -219,17 +248,14 @@ function GroupPicker({ person, groups, onClose, onSaved, onError }) {
   const open = !!person;
   useEffect(() => { if (person) { setSel(new Set(person.group_codes || [])); setQ(''); } }, [person]);
 
-  // Running groups, plus the switched-off ones this person is still linked to (so the link is visible and can be removed).
-  const listed = useMemo(() => {
-    const mine = new Set((person && person.group_codes) || []);
-    return groups.filter((g) => g.is_active !== false || mine.has(g.code));
-  }, [groups, person]);
+  // One entry per series ("Group A"), plus links to switched-off groups this person still has (visible, removable).
+  const listed = useMemo(() => buildUnits(groups, (person && person.group_codes) || []), [groups, person]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? listed.filter((g) => String(g.name || '').toLowerCase().includes(s)) : listed;
+    return s ? listed.filter((u) => u.name.toLowerCase().includes(s)) : listed;
   }, [listed, q]);
-  const toggle = (code) => setSel((cur) => { const n = new Set(cur); if (n.has(code)) n.delete(code); else n.add(code); return n; });
-  const setAll = (on) => setSel((cur) => { const n = new Set(cur); shown.forEach((g) => { if (on) n.add(g.code); else n.delete(g.code); }); return n; });
+  const toggle = (u) => setSel((cur) => unitToggle(u, cur));
+  const setAll = (on) => setSel((cur) => { const n = new Set(cur); shown.forEach((u) => u.codes.forEach((c) => { if (on) n.add(c); else n.delete(c); })); return n; });
 
   async function save() {
     if (!person) return;
@@ -254,15 +280,15 @@ function GroupPicker({ person, groups, onClose, onSaved, onError }) {
       <div className="a-gp-list" role="group" aria-label={t('Groups')}>
         {listed.length === 0 ? <p className="hint">{t('No groups yet')}</p>
           : shown.length === 0 ? <p className="hint">{t('No groups match your filters.')}</p>
-          : shown.map((g) => (
-            <label key={g.code} className={'a-gp-item' + (sel.has(g.code) ? ' on' : '')}>
-              <input type="checkbox" checked={sel.has(g.code)} onChange={() => toggle(g.code)} />
-              <span className="a-gp-name">{g.name || '—'}{g.is_active === false ? <small className="muted"> · {t('switched off')}</small> : null}</span>
+          : shown.map((u) => (
+            <label key={u.key} className={'a-gp-item' + (unitOn(u, sel) ? ' on' : '')}>
+              <input type="checkbox" checked={unitOn(u, sel)} onChange={() => toggle(u)} />
+              <UnitName u={u} t={t} />
             </label>
           ))}
       </div>
       <div className="modal-actions">
-        <span className="a-gp-count">{sel.size} {t('selected')}</span>
+        <span className="a-gp-count">{listed.filter((u) => unitOn(u, sel)).length} {t('selected')}</span>
         <button type="button" className="btn btn-ghost" onClick={onClose}>{t('Cancel')}</button>
         <button type="button" className="btn btn-gold" disabled={saving} onClick={save}>{saving ? t('Saving…') : t('Save')}</button>
       </div>

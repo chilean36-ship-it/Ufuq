@@ -257,5 +257,8 @@ html[data-theme="light"] #page-payments .set-alert{ color:#8A5F10; }
   #page-payments .pay-table tbody td.pay-actions:empty{ display:none; }
   #page-payments .pay-table tr.pay-skel td{ display:block; }
 }
+/* compact inline icons (the Deadlines heading icon used to render at full size) */
+#page-payments .pay-filters h3 svg{ width:20px; height:20px; flex:none; color:var(--gold); }
+#page-payments .pay-filters .btn svg, #page-payments .pay-actions .btn svg{ width:15px; height:15px; vertical-align:-3px; flex:none; }
 @media (prefers-reduced-motion:reduce){ #page-payments .pay-pane{ animation:none; } #page-payments .btn{ transition:none; } #page-payments .btn:not(:disabled):hover, #page-payments .btn:not(:disabled):active{ transform:none; } }
 `;

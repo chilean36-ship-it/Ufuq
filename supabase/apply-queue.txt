@@ -1,2 +1,3 @@
 # One migration file name per line; pushing a change to this file applies them to the live project (see apply-sql.yml).
-20261127_payment_policy.sql
+20261201_resource_usage.sql
+20261201c_group_inherits_letter_staff.sql

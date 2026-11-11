@@ -7,6 +7,7 @@ import './styles/ui-behavior.css';
 import './styles/ui-kit.css';
 import './styles/ui-prefs.css';
 import './styles/captcha.css';
+import './styles/ui-fields.css';
 import './styles/mobile-safety.css';
 import { applyUiPrefs } from './lib/uiPrefs';
 import { installLinkUrlHider } from './lib/hideLinkUrls';

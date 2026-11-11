@@ -22,6 +22,7 @@ import teacherDictBase from '../../i18n/cabinet-teacher';
 import teacherExtra from '../../i18n/teacher-extra';
 import AnnouncementsPage from '../Teacher/AnnouncementsPage';
 import AdminsPage from './AdminsPage';
+import ResourcesPage from './ResourcesPage';
 import LandingMediaPage from './LandingMediaPage';
 import PaymentsPage from './PaymentsPage';
 import PaywallGate from '../Dashboard/PaywallGate';
@@ -78,7 +79,7 @@ const NAV_SUPER = [
   { id: 'teaching', label: 'Teaching', icon: I.teaching, items: [{ page: 'groups', label: 'Group' }, { page: 'students', label: 'Students' }, { page: 'exams', label: 'Exams' }] },
   { page: 'announcements', label: 'Messages', icon: I.messages },
   { page: 'payments', label: 'Payments', icon: I.payments },
-  { id: 'administration', label: 'Administration', icon: I.admin, items: [{ page: 'landing', label: 'Landing page' }, { page: 'admins', label: 'Admins' }] },
+  { id: 'administration', label: 'Administration', icon: I.admin, items: [{ page: 'landing', label: 'Landing page' }, { page: 'admins', label: 'Admins' }, { page: 'resources', label: 'Resources' }] },
 ];
 // Ordinary admin: a short flat list — no section headings.
 const NAV_STANDARD = [
@@ -88,17 +89,17 @@ const NAV_STANDARD = [
 ];
 
 const PAGE_LABEL = {
-  overview: 'Overview', groups: 'Group', students: 'Students', exams: 'Exams', announcements: 'Messages', payments: 'Payments', landing: 'Landing page', admins: 'Admins', profile: 'Profile', materials: 'Audio lessons',
+  overview: 'Overview', groups: 'Group', students: 'Students', exams: 'Exams', announcements: 'Messages', payments: 'Payments', landing: 'Landing page', admins: 'Admins', resources: 'Resources', profile: 'Profile', materials: 'Audio lessons',
 };
 const SUB = {
   overview: 'Your day at a glance', groups: 'Create and manage groups', students: 'Status and level of every student',
-  exams: 'Written exams', announcements: 'Notify the group or one student', payments: 'Orders, access and payment settings', profile: 'Your account', materials: 'Audio for your own group',
+  exams: 'Written exams', announcements: 'Notify the group or one student', payments: 'Orders, access and payment settings', resources: 'Storage and API budget left', profile: 'Your account', materials: 'Audio for your own group',
 };
 
 const PAGES = {
   overview: OverviewPage, groups: GroupsPage, students: StudentsPage,
   exams: ExamsPage, profile: ProfilePage,
-  announcements: AnnouncementsPage, payments: PaymentsPage, admins: AdminsPage, landing: LandingMediaPage,
+  announcements: AnnouncementsPage, payments: PaymentsPage, admins: AdminsPage, resources: ResourcesPage, landing: LandingMediaPage,
   materials: AudioLessonsPage,
 };
 
@@ -256,7 +257,7 @@ function AdminInner() {
   const ctx = useMemo(() => ({
     t, lang, toast, askConfirm, user, myName, myAvatarUrl, setMyName, setMyAvatarUrl, myGroups, allGroups, currentGroup, currentGroupCode, setCurrentGroupCode, reloadGroups,
     announcePrefill, clearAnnouncePrefill, goToAnnouncements, showPage, pending: { tasks: 0, exams: 0, loaded: true },
-    adminTier, isSuper, canSwitchToTeacher, can: (pg) => canOpenPage(adminTier, pg) && (isSuper || (pg !== 'admins' && pg !== 'landing')),
+    adminTier, isSuper, canSwitchToTeacher, can: (pg) => canOpenPage(adminTier, pg) && (isSuper || (pg !== 'admins' && pg !== 'landing' && pg !== 'resources')),
   }), [adminTier, isSuper, canSwitchToTeacher, t, lang, toast, askConfirm, user, myName, myAvatarUrl, setMyName, setMyAvatarUrl, myGroups, allGroups, currentGroup, currentGroupCode, setCurrentGroupCode, reloadGroups, announcePrefill, clearAnnouncePrefill, goToAnnouncements, showPage]);
 
   const nav = isSuper ? NAV_SUPER : NAV_STANDARD;
