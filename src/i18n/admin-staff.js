@@ -28,6 +28,7 @@ const uz2 = {
   'Midterm': 'Midterm', 'Final': 'Final', 'handed in': 'topshirgan', 'not finished': 'tugatmagan', 'not taken': 'topshirmagan', 'stays without a group. Continue?': 'guruhsiz qoladi. Davom etasizmi?',
   'Your group was closed before you passed. Your teacher or admin will decide where you go next; you cannot join another group yourself.': 'Guruhingiz siz o‘tmasdan yopildi. Keyingi qadamni ustoz yoki admin hal qiladi; o‘zingiz boshqa guruhga qo‘shila olmaysiz.',
   'Website traffic (Vercel)': 'Sayt trafigi (Vercel)', 'Open Vercel usage': 'Vercel sarfini ochish', 'The free Vercel plan allows 100 GB of traffic per month; if it is used up the site is paused. Vercel gives no read-only API for this on the free plan, so check it here:': 'Bepul Vercel rejasida oyiga 100 GB trafik beriladi; tugasa sayt to‘xtatiladi. Bepul rejada buni o‘qiydigan API yo‘q, shuning uchun shu yerda tekshiring:',
+  'Vercel gives traffic numbers through its API only to paid plans. This site is on the free plan (limit 100 GB per month), so open the usage page:': 'Vercel trafik raqamlarini API orqali faqat pullik rejalarga beradi. Sayt bepul rejada (oyiga 100 GB limit), shuning uchun sarf sahifasini oching:',
   'Requests per minute left': 'Daqiqadagi qolgan so‘rovlar', 'Tokens per minute left': 'Daqiqadagi qolgan tokenlar',
 };
 const ru = {
