@@ -32,6 +32,7 @@ import { canOpenPage } from '../../lib/adminTiers';
 import { PANEL_ROUTES, fetchPanelProfile, verifySuperAdmin } from '../../lib/panelAccess';
 import panelSwitchDict from '../../i18n/panel-switch';
 import examLevelsDict from '../../i18n/exam-levels';
+import adminFill from '../../i18n/admin-fill';
 import ProfileMenu from '../../components/panel/ProfileMenu';
 import { CabinetI18nProvider, useCabinetI18n } from '../../context/CabinetI18nContext';
 import adminDictBase from '../../i18n/cabinet-admin';
@@ -42,7 +43,7 @@ import adminStaff from '../../i18n/admin-staff';
 
 // Admin shares several pages with the teacher panel, so its dictionary = teacher + new strings + admin (admin wins).
 import examModeDict from '../../i18n/exam-mode';
-const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}) }; return acc; }, {});
+const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}) }; return acc; }, {});
 const COLLAPSE_KEY = 'ufuq-panel-collapsed';
 import { supabase } from '../../lib/supabaseClient';
 import { getFreshUser, resolveFullName, useLiveName } from '../../lib/profileName';

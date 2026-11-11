@@ -1,13 +1,15 @@
 import { LEVEL_LIST, MAX_LEVEL } from '../../lib/levels';
 import { safeHttpUrl } from '../../lib/safeUrl';
 import { viewerIsOnTashkentTime, entryInViewerZone, viewerGmtLabel } from '../../lib/tzTime';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from '../../components/panel/PanelContext';
 import { EditIcon, Modal, Switch } from '../../components/panel/ui';
 import { Avatar, EmptyState, Ico, PageHeader, SearchInput, Segmented, StatCard } from './ui';
 import { DAYS, dayLabel } from '../../lib/panelUtils';
 import useJoinCodes from '../../lib/useJoinCodes';
+import useLiveRefresh from '../../lib/liveRefresh';
+import { closedReason, levelErrorText } from '../../lib/levelErrors';
 
 const TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -21,7 +23,7 @@ function groupErrorText(t, err) {
   if (/GROUP_LEVEL_REQUIRED/.test(m)) return t('Choose a level') + ' (1–' + MAX_LEVEL + ').';
   if (/NOT_ALLOWED/.test(m)) return t('Only the main admin can create groups.');
   if (/groups_letter_level_uidx|23505/.test(m + (err && err.code || ''))) return t('This letter already has a group on that level.');
-  return m;
+  return levelErrorText(t, err);
 }
 
 // Internal group key for NEW groups: 'G' + 6 chars (letters and digits, no look-alikes) — always contains letters.
@@ -39,6 +41,7 @@ export default function GroupsPage() {
   const [modal, setModal] = useState({ open: false, group: null });
   const { joinCodes } = useJoinCodes(myGroups.map((g) => g.code));
   const [counts, setCounts] = useState(null);
+  const [stranded, setStranded] = useState([]);
   const [q, setQ] = useState('');
   const [fStatus, setFStatus] = useState('active');
   const [series, setSeries] = useState(null); // letter whose level groups are open in the levels window
@@ -51,20 +54,31 @@ export default function GroupsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (myGroups.length === 0) { setCounts({}); return; }
+  // Students per group = real students (the server leaves out test accounts and staff). Until that function exists on the
+  // database the members are counted as before. Also: the students who sit in a switched-off group and in no running one.
+  const loadCounts = useCallback(async () => {
+    if (myGroups.length === 0) { setCounts({}); setStranded([]); return; }
+    let c = null;
+    try {
+      const r = await supabase.rpc('staff_group_student_counts');
+      if (!r.error && Array.isArray(r.data)) { c = {}; r.data.forEach((x) => { c[x.group_code] = x.students || 0; }); }
+    } catch (e) { /* older database */ }
+    if (!c) {
       const { data } = await supabase.from('group_members').select('group_code').in('group_code', myGroups.map((g) => g.code));
-      const c = {}; (data || []).forEach((m) => { c[m.group_code] = (c[m.group_code] || 0) + 1; });
-      if (!cancelled) setCounts(c);
-    })();
-    return () => { cancelled = true; };
+      c = {}; (data || []).forEach((m) => { c[m.group_code] = (c[m.group_code] || 0) + 1; });
+    }
+    setCounts((cur) => (JSON.stringify(cur) === JSON.stringify(c) ? cur : c));
+    let s = [];
+    try { const r = await supabase.rpc('staff_stranded_students'); if (!r.error && Array.isArray(r.data)) s = r.data; } catch (e) { /* older database */ }
+    setStranded((cur) => (JSON.stringify(cur) === JSON.stringify(s) ? cur : s));
   }, [myGroups]);
+  useEffect(() => { loadCounts(); }, [loadCounts]);
+  useLiveRefresh(loadCounts);
 
   const stats = useMemo(() => ({
     all: myGroups.filter((g) => g.is_active || g.type === 'individual').length, active: myGroups.filter((g) => g.is_active).length, inactive: myGroups.filter((g) => !g.is_active).length,
-    cls: myGroups.filter((g) => g.type !== 'individual').length, ind: myGroups.filter((g) => g.type === 'individual').length,
+    // running groups only: a letter keeps 14 level rows, of which one or two run at a time
+    cls: myGroups.filter((g) => g.is_active && g.type !== 'individual').length, ind: myGroups.filter((g) => g.is_active && g.type === 'individual').length,
   }), [myGroups]);
 
   const list = useMemo(() => {
@@ -73,7 +87,7 @@ export default function GroupsPage() {
       && (fType === 'all' || (fType === 'individual') === (g.type === 'individual'))
       && !(!g.is_active && g.type !== 'individual' && letterOfGroup(g))   // switched-off level groups live inside their letter card
       && (!s || (g.name || '').toLowerCase().includes(s) || String(joinCodes[g.code] || '').toLowerCase().includes(s)));
-  }, [myGroups, q, fStatus, fType]);
+  }, [myGroups, q, fStatus, fType, joinCodes]);
 
   // Lettered class groups come as one compact card per letter (all 14 level groups inside); a group card only for active ones.
   const seriesList = useMemo(() => {
@@ -89,15 +103,19 @@ export default function GroupsPage() {
   // Switching a group OFF is one click on the card's switch, so ask first; switching it back on stays instant.
   function toggleActive(g) {
     if (!g.is_active) { saveActive(g); return; }
+    const n = (counts && counts[g.code]) || 0;   // students still inside: they would be left without lessons
     askConfirm(t('Switch off group'),
-      t('Switch off {name}? It moves to the inactive groups. You can switch it back on at any time.').replace('{name}', g.name),
+      n > 0
+        ? t('{n} students are still in {name}. If you switch it off they see no lessons until you move them to a running group (they will be listed on this page). Switch it off?').replace('{n}', n).replace('{name}', g.name)
+        : t('Switch off {name}? It moves to the inactive groups. You can switch it back on at any time.').replace('{name}', g.name),
       () => saveActive(g), t('Switch off group'));
   }
   async function saveActive(g) {
     const { error } = await supabase.from('groups').update({ is_active: !g.is_active }).eq('code', g.code);
     if (error) { toast(error.message, 'err'); return; }
     toast(t('Group updated.'), 'ok');
-    reloadGroups({ silent: true });
+    await reloadGroups({ silent: true });
+    loadCounts();
   }
   async function copyCode(g) {
     const text = String(joinCodes[g.code] || '');
@@ -121,6 +139,8 @@ export default function GroupsPage() {
         <StatCard tone="var(--gold)" label={t('Arabic language')} value={stats.cls} icon={<Ico><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></Ico>} onClick={() => setFType('class')} />
         <StatCard tone="var(--a-quran)" label={t("Qur'an lesson")} value={stats.ind} icon={<Ico><circle cx="12" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /></Ico>} onClick={() => setFType('individual')} />
       </div>
+
+      <StrandedPanel rows={stranded} groups={myGroups} onDone={async () => { await reloadGroups({ silent: true }); loadCounts(); }} />
 
       <div className="a-toolbar a-toolbar-solo a-toolbar-groups">
         <SearchInput value={q} onChange={setQ} placeholder={t('Search groups…')} />
@@ -155,7 +175,7 @@ export default function GroupsPage() {
               <article className={'a-gcard' + (g.is_active ? '' : ' is-off')} key={g.code}>
                 <header>
                   <Avatar name={g.name || '?'} size={42} tone={ind ? 'quran' : 'arabic'} />
-                  <div className="a-gcard-t"><h4>{g.name}</h4><TypeChip g={g} />{g.deadline_closed_at && !g.is_active && <span className="chip" title={t('Closed automatically: the final exam deadline has passed. Decide for the students who did not hand in.')}>{t('Deadline passed')}</span>}</div>
+                  <div className="a-gcard-t"><h4>{g.name}</h4><TypeChip g={g} /><ClosedChip g={g} /></div>
                   <button type="button" className="icon-btn" title={t('Edit')} aria-label={t('Edit')} onClick={() => openEdit(g)}><EditIcon /></button>
                 </header>
                 <div className="a-gcard-meta">
@@ -233,19 +253,95 @@ export default function GroupsPage() {
   );
 }
 
+/** Why a switched-off class group is off (only the automatic reasons get a chip). */
+function ClosedChip({ g }) {
+  const { t } = usePanel();
+  const r = closedReason(g);
+  if (r === 'deadline') return <span className="chip" title={t('Closed automatically: the final exam deadline has passed. Decide for the students who did not hand in.')}>{t('Deadline passed')}</span>;
+  if (r === 'moved_on') return <span className="chip" title={t('Closed automatically: its last student moved to another level group.')}>{t('Students moved on')}</span>;
+  return null;
+}
+
+/**
+ * Students who sit in a switched-off class group and in no running one: they see no lessons, and no other page lists them
+ * (every other page shows running groups only). Each one is moved to a running group here; his level becomes that group's level.
+ * The suggested group is the nearest running level at or below his own, his own letter first.
+ */
+function StrandedPanel({ rows, groups, onDone }) {
+  const { t, toast, askConfirm } = usePanel();
+  const [pick, setPick] = useState({});
+  const [busy, setBusy] = useState(null);
+  const targets = useMemo(() => (groups || []).filter((g) => g.is_active && g.type !== 'individual' && g.level)
+    .sort((a, b) => (b.level - a.level) || String(a.name || '').localeCompare(String(b.name || ''))), [groups]);
+  if (!rows || rows.length === 0) return null;
+
+  const letterOf = (code) => letterOfGroup((groups || []).find((g) => g.code === code));
+  const suggest = (r) => {
+    const own = letterOf(r.group_code);
+    const below = targets.filter((g) => g.level <= r.level);
+    if (!below.length) return '';
+    const top = below[0].level;
+    const same = below.filter((g) => g.level === top);
+    return (same.find((g) => letterOfGroup(g) === own) || same[0]).code;
+  };
+  const chosen = (r) => (Object.prototype.hasOwnProperty.call(pick, r.user_id) ? pick[r.user_id] : suggest(r));
+  const why = { deadline: t('Deadline passed'), moved_on: t('Students moved on'), manual: t('Switched off') };
+
+  function move(r) {
+    const code = chosen(r);
+    const g = targets.find((x) => x.code === code);
+    if (!g) return;
+    askConfirm(t('Move student'),
+      t('{name}: move to {group}? The level becomes {level} and the exams of that level start fresh.').replace('{name}', r.name || t('Student')).replace('{group}', g.name).replace('{level}', g.level),
+      async () => {
+        setBusy(r.user_id);
+        const { error } = await supabase.rpc('admin_move_student_to_group', { p_user: r.user_id, p_group_code: g.code });
+        setBusy(null);
+        if (error) { toast(levelErrorText(t, error), 'err'); return; }
+        toast(t('Student moved to {group}.').replace('{group}', g.name), 'ok');
+        onDone();
+      }, t('Move'));
+  }
+
+  return (
+    <div className="panel a-stranded" role="region" aria-label={t('Students in switched-off groups')}>
+      <div className="panel-head"><h3>{t('Students in switched-off groups')} <span className="chip">{rows.length}</span></h3></div>
+      <p className="hint">{t('These students are in a group that is switched off, so they see no lessons. Move each one to a running group, or switch the group back on.')}</p>
+      <div className="a-lv-list">
+        {rows.map((r) => (
+          <div className="a-lv-row" key={r.user_id + r.group_code}>
+            <Avatar name={r.name || '?'} size={30} />
+            <div className="a-lv-name"><b>{r.name || t('Student')}</b><small>{r.group_name} · {t('Level')} {r.level} · {why[r.reason] || why.manual}</small></div>
+            {targets.length === 0 ? <span className="muted">{t('No group is running.')}</span> : (
+              <>
+                <select className="a-select" aria-label={t('Move to')} value={chosen(r)} disabled={busy === r.user_id}
+                        onChange={(e) => setPick((cur) => ({ ...cur, [r.user_id]: e.target.value }))}>
+                  <option value="">{t('Move to')}…</option>
+                  {targets.map((g) => <option key={g.code} value={g.code}>{g.name}</option>)}
+                </select>
+                <button type="button" className="btn btn-gold btn-sm" disabled={busy === r.user_id || !chosen(r)} onClick={() => move(r)}>{t('Move')}</button>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** All level groups of one letter (1-14): switch each on or off. A level switches on by itself when a student reaches it. */
 function LevelsModal({ letter, groups, counts, joinCodes, onClose, onToggle, onCopy, onEdit }) {
   const { t } = usePanel();
   return (
     <Modal open={!!letter} onClose={onClose} style={{ maxWidth: 560 }}>
       <h3>{t('Group')} {letter} — {t('levels')}</h3>
-      <p className="hint">{t('Students move up by themselves when they pass a level; the next level switches on automatically. You can also switch a level on or off here.')}</p>
+      <p className="hint">{t('Students move up one by one when they pass a level: the next level switches on for the first of them and the old level switches off when its last student has left. You can also switch a level on or off here.')}</p>
       <div className="a-lv-list">
         {groups.map((g) => (
           <div className={'a-lv-row' + (g.is_active ? ' on' : '')} key={g.code}>
             <span className="a-lv-no">{g.level || '—'}</span>
-            <div className="a-lv-name"><b>{g.name}</b>{g.deadline_closed_at && !g.is_active ? <small>{t('Deadline passed')}</small> : null}</div>
-            <span className="a-lv-n">{counts ? (counts[g.code] || 0) : '…'} <small>{t('Students')}</small></span>
+            <div className="a-lv-name"><b>{g.name}</b>{closedReason(g) === 'deadline' ? <small>{t('Deadline passed')}</small> : closedReason(g) === 'moved_on' ? <small>{t('Students moved on')}</small> : null}</div>
+            <span className={'a-lv-n' + (!g.is_active && counts && counts[g.code] > 0 ? ' warn' : '')} title={!g.is_active && counts && counts[g.code] > 0 ? t('Students are still in this switched-off group.') : undefined}>{counts ? (counts[g.code] || 0) : '…'} <small>{t('Students')}</small></span>
             <button type="button" className="a-code a-code-inline" title={t('Copy join code')} onClick={() => onCopy(g)}>{joinCodes[g.code] || '—'}</button>
             <button type="button" className="icon-btn" title={t('Edit')} aria-label={t('Edit')} onClick={() => onEdit(g)}><EditIcon /></button>
             <label className="a-switch-row" onClick={(e) => { e.preventDefault(); onToggle(g); }}><Switch on={!!g.is_active} /><span>{g.is_active ? t('Active') : t('Inactive')}</span></label>
@@ -296,6 +392,8 @@ function GroupModal({ open, group: g, onClose }) {
   }, [open, g]);
 
   const isIndividual = f.type === 'individual';
+  // A level group keeps its level for good: students change level one by one (exams, or the Students page), the row is never renumbered.
+  const levelLocked = !!g && g.type !== 'individual' && !!g.level;
   const set = (k, v) => setF((cur) => ({ ...cur, [k]: v }));
 
   const addDay = () => {
@@ -339,6 +437,7 @@ function GroupModal({ open, group: g, onClose }) {
       const daysToSave = type === 'individual' ? [] : days;
       const fields = { level: levelNum, schedule, zoom_link, is_active: f.active, schedule_days: daysToSave, type, slot_minutes, buffer_minutes, no_show_minutes };
       if (type === 'individual') fields.name = name;      // a class group is named by the server: "Group " + letter + level
+      if (levelLocked && type === 'class') delete fields.level;
       if (g) {
         const { error: err } = await supabase.from('groups').update(fields).eq('code', g.code);
         if (err) throw err;
@@ -402,11 +501,17 @@ function GroupModal({ open, group: g, onClose }) {
             </div>
             <div className="field">
               <label>{t('Level')}</label>
-              <select value={f.level} onChange={(e) => set('level', e.target.value)} style={{ width: '100%' }} required>
-                <option value="">{t('Choose a level')}</option>
-                {LEVEL_LIST.map((l) => <option key={l} value={String(l)}>{t('Level')} {l}</option>)}
-              </select>
-              <p className="hint">{t('The group is named from its letter and level (Group A8). Every student moves up on his own as soon as he passes the level exams; when the final exam deadline ends, the group is switched off.')}</p>
+              {levelLocked ? (
+                <input type="text" value={t('Level') + ' ' + f.level} disabled aria-readonly="true" />
+              ) : (
+                <select value={f.level} onChange={(e) => set('level', e.target.value)} style={{ width: '100%' }} required>
+                  <option value="">{t('Choose a level')}</option>
+                  {LEVEL_LIST.map((l) => <option key={l} value={String(l)}>{t('Level')} {l}</option>)}
+                </select>
+              )}
+              <p className="hint">{levelLocked
+                ? t('The level of a group never changes. Students move to the next level group when they pass the exams; to move one student by hand use the Students page.')
+                : t('The group is named from its letter and level (Group A8). Every student moves up on his own as soon as he passes the level exams. The group switches off by itself when its last student has moved on, or when the final exam deadline ends.')}</p>
             </div>
           </div>
         )}

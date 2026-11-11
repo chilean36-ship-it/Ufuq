@@ -87,6 +87,9 @@ export default function AdminsPage() {
   const list = Array.isArray(rows) ? rows : [];
   const count = (k) => list.filter((a) => kindOf(a) === k).length;
   const nameOf = useMemo(() => { const m = {}; groups.forEach((g) => { m[g.code] = g.name || ''; }); return m; }, [groups]);
+  // Only running groups can be given to somebody; a switched-off level group gets its teachers when the cohort reaches it.
+  const liveGroups = useMemo(() => groups.filter((g) => g.is_active !== false), [groups]);
+  const isLive = useMemo(() => { const m = {}; groups.forEach((g) => { m[g.code] = g.is_active !== false; }); return m; }, [groups]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     return list.filter((a) => (filter === 'all' || kindOf(a) === filter)
@@ -126,11 +129,11 @@ export default function AdminsPage() {
             <div className="a-appoint-gh">
               <b>{t('Groups this person can work with')}</b>
               <span className="a-gp-count">{newGroups.size} {t('selected')}</span>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set(groups.filter((g) => g.is_active !== false).map((g) => g.code)))}>{t('Select all')}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set(liveGroups.map((g) => g.code)))}>{t('Select all')}</button>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewGroups(new Set())}>{t('Clear')}</button>
             </div>
             <div className="a-gp-list a-appoint-glist" role="group" aria-label={t('Groups')}>
-              {groups.length === 0 ? <p className="hint">{t('No groups yet')}</p> : groups.map((g) => (
+              {liveGroups.length === 0 ? <p className="hint">{t('No groups yet')}</p> : liveGroups.map((g) => (
                 <label key={g.code} className={'a-gp-item' + (newGroups.has(g.code) ? ' on' : '')}>
                   <input type="checkbox" checked={newGroups.has(g.code)} onChange={() => setNewGroups((cur) => { const n = new Set(cur); if (n.has(g.code)) n.delete(g.code); else n.add(g.code); return n; })} />
                   <span className="a-gp-name">{g.name || '—'}</span>
@@ -164,7 +167,9 @@ export default function AdminsPage() {
                 : shown.map((a) => {
                   const me = user && a.id === user.id;
                   const k = kindOf(a);
-                  const names = (a.group_codes || []).map((c) => nameOf[c]).filter(Boolean);
+                  // running groups first; links to switched-off groups only as a number
+                  const names = (a.group_codes || []).filter((c) => isLive[c]).map((c) => nameOf[c]).filter(Boolean);
+                  const offCount = (a.group_codes || []).filter((c) => nameOf[c] && !isLive[c]).length;
                   return (
                     <tr key={a.id}>
                       <td data-label={t('Name')}><div className="a-cell-user"><Avatar name={a.full_name || a.email || '?'} /><span className="a-who"><b>{a.full_name || '\u2014'}{me ? <span className="u-pill gold" style={{ marginLeft: 8 }}>{t('You')}</span> : null}</b><small>{a.email}</small></span></div></td>
@@ -179,10 +184,11 @@ export default function AdminsPage() {
                       <td data-label={t('Groups')}>
                         {k === 'super' ? <span className="muted">{t('All groups')}</span> : (
                           <button type="button" className="a-groups-btn" onClick={() => setPicker(a)} aria-label={t('Groups') + ': ' + (a.full_name || a.email)}>
-                            {names.length === 0 ? <span className="muted">{t('No groups yet')}</span> : (
+                            {names.length === 0 && offCount === 0 ? <span className="muted">{t('No groups yet')}</span> : (
                               <span className="a-gchips">
                                 {names.slice(0, 2).map((n, ni) => <span className="a-gchip" key={ni}>{n}</span>)}
                                 {names.length > 2 && <span className="a-gchip more">+{names.length - 2}</span>}
+                                {offCount > 0 && <span className="a-gchip more" title={t('Links to switched-off groups')}>{offCount} {t('switched off')}</span>}
                               </span>
                             )}
                             <span className="a-groups-edit" aria-hidden="true">{'\u270E'}</span>
@@ -213,10 +219,15 @@ function GroupPicker({ person, groups, onClose, onSaved, onError }) {
   const open = !!person;
   useEffect(() => { if (person) { setSel(new Set(person.group_codes || [])); setQ(''); } }, [person]);
 
+  // Running groups, plus the switched-off ones this person is still linked to (so the link is visible and can be removed).
+  const listed = useMemo(() => {
+    const mine = new Set((person && person.group_codes) || []);
+    return groups.filter((g) => g.is_active !== false || mine.has(g.code));
+  }, [groups, person]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? groups.filter((g) => String(g.name || '').toLowerCase().includes(s)) : groups;
-  }, [groups, q]);
+    return s ? listed.filter((g) => String(g.name || '').toLowerCase().includes(s)) : listed;
+  }, [listed, q]);
   const toggle = (code) => setSel((cur) => { const n = new Set(cur); if (n.has(code)) n.delete(code); else n.add(code); return n; });
   const setAll = (on) => setSel((cur) => { const n = new Set(cur); shown.forEach((g) => { if (on) n.add(g.code); else n.delete(g.code); }); return n; });
 
@@ -241,12 +252,12 @@ function GroupPicker({ person, groups, onClose, onSaved, onError }) {
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAll(false)}>{t('Clear')}</button>
       </div>
       <div className="a-gp-list" role="group" aria-label={t('Groups')}>
-        {groups.length === 0 ? <p className="hint">{t('No groups yet')}</p>
+        {listed.length === 0 ? <p className="hint">{t('No groups yet')}</p>
           : shown.length === 0 ? <p className="hint">{t('No groups match your filters.')}</p>
           : shown.map((g) => (
             <label key={g.code} className={'a-gp-item' + (sel.has(g.code) ? ' on' : '')}>
               <input type="checkbox" checked={sel.has(g.code)} onChange={() => toggle(g.code)} />
-              <span className="a-gp-name">{g.name || '—'}</span>
+              <span className="a-gp-name">{g.name || '—'}{g.is_active === false ? <small className="muted"> · {t('switched off')}</small> : null}</span>
             </label>
           ))}
       </div>

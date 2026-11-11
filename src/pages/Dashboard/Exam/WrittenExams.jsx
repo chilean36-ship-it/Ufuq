@@ -61,7 +61,8 @@ export default function WrittenExams() {
     const silent = !!(opts && opts.silent);
     if (!silent) { setExams(null); setError(''); sigRef.current = ''; }
     try {
-      const groupList = await fetchPublishedWrittenExams(groupCode);   // published exams of the group selected at the top
+      // published exams of the group selected at the top; with no running group there is no group list (only the level exams below)
+      const groupList = groupCode ? await fetchPublishedWrittenExams(groupCode) : [];
       // Midterm / final exams belong to a LEVEL: every student of the level sees them in any group, locked until a teacher opens them.
       const levelList = isStaff || levelFree ? [] : await fetchMyLevelExams();
       const isLevelExam = (e) => !!(e.exam_kind && e.level);

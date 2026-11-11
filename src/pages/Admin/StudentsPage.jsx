@@ -4,6 +4,7 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { usePanel } from '../../components/panel/PanelContext';
 import { fmtDate } from '../../lib/panelUtils';
 import { LEVEL_LIST, MAX_LEVEL } from '../../lib/levels';
+import { levelErrorText } from '../../lib/levelErrors';
 import { Avatar, EmptyState, Ico, PageHeader, SearchInput, Segmented, Skeleton, StatCard } from './ui';
 
 const STATUSES = ['active', 'unpaid', 'blocked'];
@@ -85,11 +86,18 @@ export default function StudentsPage() {
     patchRows([uid], { status });
     return true;
   }
+  // A level change moves the student to a running group of that level, so he usually leaves this list: the list is read
+  // again from the server instead of patching the number. Returns the name of the group he is in now (when it changed).
   async function changeLevel(uid, level) {
     const { error } = await supabase.rpc('admin_update_student', { p_user_id: uid, p_status: null, p_level: level });
-    if (error) { toast(error.message, 'err'); return false; }
-    patchRows([uid], { level });
-    return true;
+    if (error) { toast(levelErrorText(t, error), 'err'); return false; }
+    let dest = '';
+    try {
+      const { data } = await supabase.from('level_transitions').select('to_group, to_group_name').eq('user_id', uid).order('created_at', { ascending: false }).limit(1);
+      if (data && data[0] && data[0].to_group && data[0].to_group !== code) dest = data[0].to_group_name || '';
+    } catch (e) { /* the list below still shows the truth */ }
+    await load({ silent: true });
+    return { dest };
   }
 
   async function bulkStatus(status) {
@@ -113,15 +121,15 @@ export default function StudentsPage() {
     for (let i = 0; i < ids.length; i += 5) {
       const chunk = ids.slice(i, i + 5);
       const res = await Promise.all(chunk.map((id) => supabase.rpc('admin_update_student', { p_user_id: id, p_status: null, p_level: lvl })));
-      const saved = chunk.filter((id, k) => !res[k].error);
-      ok += saved.length;
-      if (saved.length) patchRows(saved, { level: lvl });
+      ok += chunk.filter((id, k) => !res[k].error).length;
       const bad = res.find((x) => x.error);
-      if (bad) toast(bad.error.message, 'err');
+      if (bad) toast(levelErrorText(t, bad.error), 'err');
     }
+    await load({ silent: true });   // the moved students have left this group
     setBusy(false);
     toast(t('Level updated.') + ' (' + ok + '/' + ids.length + ')', ok === ids.length ? 'ok' : 'err');
-    if (ok === ids.length) { setPicked(new Set()); setBulkLevel(''); }
+    setPicked(new Set());
+    if (ok === ids.length) setBulkLevel('');
   }
 
   function remove(m) {
@@ -255,9 +263,12 @@ export default function StudentsPage() {
                           // A level change also moves the student to that level's group, so a stray +/− click must not do it
                           // silently. Returning false resets the stepper; the row updates only after "Yes" saves it.
                           askConfirm(t('Change level'),
-                            t('{name}: level {from} → {to}. The student also moves to the group of level {to}. Continue?')
+                            t('{name}: level {from} → {to}. The student leaves this group and joins a running group of level {to}; the exams of that level start fresh. Continue?')
                               .replace('{name}', m.name || t('Student')).replace('{from}', m.level).split('{to}').join(n),
-                            async () => { if (await changeLevel(m.user_id, n)) toast(t('Level updated.'), 'ok'); },
+                            async () => {
+                              const r = await changeLevel(m.user_id, n);
+                              if (r) toast(t('Level updated.') + (r.dest ? ' ' + t('Now in {group}.').replace('{group}', r.dest) : ''), 'ok');
+                            },
                             t('Change level'));
                           return false;
                         }} />
