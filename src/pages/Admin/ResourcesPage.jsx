@@ -82,6 +82,7 @@ function Notice({ title, icon, children }) {
 const I = (d) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
 const IC_DB = I(<><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>);
 const IC_FILES = I(<><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /></>);
+const IC_SITE = I(<><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" /></>);
 const IC_CLOUD = I(<path d="M18 10a6 6 0 0 0-11.6-1.5A4.5 4.5 0 0 0 7 18h11a4 4 0 0 0 0-8z" />);
 
 export default function ResourcesPage() {
@@ -137,6 +138,10 @@ export default function ResourcesPage() {
               ? <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{t('Not connected yet. Add these secrets to the Edge Function:')} {need(cf.need)}</Notice>
               : <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{(cf && cf.error) || '—'}</Notice>}
 
+          <Notice icon={IC_SITE} title={t('Website traffic (Vercel)')}>
+            {t('The free Vercel plan allows 100 GB of traffic per month; if it is used up the site is paused. Vercel gives no read-only API for this on the free plan, so check it here:')}{' '}
+            <a href="https://vercel.com/khalilov16122005-5171/~/usage" target="_blank" rel="noopener noreferrer">{t('Open Vercel usage')}</a>
+          </Notice>
         </div>
         <p className="hint">{t('Updated')}: {new Date(d.at).toLocaleString()}</p>
       </>)}
