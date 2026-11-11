@@ -41,7 +41,6 @@ export default function GroupsPage() {
   const [modal, setModal] = useState({ open: false, group: null });
   const { joinCodes } = useJoinCodes(myGroups.map((g) => g.code));
   const [counts, setCounts] = useState(null);
-  const [stranded, setStranded] = useState([]);
   const [q, setQ] = useState('');
   const [fStatus, setFStatus] = useState('active');
   const [series, setSeries] = useState(null); // letter whose level groups are open in the levels window
@@ -57,7 +56,7 @@ export default function GroupsPage() {
   // Students per group = real students (the server leaves out test accounts and staff). Until that function exists on the
   // database the members are counted as before. Also: the students who sit in a switched-off group and in no running one.
   const loadCounts = useCallback(async () => {
-    if (myGroups.length === 0) { setCounts({}); setStranded([]); return; }
+    if (myGroups.length === 0) { setCounts({}); return; }
     let c = null;
     try {
       const r = await supabase.rpc('staff_group_student_counts');
@@ -68,9 +67,6 @@ export default function GroupsPage() {
       c = {}; (data || []).forEach((m) => { c[m.group_code] = (c[m.group_code] || 0) + 1; });
     }
     setCounts((cur) => (JSON.stringify(cur) === JSON.stringify(c) ? cur : c));
-    let s = [];
-    try { const r = await supabase.rpc('staff_stranded_students'); if (!r.error && Array.isArray(r.data)) s = r.data; } catch (e) { /* older database */ }
-    setStranded((cur) => (JSON.stringify(cur) === JSON.stringify(s) ? cur : s));
   }, [myGroups]);
   useEffect(() => { loadCounts(); }, [loadCounts]);
   useLiveRefresh(loadCounts);
@@ -140,7 +136,6 @@ export default function GroupsPage() {
         <StatCard tone="var(--a-quran)" label={t("Qur'an lesson")} value={stats.ind} icon={<Ico><circle cx="12" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /></Ico>} onClick={() => setFType('individual')} />
       </div>
 
-      <StrandedPanel rows={stranded} groups={myGroups} onDone={async () => { await reloadGroups({ silent: true }); loadCounts(); }} />
 
       <div className="a-toolbar a-toolbar-solo a-toolbar-groups">
         <SearchInput value={q} onChange={setQ} placeholder={t('Search groups…')} />
@@ -260,73 +255,6 @@ function ClosedChip({ g }) {
   if (r === 'deadline') return <span className="chip" title={t('Closed automatically: the final exam deadline has passed. Decide for the students who did not hand in.')}>{t('Deadline passed')}</span>;
   if (r === 'moved_on') return <span className="chip" title={t('Closed automatically: its last student moved to another level group.')}>{t('Students moved on')}</span>;
   return null;
-}
-
-/**
- * Students who sit in a switched-off class group and in no running one: they see no lessons, and no other page lists them
- * (every other page shows running groups only). Each one is moved to a running group here; his level becomes that group's level.
- * The suggested group is the nearest running level at or below his own, his own letter first.
- */
-function StrandedPanel({ rows, groups, onDone }) {
-  const { t, toast, askConfirm } = usePanel();
-  const [pick, setPick] = useState({});
-  const [busy, setBusy] = useState(null);
-  const targets = useMemo(() => (groups || []).filter((g) => g.is_active && g.type !== 'individual' && g.level)
-    .sort((a, b) => (b.level - a.level) || String(a.name || '').localeCompare(String(b.name || ''))), [groups]);
-  if (!rows || rows.length === 0) return null;
-
-  const letterOf = (code) => letterOfGroup((groups || []).find((g) => g.code === code));
-  const suggest = (r) => {
-    const own = letterOf(r.group_code);
-    const below = targets.filter((g) => g.level <= r.level);
-    if (!below.length) return '';
-    const top = below[0].level;
-    const same = below.filter((g) => g.level === top);
-    return (same.find((g) => letterOfGroup(g) === own) || same[0]).code;
-  };
-  const chosen = (r) => (Object.prototype.hasOwnProperty.call(pick, r.user_id) ? pick[r.user_id] : suggest(r));
-  const why = { deadline: t('Deadline passed'), moved_on: t('Students moved on'), manual: t('Switched off') };
-
-  function move(r) {
-    const code = chosen(r);
-    const g = targets.find((x) => x.code === code);
-    if (!g) return;
-    askConfirm(t('Move student'),
-      t('{name}: move to {group}? The level becomes {level} and the exams of that level start fresh.').replace('{name}', r.name || t('Student')).replace('{group}', g.name).replace('{level}', g.level),
-      async () => {
-        setBusy(r.user_id);
-        const { error } = await supabase.rpc('admin_move_student_to_group', { p_user: r.user_id, p_group_code: g.code });
-        setBusy(null);
-        if (error) { toast(levelErrorText(t, error), 'err'); return; }
-        toast(t('Student moved to {group}.').replace('{group}', g.name), 'ok');
-        onDone();
-      }, t('Move'));
-  }
-
-  return (
-    <div className="panel a-stranded" role="region" aria-label={t('Students in switched-off groups')}>
-      <div className="panel-head"><h3>{t('Students in switched-off groups')} <span className="chip">{rows.length}</span></h3></div>
-      <p className="hint">{t('These students are in a group that is switched off, so they see no lessons. Move each one to a running group, or switch the group back on.')}</p>
-      <div className="a-lv-list">
-        {rows.map((r) => (
-          <div className="a-lv-row" key={r.user_id + r.group_code}>
-            <Avatar name={r.name || '?'} size={30} />
-            <div className="a-lv-name"><b>{r.name || t('Student')}</b><small>{r.group_name} · {t('Level')} {r.level} · {why[r.reason] || why.manual}</small></div>
-            {targets.length === 0 ? <span className="muted">{t('No group is running.')}</span> : (
-              <>
-                <select className="a-select" aria-label={t('Move to')} value={chosen(r)} disabled={busy === r.user_id}
-                        onChange={(e) => setPick((cur) => ({ ...cur, [r.user_id]: e.target.value }))}>
-                  <option value="">{t('Move to')}…</option>
-                  {targets.map((g) => <option key={g.code} value={g.code}>{g.name}</option>)}
-                </select>
-                <button type="button" className="btn btn-gold btn-sm" disabled={busy === r.user_id || !chosen(r)} onClick={() => move(r)}>{t('Move')}</button>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 /** All level groups of one letter (1-14): switch each on or off. A level switches on by itself when a student reaches it. */
