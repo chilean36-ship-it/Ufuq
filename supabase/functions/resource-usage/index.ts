@@ -64,8 +64,7 @@ async function vercelUsage() {
     const text = await r.text();
     if (!r.ok) { let m = `HTTP ${r.status}`; try { m = JSON.parse(text)?.error?.message || m; } catch { /* keep */ } return { configured: true, error: m }; }
     const services: Record<string, { qty: number; unit: string }> = {};
-    for (const line of text.split("
-")) {
+    for (const line of text.split("\n")) {
       if (!line.trim()) continue;
       let o: Record<string, unknown>; try { o = JSON.parse(line); } catch { continue; }
       const name = String(o.ServiceName || o.ChargeDescription || "other");
