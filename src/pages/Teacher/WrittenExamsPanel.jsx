@@ -13,6 +13,7 @@ import MissedStudentsModal from './MissedStudentsModal';
 import ExamResultsModal from './ExamResultsModal';
 import '../../styles/exam-paper.css';
 import Loader from '../../components/Loader';
+import RichQ from '../../components/RichQ';
 
 import { fmtDateTime as fmtDateTimeL } from '../../lib/dateLocale';
 import { LEVEL_LIST, MAX_LEVEL } from '../../lib/levels';
@@ -138,7 +139,7 @@ export default function WrittenExamsPanel() {
       </label>
       <div className="xl-actions">
         <button className="btn btn-gold btn-sm" onClick={() => setResults({ open: true, exam: e })}>{t('Results')}</button>
-        {e.deadline_at && new Date(e.deadline_at).getTime() < Date.now() && (
+        {((e.deadline_at && new Date(e.deadline_at).getTime() < Date.now()) || e.exam_kind) && (
           <button className="btn btn-ghost btn-sm" title={t('Students who missed the deadline')} onClick={() => setMissed({ open: true, exam: e })}>{t('Missed the deadline')}</button>
         )}
         <button className="btn btn-ghost btn-sm" onClick={() => setBuilder({ open: true, exam: e, level: null })}>{t('Edit')}</button>
@@ -347,7 +348,7 @@ function GradeModal({ state, onClose, examTitle, onSaved }) {
             return (
               <div className="we-ans" key={q.id}>
                 <div className="we-ans-type">{t('Question')} {i + 1} {'\u00b7'} {t(TYPE_LABEL[q.type] || q.type)}</div>
-                <div className="we-ans-q" dir="auto">{plainQ(q.question_text)}</div>
+                <div className="we-ans-q" dir="auto"><RichQ text={plainQ(q.question_text)} /></div>
                 {q.criteria_text && <div className="we-ai"><b>{t('Criteria')}:</b> {q.criteria_text}</div>}
                 <div className={'we-ans-text' + (text ? '' : ' we-ans-empty')} dir="auto">{text ? a.answer_text : t('No answer.')}</div>
                 <div className="we-ai">

@@ -16,6 +16,8 @@ const ERR = {
   already_lowest: 'This student is already on the lowest level.',
   not_a_student: 'Only students can be moved.',
   no_lower_group: 'There is no lower level group to move this student to.',
+  not_on_list: 'This student is not on the list any more.',
+  target_not_active: 'Pick a running group.',
 };
 
 /** value for <input type="datetime-local"> in the browser's own time zone */
@@ -42,6 +44,7 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
   const [rows, setRows] = useState(null);       // null = loading, { error } = failed
   const [busy, setBusy] = useState(false);
   const [ext, setExt] = useState(null);         // { uid, value } while the "extend deadline" editor is open for one row
+  const [place, setPlace] = useState(null);     // { uid, groups, pick } while "Move to a group" is open for a student without a group
 
   const fail = useCallback((e) => {
     const m = String((e && e.message) || e);
@@ -57,14 +60,14 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
     setRows(data || []);
   }, [examId]);
 
-  useEffect(() => { if (state.open) { setExt(null); refresh(); } }, [state.open, refresh]);
+  useEffect(() => { if (state.open) { setExt(null); setPlace(null); refresh(); } }, [state.open, refresh]);
 
   async function run(fn, okMsg) {
     setBusy(true);
     try {
       await fn();
       toast(t(okMsg), 'ok');
-      setExt(null);
+      setExt(null); setPlace(null);
       await refresh();
       if (onChanged) onChanged({ silent: true });
     } catch (e) { fail(e); } finally { setBusy(false); }
@@ -86,7 +89,28 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
     }, 'Student moved to the nearest lower group.'));
   }
 
+  async function openPlace(r) {
+    setExt(null);
+    const { data, error } = await supabase.rpc('staff_missed_target_groups', { p_exam_id: examId });
+    if (error) { fail(error); return; }
+    setPlace({ uid: r.user_id, groups: data || [], pick: '' });
+  }
+  function savePlace() {
+    if (!place || !place.pick) return;
+    run(async () => {
+      const { error } = await supabase.rpc('staff_resolve_missed_in_exam', { p_exam_id: examId, p_user: place.uid, p_action: 'move', p_target: place.pick });
+      if (error) throw error;
+    }, 'Student moved to the group.');
+  }
+
   function remove(r) {
+    if (r.groupless) {   // his group already closed: he is only taken off the waiting list
+      askConfirm(t('Remove from the list'), t('Remove this student from the list? They stay without a group.'), () => run(async () => {
+        const { error } = await supabase.rpc('staff_resolve_missed_in_exam', { p_exam_id: examId, p_user: r.user_id, p_action: 'remove' });
+        if (error) throw error;
+      }, 'Student removed from the list.'));
+      return;
+    }
     askConfirm(t('Remove from group'), t('Remove this student from the group? They will be told to wait for a new group.'), () => run(async () => {
       const { error } = await supabase.rpc('staff_remove_missed_student', { p_exam_id: examId, p_user: r.user_id });
       if (error) throw error;
@@ -144,18 +168,31 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
                       <b dir="auto">{r.name || t('Student')}</b>
                       <div className="mm-meta">
                         <span>{t('Level')} {r.level}</span>
+                        {r.group_name ? <span>{r.group_name}</span> : null}
+                        {r.groupless ? <span className="tag">{t('Group closed')}</span> : null}
                         <span className="tag">{r.status === 'draft' ? t('Started, not submitted') : t('Not started')}</span>
                         {until && <span className="tag ext">{t('Extended until')}: {fmtDateTime(until, lang)}</span>}
                       </div>
                     </div>
                     <div className="mm-acts">
-                      <button type="button" className="btn btn-gold btn-sm" disabled={busy} title={t('Give this student more time to take the exam')} onClick={() => setExt({ uid: r.user_id, value: tomorrow() })}>{t('Extend deadline')}</button>
+                      <button type="button" className="btn btn-gold btn-sm" disabled={busy} title={t('Give this student more time to take the exam')} onClick={() => { setPlace(null); setExt({ uid: r.user_id, value: tomorrow() }); }}>{t('Extend deadline')}</button>
                       <button type="button" className="btn btn-ghost btn-sm" disabled={busy || r.level <= 1} title={r.level <= 1 ? t('This student is already on the lowest level.') : t('Move to the nearest lower group')} onClick={() => demote(r)}>{t('Lower level')}</button>
                       <RowMenu label={t('More')} disabled={busy} items={[
-                        { key: 'group', label: t('Remove from group'), title: t('Take the student out of the group; they wait for a new one'), onClick: () => remove(r) },
+                        ...(r.groupless ? [{ key: 'place', label: t('Move to a running group'), title: t('Put the student in a running group'), onClick: () => openPlace(r) }] : []),
+                        { key: 'group', label: r.groupless ? t('Remove from the list') : t('Remove from group'), title: t('Take the student out of the group; they wait for a new one'), onClick: () => remove(r) },
                         { key: 'platform', label: t('Remove from platform'), title: t('Block the account and take the student out of the group'), danger: true, onClick: () => removeFromPlatform(r) },
                       ]} />
                     </div>
+                    {place && place.uid === r.user_id && (
+                      <div className="mm-ext">
+                        <label htmlFor={'mmp' + r.user_id}>{t('Move to a running group')}</label>
+                        <select id={'mmp' + r.user_id} value={place.pick} onChange={(e) => setPlace({ ...place, pick: e.target.value })}>
+                          <option value="">—</option>{place.groups.map((g) => <option key={g.code} value={g.code}>{g.name}</option>)}
+                        </select>
+                        <button type="button" className="btn btn-gold btn-sm" disabled={busy || !place.pick} onClick={savePlace}>{t('Save')}</button>
+                        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setPlace(null)}>{t('Cancel')}</button>
+                      </div>
+                    )}
                     {editing && (
                       <div className="mm-ext">
                         <label htmlFor={'mmx' + r.user_id}>{t('Can take the exam until')}</label>

@@ -1,4 +1,5 @@
 import { isAnswered } from './runnerShared';
+import RichQ from '../../../../components/RichQ';
 
 /** One question of the exam room (part / section heading, word list, the question text and the answer box passed in as `field`). */
 export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ctx, scale, field, onToggleFlag }) {
@@ -25,7 +26,7 @@ export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ct
                 {item.bank.map((w) => <span className="xq-chip" key={w}>{w}</span>)}
               </div>
             )}
-            <p className={'xq-text' + (item.audio ? ' xq-text-ar' : '')} dir="auto">{item.body}</p>
+            <p className={'xq-text' + (item.audio ? ' xq-text-ar' : '')} dir="auto"><RichQ text={item.body} /></p>
             {field}
           </article>
           <p className="xq-hint">{t('Your answers are saved automatically.')}</p>

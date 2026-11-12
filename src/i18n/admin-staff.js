@@ -59,4 +59,10 @@ const ar = {
   'Run the latest SQL migration first.': 'شغّل أحدث ترحيل SQL أولًا.', 'No admins or teachers yet.': 'لا يوجد معلّمون أو مشرفون بعد.',
   'Works in the teacher panel with the groups linked to them: lessons, tasks, exams, attendance and students.': 'يعمل في لوحة المعلّم مع المجموعات المرتبطة به: الدروس والمهام والاختبارات والحضور والطلاب.',
 };
-export default { UZ: { ...uz, ...uz2 }, RU: ru, AR: ar, EN: {} };
+const uz3 = {
+  'Group closed': 'Guruh yopilgan', 'Put the student in a running group': 'Talabani faol guruhga qo‘yish',
+  'Remove this student from the list? They stay without a group.': 'Talabani ro‘yxatdan chiqaramizmi? U guruhsiz qoladi.',
+  'Student removed from the list.': 'Talaba ro‘yxatdan chiqarildi.', 'Student moved to the group.': 'Talaba guruhga o‘tkazildi.',
+  'This student is not on the list any more.': 'Bu talaba endi ro‘yxatda yo‘q.', 'Pick a running group.': 'Faol guruhni tanlang.',
+};
+export default { UZ: { ...uz, ...uz2, ...uz3 }, RU: ru, AR: ar, EN: {} };

@@ -318,6 +318,11 @@ export default function ExamEditor({ state, onClose, onSaved }) {
         const { error: err } = await supabase.from('written_exams').update({ title: trimmedTitle, duration_minutes: durValue, deadline_at: deadlineValue, level: levelValue, exam_kind: kind || null }).eq('id', state.exam.id);
         if (err) throw err;
         await writeQuestions(state.exam.id, true);
+        // a level exam has ONE content: copy it to the same level exam of every other group (copies with submissions are skipped)
+        if (kind && levelValue) {
+          const sync = await supabase.rpc('staff_sync_level_exam', { p_exam_id: state.exam.id });
+          if (sync.error) toast(t('Saved here, but the other groups could not be updated.') + ' ' + sync.error.message, 'err');
+        }
       } else {
         // One separate exam per chosen group: every group gets its own copy, so results and publishing never mix.
         // If any group fails midway, the copies already created are removed so no half-built exam is left behind.

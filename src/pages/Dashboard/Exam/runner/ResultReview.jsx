@@ -4,6 +4,7 @@ import { pickFeedback } from '../../../../lib/aiFeedback';
 import { splitAnswer } from '../../../../lib/examPaper';
 import { examMax, examPoints, fmtPts } from '../../../../lib/scoring';
 import { ScoreWindow } from './runnerShared';
+import RichQ from '../../../../components/RichQ';
 
 /** The handed-in, AI-checked paper: score ring, correct / partial / wrong filters and one expandable card per question. */
 export default function ResultReview({ t, lang, exam, sub, laid, answers, texts, showResult, onCloseResult, onBack, backBtn }) {
@@ -70,14 +71,14 @@ export default function ResultReview({ t, lang, exam, sub, laid, answers, texts,
                 <article className={'xrv-card ' + tn + (open ? ' open' : '')} key={r.id}>
                   <button type="button" className="xrv-head" aria-expanded={open} onClick={() => setOv((o) => ({ ...o, [r.id]: !open }))}>
                     <span className="xrv-n">{r.n}</span>
-                    <span className="xrv-q" dir="auto">{String(r.body).replace(/\s+/g, ' ').slice(0, 120)}</span>
+                    <span className="xrv-q" dir="auto">{String(r.body).replace(/[{}]/g, '').replace(/\s+/g, ' ').slice(0, 120)}</span>
                     {r.sec > 0 && <span className="xrv-sec">{t('Section')} {r.sec}</span>}
                     <span className={'xr-rs ' + tn}>{r.sc == null ? '—' : r.sc}</span>
                     <svg className="xrv-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
                   </button>
                   {open && (
                     <div className="xrv-body">
-                      <p className="xrv-full" dir="auto">{r.body}</p>
+                      <p className="xrv-full" dir="auto"><RichQ text={r.body} /></p>
                       <div className="xrv-lbl">{t('Your answer')}</div>
                       <div className={'xrv-ans' + (r.ans ? '' : ' none')} dir="auto">{r.ans || t('No answer')}</div>
                       {r.fb ? (<><div className="xrv-lbl">{t('AI comment')}</div><div className="xrv-fb" dir="auto">{r.fb}</div></>) : null}
