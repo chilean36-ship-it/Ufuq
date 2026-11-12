@@ -51,13 +51,14 @@ const en = {
     "c6d": "See your growth over time with clear milestones and completion stats."
   },
   "programs": {
-    "eyebrow": "Choose Your Path",
-    "title": "Three ways into Arabic.",
+    "eyebrow": "Your Learning Map",
+    "title": "Follow the route to fluent Arabic.",
     "sub": "Pick a track and start today — every path is built by native teachers and grounded in the textbook itself.",
+    "stage": "Stage",
     "p1l": "Your Textbook",
     "p1t": "Al-Ufuq, Cover to Cover",
-    "p2l": "Build Your Base",
-    "p2t": "Letter-by-Letter",
+    "p2l": "Go Further",
+    "p2t": "Bayna Yadayk, Book by Book",
     "p3l": "Speak With Confidence",
     "p3t": "Step-by-Step"
   },
@@ -66,7 +67,7 @@ const en = {
     "tab2": "Morals",
     "tab3": "Culture",
     "eyebrow": "Discover Arabic",
-    "title": "Learn through Stories, Morals & Culture.",
+    "title": "Real students. Real Arabic.",
     "sub": "Language sticks best when it carries meaning. Explore the world behind the words.",
     "text1": "Timeless tales retold in simple Arabic — read aloud, then read them yourself.",
     "text2": "Short lessons on honesty, kindness, and patience — vocabulary that shapes character, not just conversation.",

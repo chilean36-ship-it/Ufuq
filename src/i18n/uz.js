@@ -51,13 +51,14 @@ const uz = {
     "c6d": "O'sishingizni aniq bosqichlar va yakunlangan statistikalar bilan ko'ring."
   },
   "programs": {
-    "eyebrow": "Yo'lingizni tanlang",
-    "title": "Arab tiliga uchta yo'l.",
+    "eyebrow": "O‘quv xaritangiz",
+    "title": "Ravon arab tiliga boradigan yo‘l.",
     "sub": "Bir yo'nalishni tanlang va bugundan boshlang — har bir yo'l ona tilida so'zlashuvchi ustozlar tomonidan, darslikka asoslangan holda tuzilgan.",
+    "stage": "Bosqich",
     "p1l": "Darsligingiz",
     "p1t": "Al-Ufuq, boshidan oxirigacha",
-    "p2l": "Poydevoringizni quring",
-    "p2t": "Harf-ba-harf",
+    "p2l": "Yanada oldinga",
+    "p2t": "Bayna Yadayk, kitobma-kitob",
     "p3l": "Ishonch bilan gapiring",
     "p3t": "Qadam-ba-qadam"
   },
@@ -66,7 +67,7 @@ const uz = {
     "tab2": "Axloq",
     "tab3": "Madaniyat",
     "eyebrow": "Arab tilini kashf eting",
-    "title": "Hikoyalar, axloq va madaniyat orqali o'rganing.",
+    "title": "Haqiqiy talabalar. Haqiqiy arab tili.",
     "sub": "Til ma'no orqali eng yaxshi yodda qoladi. So'zlar ortidagi dunyoni kashf eting.",
     "text1": "Sodda arab tilida qayta hikoya qilingan abadiy hikoyalar — avval tinglang, keyin o'zingiz o'qing.",
     "text2": "Halollik, mehr-shafqat va sabr haqida qisqa darslar — nafaqat suhbat, balki xarakterni shakllantiruvchi lug'at.",

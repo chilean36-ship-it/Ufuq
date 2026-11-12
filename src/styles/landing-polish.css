@@ -125,3 +125,15 @@ html[data-theme="light"] .pricing .price-card{ box-shadow:0 24px 50px -30px rgba
 /* Student certificates in the lightbox: show the whole sheet (level and scores are at the bottom), never crop it. */
 html body .prog-lightbox-media.face-fallback{ aspect-ratio:3/4; max-height:72vh; background:#14110d; }
 html body .prog-lightbox-media.face-fallback img{ object-fit:contain; }
+
+/* ---------- programmes as a learning map: numbered stages joined by a dashed route ---------- */
+.prog-route{ position:relative; gap:46px; }
+.prog-route::before{ content:''; position:absolute; left:7%; right:7%; top:34px; border-top:2px dashed color-mix(in srgb, var(--gold) 55%, transparent); z-index:0; pointer-events:none; }
+.prog-route > .prog-card{ position:relative; z-index:1; }
+.prog-step{ position:absolute; top:14px; left:14px; z-index:3; display:inline-flex; align-items:center; gap:9px; padding:5px 14px 5px 5px; border-radius:99px; font-size:11.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text);
+  background:rgba(13,13,13,.62); border:1px solid rgba(201,162,75,.5); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.prog-step b{ display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--gold); color:#121212; font-size:14px; letter-spacing:0; }
+@media (max-width:900px){
+  .prog-route{ gap:44px; }
+  .prog-route::before{ left:50%; right:auto; top:0; bottom:0; border-top:0; border-left:2px dashed color-mix(in srgb, var(--gold) 55%, transparent); }
+}

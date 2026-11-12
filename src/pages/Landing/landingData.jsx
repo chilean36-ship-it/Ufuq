@@ -48,7 +48,7 @@ export const PROG_ARROW = ARROW;
 
 export const PROGRAMS = [
   {
-    img: '/assets/images/program-textbook.webp',
+    img: '/assets/images/program-textbook.jpg',
     alt: 'Al-Ufuq — Arabic language textbook for non-native speakers',
     labelKey: 'programs.p1l', titleKey: 'programs.p1t',
     icon: (
@@ -59,8 +59,8 @@ export const PROGRAMS = [
     ),
   },
   {
-    img: '/assets/images/img-06.webp',
-    alt: 'Arabic calligraphy pen and ink on script',
+    img: '/assets/images/program-bayna.jpg',
+    alt: 'Al-Arabiyya Bayna Yadayk textbook series, volumes 1 to 4',
     labelKey: 'programs.p2l', titleKey: 'programs.p2t',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#E5C878" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -85,12 +85,12 @@ const CULTURE_IMG_STYLE = { width: '100%', height: '100%', objectFit: 'cover', d
 
 export const DISCOVER_TABS = [
   {
-    id: 'stories', tabKey: 'discover.tab1', textKey: 'discover.text1',
+    id: 'stories', tabKey: 'discover.tab1', textKey: 'discover.text1', noText: true,
     cards: [
       // Students tab: real student videos (faces blurred). noPreview = the card shows only its picture + play button; the video opens (and plays) in the window.
-      { img: '/assets/images/students-story.jpg', alt: 'Six students retelling one story, each in turn', titleKey: 'discover.s1', video: '/assets/videos/students-story.mp4', fixed: true, noPreview: true },
-      { img: '/assets/images/students-dialogue.jpg', alt: 'Two students having a conversation in Arabic', titleKey: 'discover.s2', video: '/assets/videos/students-dialogue.mp4', fixed: true, noPreview: true },
-      { img: '/assets/images/students-writing.jpg', alt: 'Pages from the Arabic handwriting notebooks of students', titleKey: 'discover.s3', video: '/assets/videos/students-writing.mp4', fixed: true, noPreview: true },
+      { img: '/assets/images/students-story.jpg', alt: 'Six students retelling one story, each in turn', titleKey: 'discover.s1', video: '/assets/videos/students-story-v2.mp4', fixed: true, noPreview: true },
+      { img: '/assets/images/students-dialogue.jpg', alt: 'Two students having a conversation in Arabic', titleKey: 'discover.s2', video: '/assets/videos/students-dialogue-v2.mp4', fixed: true, noPreview: true },
+      { img: '/assets/images/students-writing.jpg', alt: 'Pages from the Arabic handwriting notebooks of students', titleKey: 'discover.s3', video: '/assets/videos/students-writing-v2.mp4', fixed: true, noPreview: true },
     ],
   },
   {

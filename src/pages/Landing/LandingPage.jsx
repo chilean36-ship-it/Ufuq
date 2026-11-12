@@ -206,9 +206,8 @@ function Programs({ onOpenLightbox }) {
         <Reveal className="section-head">
           <div className="eyebrow">{t('programs.eyebrow')}</div>
           <h2>{t('programs.title')}</h2>
-          <p>{t('programs.sub')}</p>
         </Reveal>
-        <div className="prog-grid">
+        <div className="prog-grid prog-route">
           {PROGRAMS.map((pRaw, pi) => {
             const p = { ...pRaw, img: media.img('program_' + (pi + 1), pRaw.img) };
             return (
@@ -219,6 +218,7 @@ function Programs({ onOpenLightbox }) {
                 onOpenLightbox({ img: { src: p.img, alt: p.alt }, labelKey: p.labelKey, titleKey: p.titleKey });
               }}
             >
+              <span className="prog-step" aria-hidden="true"><b>{pi + 1}</b>{t('programs.stage')}</span>
               <div className="prog-media"><img src={p.img} alt={p.alt} /></div>
               <div className="prog-scrim"></div>
               <span className="prog-icon" aria-hidden="true">{p.icon}</span>
@@ -259,7 +259,7 @@ function Discover({ onOpenLightbox }) {
 
         {DISCOVER_TABS.map((d) => (
           <div key={d.id} className={'discover-panel' + (tab === d.id ? ' active' : '')} data-panel={d.id}>
-            <p className="discover-text">{t(d.textKey)}</p>
+            {!d.noText && <p className="discover-text">{t(d.textKey)}</p>}
             <div className="discover-grid">
               {d.cards.map((cRaw, ci) => {
                 const c = { ...cRaw, img: media.img(d.id + '_' + (ci + 1), cRaw.img), video: cRaw.fixed ? cRaw.video : media.video(d.id + '_' + (ci + 1), cRaw.video) };
