@@ -62,7 +62,7 @@ const en = {
     "p3t": "Step-by-Step"
   },
   "discover": {
-    "tab1": "Stories",
+    "tab1": "Students",
     "tab2": "Morals",
     "tab3": "Culture",
     "eyebrow": "Discover Arabic",
@@ -71,8 +71,8 @@ const en = {
     "text1": "Timeless tales retold in simple Arabic — read aloud, then read them yourself.",
     "text2": "Short lessons on honesty, kindness, and patience — vocabulary that shapes character, not just conversation.",
     "text3": "The geometry, architecture, and calligraphy that Arabic grew alongside — context that makes the language feel alive.",
-    "s1": "The Well in the Palms",
-    "s2": "The Caravan's Journey",
+    "s1": "One Story, Six Voices",
+    "s2": "From Zero to Conversation in 2 Months",
     "s3": "Rider at the Gates",
     "m1": "Honesty",
     "m2": "Kindness",

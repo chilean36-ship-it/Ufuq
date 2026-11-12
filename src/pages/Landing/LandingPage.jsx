@@ -262,7 +262,7 @@ function Discover({ onOpenLightbox }) {
             <p className="discover-text">{t(d.textKey)}</p>
             <div className="discover-grid">
               {d.cards.map((cRaw, ci) => {
-                const c = { ...cRaw, img: media.img(d.id + '_' + (ci + 1), cRaw.img), video: media.video(d.id + '_' + (ci + 1), cRaw.video) };
+                const c = { ...cRaw, img: media.img(d.id + '_' + (ci + 1), cRaw.img), video: cRaw.fixed ? cRaw.video : media.video(d.id + '_' + (ci + 1), cRaw.video) };
                 const open = () => onOpenLightbox({
                   img: { src: c.img, alt: c.alt, style: c.imgStyle }, video: c.video, labelKey: d.tabKey, titleKey: c.titleKey,
                 });
@@ -274,7 +274,7 @@ function Discover({ onOpenLightbox }) {
                   >
                     <div className={'disc-art' + (c.moral ? ' moral-photo' : '') + ' prog-media'}>
                       <img src={c.img} alt={c.alt} style={c.imgStyle} />
-                      <CardVideo src={c.video} poster={c.img} />
+                      {!c.noPreview && <CardVideo src={c.video} poster={c.img} />}
                     </div>
                     <span className="disc-play" aria-hidden="true">{PLAY_ICON}</span>
                     <div className="disc-scrim"></div>

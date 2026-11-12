@@ -105,7 +105,7 @@ html body :is(.modal-actions, .password-actions, .field-actions){gap:10px;}
 /* ---------- Landing: photo / video window and student cards (same window language as every dialog) ---------- */
 html body .prog-lightbox{background:var(--uk-overlay); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);}
 html body .prog-lightbox-inner{background:var(--bg-2); border:1px solid var(--line); border-radius:var(--uk-radius); box-shadow:var(--uk-shadow); padding:14px 14px 18px; max-width:520px; gap:14px; max-height:calc(100dvh - 48px); overflow:auto;}
-html body .prog-lightbox-inner.is-video{max-width:880px;}
+html body .prog-lightbox-inner.is-video{max-width:760px;}
 html body .prog-lightbox-media{border-radius:12px; box-shadow:none; max-height:68vh;}
 html body .prog-lightbox-inner.is-video .prog-lightbox-media{aspect-ratio:16/9; background:#000;}
 html body .prog-lightbox-close{top:18px; right:18px; width:34px; height:34px; font-size:20px; background:var(--bg-2); border-color:var(--line); z-index:2;}

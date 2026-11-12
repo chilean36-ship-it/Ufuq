@@ -87,8 +87,9 @@ export const DISCOVER_TABS = [
   {
     id: 'stories', tabKey: 'discover.tab1', textKey: 'discover.text1',
     cards: [
-      { img: '/assets/images/img-09.webp', alt: 'A traveller pausing at a desert well', titleKey: 'discover.s1', video: '/assets/videos/stories-well-in-palms.mp4' },
-      { img: '/assets/images/img-10.webp', alt: 'A caravan of camels crossing the dunes', titleKey: 'discover.s2', video: '/assets/videos/stories-caravans-journey.mp4' },
+      // Students tab: real student videos (faces blurred). noPreview = the card shows only its picture + play button; the video opens (and plays) in the window.
+      { img: '/assets/images/students-story.jpg', alt: 'Six students retelling one story, each in turn', titleKey: 'discover.s1', video: '/assets/videos/students-story.mp4', fixed: true, noPreview: true },
+      { img: '/assets/images/students-dialogue.jpg', alt: 'Two students having a conversation in Arabic', titleKey: 'discover.s2', video: '/assets/videos/students-dialogue.mp4', fixed: true, noPreview: true },
       { img: '/assets/images/img-11.webp', alt: 'A rider approaching a lantern-lit city at dusk', titleKey: 'discover.s3', video: '/assets/videos/stories-rider-at-the-gates.mp4' },
     ],
   },

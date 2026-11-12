@@ -62,7 +62,7 @@ const uz = {
     "p3t": "Qadam-ba-qadam"
   },
   "discover": {
-    "tab1": "Hikoyalar",
+    "tab1": "Talabalar",
     "tab2": "Axloq",
     "tab3": "Madaniyat",
     "eyebrow": "Arab tilini kashf eting",
@@ -71,8 +71,8 @@ const uz = {
     "text1": "Sodda arab tilida qayta hikoya qilingan abadiy hikoyalar — avval tinglang, keyin o'zingiz o'qing.",
     "text2": "Halollik, mehr-shafqat va sabr haqida qisqa darslar — nafaqat suhbat, balki xarakterni shakllantiruvchi lug'at.",
     "text3": "Arab tili rivojlangan geometriya, me'morchilik va kalligrafiya — tilni jonli his qildiruvchi kontekst.",
-    "s1": "Xurmozorlardagi quduq",
-    "s2": "Karvon sayohati",
+    "s1": "Bir qissa — olti ovoz",
+    "s2": "Noldan 2 oyda arabcha suhbat",
     "s3": "Darvoza oldidagi chavandoz",
     "m1": "Halollik",
     "m2": "Mehr-shafqat",
