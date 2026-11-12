@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ScrollManager from './components/ScrollManager';
+import CanonicalLink from './components/CanonicalLink';
 import RecoveryGate from './components/RecoveryGate';
 import SiteLayout from './components/SiteLayout';
 import RequireAuth from './components/RequireAuth';
@@ -29,6 +30,7 @@ export default function App() {
   return (
     <>
       <ScrollManager />
+      <CanonicalLink />
       <RecoveryGate />
       <Suspense fallback={<Loader />}>
       <Routes>

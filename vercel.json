@@ -1,5 +1,11 @@
 {
+  "trailingSlash": false,
   "redirects": [
+    {
+      "source": "/(index|about-author|terms|privacy|cookies|refund).html",
+      "destination": "/$1",
+      "permanent": true
+    },
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "ufuq-com.vercel.app" }],
