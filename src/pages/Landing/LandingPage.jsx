@@ -132,7 +132,6 @@ function Hero({ onOpenAuth }) {
           <HeroOrnament />
           <div className="calligraphy" aria-hidden="true">أُفُق</div>
           <SandCalligraphy />
-          <div className="caption">{t('hero.caption')}</div>
         </Reveal>
       </div>
       <SandDivider className="in-hero" />

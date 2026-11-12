@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-/* The hero word "أُفُق" is built from thousands of sand grains that pour in from above, then
+/* The hero word "أُفُق" is built from thousands of sand grains that are blown in from the left by the wind, then
    scatter away from the cursor / finger (and blow apart on click) and settle back. Wind-blown grains
    drift across the whole hero. Pure canvas — no libraries. Pauses off-screen; static under reduced motion. */
 const PAD = 80;
@@ -84,13 +84,13 @@ export default function SandCalligraphy({ text = 'أُفُق' }) {
       }
       parts = pts.map(([hx, hy]) => ({
         hx, hy,
-        x: still ? hx : hx + (Math.random() - 0.5) * W * 0.5,
-        y: still ? hy : -20 - Math.random() * H * 0.7,
+        x: still ? hx : -30 - Math.random() * W * 0.5,
+        y: still ? hy : hy + (Math.random() - 0.5) * H * 0.55,
         vx: 0, vy: 0,
         s: 0.8 + Math.random() * 0.7,
         c: (Math.random() * palette.length) | 0,
         ph: Math.random() * 6.283,
-        delay: Math.random() * 1100,
+        delay: still ? 0 : Math.random() * 900 + (hx / W) * 500,
         spark: Math.random() < 0.07,
       }));
       wind = still ? [] : Array.from({ length: W < 700 ? 40 : 80 }, () => ({
@@ -113,8 +113,10 @@ export default function SandCalligraphy({ text = 'أُفُق' }) {
       const R = 95, R2 = R * R, k = 0.045, damp = 0.86, el = now - t0;
       for (const p of parts) {
         if (el < p.delay) continue;
-        p.vx += (p.hx - p.x) * k * dt + Math.sin(now * 0.0016 + p.ph) * 0.011;
-        p.vy += (p.hy - p.y) * k * dt + Math.cos(now * 0.0013 + p.ph) * 0.011;
+        // wind phase: for ~2.3 s after a grain starts it is carried left -> right by gusts (weak pull home), then the pull wins
+        const e = Math.min(1, (el - p.delay) / 2300), ease = e * e, gust = 1 - e;
+        p.vx += (p.hx - p.x) * k * ease * dt + Math.sin(now * 0.0016 + p.ph) * 0.011 + gust * (0.75 + 0.35 * Math.sin(now * 0.004 + p.ph)) * dt;
+        p.vy += (p.hy - p.y) * k * (0.25 + 0.75 * ease) * dt + Math.cos(now * 0.0013 + p.ph) * 0.011 + gust * Math.sin(now * 0.005 + p.ph * 3 + p.x * 0.02) * 0.45 * dt;
         if (ptr.active) {
           const dx = p.x - ptr.x, dy = p.y - ptr.y, d2 = dx * dx + dy * dy;
           if (d2 < R2) {
