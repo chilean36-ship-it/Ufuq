@@ -23,3 +23,7 @@ verify_jwt = false
 # Called only by pg_cron (job ufuq-bot-daily); it proves itself with the x-cron-secret header.
 [functions.cron-monitor]
 verify_jwt = false
+
+# Student support bot: Telegram proves itself with the X-Telegram-Bot-Api-Secret-Token header.
+[functions.support-bot]
+verify_jwt = false

@@ -135,7 +135,13 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 - APPLIED (2026-11-02): `supabase/migrations/20261128_levels_ranking_certificates_joins.sql` (levels A-E 1..14 pre-created inactive; group ranking = last exam %; certificates by level total with one-time winner notice; one Arabic class group per account).
 - APPLIED (2026-11-02): `supabase/migrations/20261129_series_materials_and_real_students.sql` (audio/board photos of lower levels of the same letter stay visible; certificates count every non-teacher, non-main-admin account).
 
-## Admin Telegram bot (English, no AI) — APPLIED to live ldbthwpikixtykwmvudy on 2026-11-03
+## Student support bot (support-bot) — LIVE since 2026-11-12, replaces the admin bot below
+- APPLIED (2026-11-12, MCP): `supabase/migrations/20261201_support_bot.sql` (private schema `support`, role `support_bot` without password, unused unless SUPPORT_DB_URL is set).
+- Edge Function `support-bot` (verify_jwt = false) deployed via MCP. It uses the same bot token (TELEGRAM_BOT_TOKEN, @Ufuq_ai_Bot); the bot's webhook now points to support-bot. Staff group is stored in support.settings by `/setup`. Details: `supabase/functions/support-bot/README.md`.
+- The daily report cron job `ufuq-bot-daily` was removed (cron.unschedule) on 2026-11-12 at the owner's request.
+- ⚠️ Do NOT run the cron-monitor `set_webhook` call below any more: it would point the bot back to tg-webhook and students' messages would stop arriving. To re-register support-bot: insert a fresh `setup_nonce` into support.settings and open `.../functions/v1/support-bot?setup=<nonce>` within 15 minutes.
+
+## Admin Telegram bot (English, no AI) — RETIRED 2026-11-12 (was applied 2026-11-03)
 - APPLIED: `20261130_telegram_bot_layer.sql` (private schema `bot`, role `bot_reader` that can only EXECUTE bot.rpc_*, `bot_audit`, `alert_sent`, rate limit 20/min in SQL), `20261130b_telegram_bot_cron.sql` (pg_net + cron job `ufuq-bot-daily` at 03:00 UTC = 08:00 Tashkent), `20261130c_telegram_bot_english.sql` (English summaries, richer daily report).
 - Edge Functions `tg-webhook` and `cron-monitor` (both `verify_jwt = false`, see config.toml) share `_shared/bot.ts`.
 - Secrets: TELEGRAM_BOT_TOKEN, TG_WEBHOOK_SECRET, OWNER_CHAT_ID, ADMIN_CHAT_IDS (comma-separated extra admins), BOT_CRON_SECRET (= Vault secret `bot_cron_secret`), BOT_DB_URL (transaction pooler URL for `bot_reader`). Names only in `supabase/functions/.env.example`.
