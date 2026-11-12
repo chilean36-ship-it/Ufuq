@@ -12,6 +12,8 @@ import { useI18n } from '../../context/I18nContext';
 import { getSessionAndRole, hasStoredSession, homeRoute, isOAuthCallback, readCachedRole, ROLE_PAGES, storedSessionUserId } from '../../lib/auth';
 import { setPayIntent, afterAuthDestination } from '../../lib/payIntent';
 import fxCss from './fx/fx.css?inline';
+import showcaseCss from './showcase.css?inline';
+import Showcase from './Showcase';
 import LandingFX from './fx/LandingFX';
 import SandCalligraphy from './fx/SandCalligraphy';
 import HeroOrnament from './fx/HeroOrnament';
@@ -636,10 +638,12 @@ export default function LandingPage() {
       <PageStyle css={elementsCss} />
       <PageStyle css={fxCss} />
       <PageStyle css={polishCss} />
+      <PageStyle css={showcaseCss} />
       <LandingFX />
       <SiteHeader onOpenAuth={openAuth} />
       <Hero onOpenAuth={openAuth} />
       <AboutTeaser />
+      <Showcase />
       <Explore />
       <Programs onOpenLightbox={setLightbox} />
       <Discover onOpenLightbox={setLightbox} />
