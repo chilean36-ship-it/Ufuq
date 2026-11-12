@@ -59,8 +59,8 @@ const en = {
     "p1t": "Al-Ufuq, Cover to Cover",
     "p2l": "Go Further",
     "p2t": "Bayna Yadayk, Book by Book",
-    "p3l": "Speak With Confidence",
-    "p3t": "Step-by-Step"
+    "p3l": "The Next Summit",
+    "p3t": "Big, Powerful Books Come Next"
   },
   "discover": {
     "tab1": "Students",

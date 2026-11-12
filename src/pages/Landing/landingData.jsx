@@ -59,7 +59,7 @@ export const PROGRAMS = [
     ),
   },
   {
-    img: '/assets/images/program-bayna-real.jpg',
+    img: '/assets/images/program-bayna-desk.jpg',
     alt: 'Al-Arabiyya Bayna Yadayk textbook series, volumes 1 to 4',
     labelKey: 'programs.p2l', titleKey: 'programs.p2t',
     icon: (

@@ -59,8 +59,8 @@ const uz = {
     "p1t": "Al-Ufuq, boshidan oxirigacha",
     "p2l": "Yanada oldinga",
     "p2t": "Bayna Yadayk, kitobma-kitob",
-    "p3l": "Ishonch bilan gapiring",
-    "p3t": "Qadam-ba-qadam"
+    "p3l": "Keyingi cho‘qqi",
+    "p3t": "Undan keyin — katta va kuchli kitoblar"
   },
   "discover": {
     "tab1": "Talabalar",
