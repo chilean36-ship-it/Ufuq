@@ -1,14 +1,6 @@
-/* "Inside Ufuq" showcase: big video stage with aurora and orbit rings. */
-.showcase{position:relative; overflow:hidden; padding:110px 0 130px; background:var(--bg-2);}
+/* "Inside Ufuq" showcase: big video stage on the plain page background. */
+.showcase{position:relative; overflow:hidden; padding:110px 0 130px; background:var(--bg);}
 .showcase > .wrap{position:relative; z-index:2;}
-.sc-aurora{position:absolute; inset:0; pointer-events:none; z-index:0;}
-.sc-aurora i{position:absolute; border-radius:50%; filter:blur(80px); opacity:.5; background:radial-gradient(circle, var(--gold) 0%, transparent 65%); animation:scDrift 18s ease-in-out infinite alternate;}
-.sc-aurora i:nth-child(1){width:560px; height:560px; left:-120px; top:8%;}
-.sc-aurora i:nth-child(2){width:480px; height:480px; right:-100px; top:30%; animation-delay:-6s; opacity:.35;}
-.sc-aurora i:nth-child(3){width:620px; height:620px; left:35%; bottom:-260px; animation-delay:-11s; opacity:.28;}
-html[data-theme="light"] .sc-aurora i{opacity:.28;}
-@keyframes scDrift{to{transform:translate3d(60px,-40px,0) scale(1.15);}}
-
 .sc-stage{max-width:1080px; margin:0 auto; padding:0 36px;}
 .sc-perspective{
   --rx:0deg; --ry:0deg; --px:0; --py:0; --gx:50%; --gy:50%;
@@ -17,10 +9,9 @@ html[data-theme="light"] .sc-aurora i{opacity:.28;}
 .sc-frame{
   position:relative; border-radius:16px; overflow:hidden; background:#0b0b0b;
   border:1px solid color-mix(in srgb, var(--gold) 45%, transparent);
-  box-shadow:0 40px 90px -30px rgba(0,0,0,.65), 0 0 0 6px color-mix(in srgb, var(--gold) 8%, transparent), 0 0 80px -20px color-mix(in srgb, var(--gold) 40%, transparent);
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.7);
   transition:box-shadow .4s ease;
 }
-.sc-frame.is-sound{box-shadow:0 50px 110px -30px rgba(0,0,0,.75), 0 0 0 6px color-mix(in srgb, var(--gold) 14%, transparent), 0 0 120px -10px color-mix(in srgb, var(--gold) 55%, transparent);}
 .sc-bar{display:flex; align-items:center; gap:7px; padding:10px 16px; background:#161616; border-bottom:1px solid rgba(255,255,255,.07);}
 .sc-bar i{width:10px; height:10px; border-radius:50%; background:#3a3a3a;}
 .sc-bar i:nth-child(1){background:#e0675b;} .sc-bar i:nth-child(2){background:#e5c878;} .sc-bar i:nth-child(3){background:#6fbf73;}
@@ -55,14 +46,6 @@ html[data-theme="light"] .sc-aurora i{opacity:.28;}
 .sc-track i{position:absolute; inset:0 auto 0 0; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); border-radius:6px;}
 [dir="rtl"] .sc-track i{inset:0 0 0 auto;}
 
-/* orbit rings + reflection */
-.sc-ring{position:absolute; left:50%; top:50%; border-radius:50%; pointer-events:none; border:1px dashed color-mix(in srgb, var(--gold) 35%, transparent);
-  transform:translate(-50%,-50%);}
-.sc-ring.r1{width:112%; aspect-ratio:1; animation:scSpin 60s linear infinite;}
-.sc-ring.r2{width:86%; aspect-ratio:1; border-style:solid; opacity:.35; animation:scSpin 90s linear infinite reverse;}
-@keyframes scSpin{to{rotate:360deg;}}
-.sc-reflect{height:60px; margin:18px 8% 0; border-radius:50%; background:radial-gradient(ellipse at center, color-mix(in srgb, var(--gold) 40%, transparent), transparent 70%); filter:blur(22px); opacity:.6;}
-
 @media (max-width:900px){
   .sc-stage{padding:0 8px;}
 }
@@ -74,5 +57,5 @@ html[data-theme="light"] .sc-aurora i{opacity:.28;}
   .sc-bar span{display:none;}
 }
 @media (prefers-reduced-motion:reduce){
-  .sc-aurora i,.sc-ring,.sc-pulse{animation:none;}
+  .sc-pulse{animation:none;}
 }

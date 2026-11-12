@@ -57,7 +57,6 @@ export default function Showcase() {
 
   return (
     <section className="showcase" id="showcase">
-      <div className="sc-aurora" aria-hidden="true"><i /><i /><i /></div>
       <div className="wrap">
         <Reveal className="section-head">
           <div className="eyebrow">{t('showcase.eyebrow')}</div>
@@ -67,8 +66,6 @@ export default function Showcase() {
 
         <Reveal className="sc-stage">
           <div className="sc-perspective" ref={stageRef}>
-            <span className="sc-ring r1" aria-hidden="true" />
-            <span className="sc-ring r2" aria-hidden="true" />
 
             <div className={'sc-frame' + (sound ? ' is-sound' : '') + (playing ? ' is-playing' : '')} ref={frameRef}>
               <div className="sc-bar" aria-hidden="true"><i /><i /><i /><span>ufuqtaleem.com</span></div>
@@ -109,7 +106,6 @@ export default function Showcase() {
                 )}
               </div>
             </div>
-            <div className="sc-reflect" aria-hidden="true" />
           </div>
         </Reveal>
       </div>

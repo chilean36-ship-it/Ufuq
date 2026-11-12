@@ -73,7 +73,7 @@ const uz = {
     "text3": "Arab tili rivojlangan geometriya, me'morchilik va kalligrafiya — tilni jonli his qildiruvchi kontekst.",
     "s1": "Bir qissa — olti ovoz",
     "s2": "Noldan 2 oyda arabcha suhbat",
-    "s3": "Darvoza oldidagi chavandoz",
+    "s3": "Talabalarning arab yozuvi",
     "m1": "Halollik",
     "m2": "Mehr-shafqat",
     "m3": "Sabr",

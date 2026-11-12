@@ -73,7 +73,7 @@ const en = {
     "text3": "The geometry, architecture, and calligraphy that Arabic grew alongside — context that makes the language feel alive.",
     "s1": "One Story, Six Voices",
     "s2": "From Zero to Conversation in 2 Months",
-    "s3": "Rider at the Gates",
+    "s3": "Arabic Handwriting by Students",
     "m1": "Honesty",
     "m2": "Kindness",
     "m3": "Patience",
