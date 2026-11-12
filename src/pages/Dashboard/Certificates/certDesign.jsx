@@ -10,6 +10,9 @@ export const SERIF = "Fraunces, 'Playfair Display', Georgia, 'Times New Roman', 
 export const SANS = "Inter, 'Segoe UI', Arial, sans-serif";
 export const ARABIC = "Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif";
 
+export const LEVEL_NAMES_AR = ['المبتدئ', 'الأساسي', 'ما قبل المتوسط', 'المتوسط', 'فوق المتوسط', 'المتقدّم', 'المتمكّن', 'الإتقان', 'الخبير', 'العالِم', 'المتميّز', 'النخبة', 'الحكيم', 'المنير'];
+export const levelNameAr = (n) => LEVEL_NAMES_AR[Math.max(0, Number(n) - 1)] || '';
+
 /** Eight-pointed Islamic star (khatam): two squares rotated 45 degrees. */
 export function Khatam({ cx, cy, r, fill, stroke, sw = 1.6, opacity = 1 }) {
   const q = r;

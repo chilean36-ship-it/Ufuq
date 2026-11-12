@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CERT_W, CERT_H, THEMES, SERIF, SANS, ARABIC, Khatam, CornerOrnament, Seal } from './certDesign';
+import { CERT_W, CERT_H, THEMES, SERIF, SANS, ARABIC, levelNameAr, Khatam, CornerOrnament, Seal } from './certDesign';
 
 export { CERT_W, CERT_H };
 
@@ -14,8 +14,8 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
   const nameSize = shownName.length > 30 ? 50 : shownName.length > 22 ? 60 : shownName.length > 16 ? 70 : 80;
   const stars = Array.from({ length: 6 }, (_, i) => i);
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-         aria-label={`${th.label} · Level ${levelNo} · ${shownName}`} style={{ display: 'block' }}>
+    <svg direction="rtl" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
+         aria-label={`${th.ar} · ${shownName}`} style={{ display: 'block' }}>
       <defs>
         <linearGradient id={g} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor={th.a} /><stop offset=".45" stopColor={th.b} /><stop offset="1" stopColor={th.c} />
@@ -52,31 +52,30 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
       <circle cx={M} cy="136" r="62" fill={th.paper1} stroke={`url(#${g})`} strokeWidth="4" />
       <circle cx={M} cy="136" r="54" fill="none" stroke={th.b} strokeOpacity=".5" strokeWidth="1" strokeDasharray="2 4" />
       {logo && <image href={logo} xlinkHref={logo} x={M - 38} y="98" width="76" height="76" preserveAspectRatio="xMidYMid meet" />}
-      <text x={M} y="238" textAnchor="middle" fontFamily={SERIF} fontWeight="700" fontSize="30" letterSpacing="16" fill={th.c}>UFUQ</text>
-      <text x={M} y="262" textAnchor="middle" fontFamily={SANS} fontWeight="600" fontSize="12" letterSpacing="6" fill={th.ink} fillOpacity=".55">ARABIC LANGUAGE ACADEMY</text>
+      <text x={M} y="240" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="44" fill={th.c}>أُفُق</text>
+      <text x={M} y="272" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="22" fill={th.ink} fillOpacity=".6">أكاديمية اللغة العربية</text>
 
       {/* title */}
-      <text x={M} y="336" textAnchor="middle" fontFamily={SERIF} fontWeight="600" fontSize="80" letterSpacing="12" fill={th.ink}>CERTIFICATE</text>
-      <text x={M} y="378" textAnchor="middle" fontFamily={SANS} fontWeight="600" fontSize="19" letterSpacing="14" fill={th.c}>OF ACHIEVEMENT</text>
+      <text x={M} y="336" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="92" fill={th.ink}>شهادة تقدير</text>
+      <text x={M} y="378" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="28" fill={th.c}>وتميّز في الإنجاز</text>
 
       {/* place ribbon */}
       <g transform={`translate(${M} 420)`}>
         <path d="M-210 -22 H210 L190 0 L210 22 H-210 L-190 0 Z" fill={`url(#${g})`} />
         <path d="M-210 -22 H210 L190 0 L210 22 H-210 L-190 0 Z" fill="none" stroke={th.ink} strokeOpacity=".25" strokeWidth="1" />
-        <text y="7" textAnchor="middle" fontFamily={SANS} fontWeight="800" fontSize="19" letterSpacing="9" fill={th.ink}>{th.label}</text>
+        <text y="9" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="26" fill={th.ink}>{th.ar}</text>
       </g>
 
-      <text x={M} y="494" textAnchor="middle" fontFamily={SERIF} fontStyle="italic" fontSize="22" fill={th.ink} fillOpacity=".7">This certificate is proudly presented to</text>
+      <text x={M} y="494" textAnchor="middle" fontFamily={ARABIC} fontSize="28" fill={th.ink} fillOpacity=".75">تُمنح هذه الشهادة بكل فخر واعتزاز إلى</text>
       <text x={M} y="580" textAnchor="middle" fontFamily={SERIF} fontWeight="600" fontSize={nameSize} fill={th.ink}>{shownName}</text>
       <path d={`M${M - 340} 606 H${M - 22} M${M + 22} 606 H${M + 340}`} stroke={`url(#${g})`} strokeWidth="1.8" />
       <Khatam cx={M} cy={606} r={11} fill={`url(#${g})`} />
 
-      <text x={M} y="654" textAnchor="middle" fontFamily={SERIF} fontSize="22" fill={th.ink} fillOpacity=".78">for outstanding results in</text>
-      <text x={M} y="698" textAnchor="middle" fontFamily={SERIF} fontWeight="700" fontSize="38" fill={th.c}>Level {levelNo} · {levelName}</text>
-      <text x={M} y="734" textAnchor="middle" fontFamily={SANS} fontSize="17" letterSpacing="1" fill={th.ink} fillOpacity=".72">
-        Midterm + Final: <tspan fontWeight="700" fill={th.ink} fillOpacity="1">{points} / {max} points</tspan>
+      <text x={M} y="654" textAnchor="middle" fontFamily={ARABIC} fontSize="28" fill={th.ink} fillOpacity=".8">تقديرًا لنتائجه المتميّزة في</text>
+      <text x={M} y="706" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="46" fill={th.c}>{`المستوى ${levelNo} · ${levelNameAr(levelNo)}`}</text>
+      <text x={M} y="750" textAnchor="middle" fontFamily={ARABIC} fontSize="26" fill={th.ink} fillOpacity=".8">
+        {'الاختبار النصفي + النهائي: '}<tspan fontWeight="700" fill={th.ink} fillOpacity="1">{`${points} / ${max} نقطة`}</tspan>
       </text>
-      <text x={M} y="772" textAnchor="middle" fontFamily={ARABIC} fontSize="30" fill={th.c}>{th.ar}</text>
 
       <Seal cx={M} cy={850} th={th} g={g} place={place} />
 
@@ -84,13 +83,13 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
       <g fontFamily={SANS} fill={th.ink}>
         <path d="M150 884 H430" stroke={th.b} strokeWidth="1.5" />
         <text x="290" y="876" textAnchor="middle" fontFamily={SERIF} fontSize="22">{date}</text>
-        <text x="290" y="910" textAnchor="middle" fontSize="11.5" letterSpacing="4" fillOpacity=".55">DATE OF ISSUE</text>
+        <text x="290" y="912" textAnchor="middle" fontFamily={ARABIC} fontSize="20" fillOpacity=".65">تاريخ الإصدار</text>
         <path d="M970 884 H1250" stroke={th.b} strokeWidth="1.5" />
-        <text x="1110" y="868" textAnchor="middle" fontFamily={SERIF} fontStyle="italic" fontSize="32" fill={th.c}>Ali Hifniy</text>
-        <text x="1110" y="910" textAnchor="middle" fontSize="11.5" letterSpacing="4" fillOpacity=".55">USTAZ · FOUNDER OF UFUQ</text>
+        <text x="1110" y="870" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="36" fill={th.c}>علي حفني</text>
+        <text x="1110" y="912" textAnchor="middle" fontFamily={ARABIC} fontSize="20" fillOpacity=".65">الأستاذ · مؤسس أفق</text>
       </g>
       {stars.map((i) => <Khatam key={i} cx={M - 110 + i * 44} cy={H - 70} r={5} fill={th.b} opacity=".5" />)}
-      <text x={M} y={H - 46} textAnchor="middle" fontFamily={SANS} fontSize="10.5" letterSpacing="3" fill={th.ink} fillOpacity=".45">CERTIFICATE No. {number}</text>
+      <text x={M} y={H - 46} textAnchor="middle" fontFamily={ARABIC} fontSize="17" fill={th.ink} fillOpacity=".55">{`شهادة رقم ${number}`}</text>
     </svg>
   );
 }
@@ -102,8 +101,17 @@ let logoCache = null;
 export async function loadLogo() {
   if (logoCache) return logoCache;
   try {
+    // the mark file is white (for dark pages): paint every visible pixel black so it shows on the cream certificate
     const blob = await (await fetch('/assets/images/logo-mark.png')).blob();
-    logoCache = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(blob); });
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const c = document.createElement('canvas'); c.width = 400; c.height = Math.round(400 * img.naturalHeight / img.naturalWidth) || 400;
+      const x = c.getContext('2d');
+      x.drawImage(img, 0, 0, c.width, c.height);
+      x.globalCompositeOperation = 'source-in'; x.fillStyle = '#111'; x.fillRect(0, 0, c.width, c.height);
+      logoCache = c.toDataURL('image/png');
+    } finally { URL.revokeObjectURL(url); }
   } catch (e) { logoCache = null; }
   return logoCache;
 }

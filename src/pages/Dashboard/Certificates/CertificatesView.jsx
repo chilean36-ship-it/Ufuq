@@ -3,7 +3,6 @@ import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { useDashboardData, LEVEL_NAMES } from '../../../context/DashboardDataContext';
 import { supabase } from '../../../lib/supabaseClient';
 import useLiveRefresh from '../../../lib/liveRefresh';
-import { fmtDate } from '../../../lib/dateLocale';
 import { fmtPts } from '../../../lib/scoring';
 import Certificate, { certificateToPng, printCertificate, loadLogo } from './Certificate';
 import css from './certificates.css?inline';
@@ -62,7 +61,7 @@ export default function CertificatesView() {
     name: name || (typeof localStorage !== 'undefined' && localStorage.getItem('ufuq-profile-name')) || '',
     levelNo: r.level, levelName: LEVEL_NAMES[Math.max(0, Number(r.level) - 1)] || '',
     place: Number(r.place), points: fmtPts(r.total_points), max: r.max_points || 150,
-    date: fmtDate(r.issued_at, lang, { day: 'numeric', month: 'long', year: 'numeric' }),
+    date: new Date(r.issued_at).toLocaleDateString('ar-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }),
     number: `UFQ-L${r.level}-P${r.place}-${String(userId || '').replace(/-/g, '').slice(0, 6).toUpperCase()}`,
     logo,
   });
