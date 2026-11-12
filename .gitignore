@@ -4,3 +4,4 @@ dist
 .env.local
 supabase/.temp
 public/assets/videos/ufuq-features-720.mp4
+public/assets/videos/students-*.mp4
