@@ -60,7 +60,7 @@ const en = {
     "p2l": "Go Further",
     "p2t": "Bayna Yadayk, Book by Book",
     "p3l": "The Next Summit",
-    "p3t": "Big, Powerful Books Come Next"
+    "p3t": "The Great Arabic Library"
   },
   "discover": {
     "tab1": "Students",

@@ -60,7 +60,7 @@ const uz = {
     "p2l": "Yanada oldinga",
     "p2t": "Bayna Yadayk, kitobma-kitob",
     "p3l": "Keyingi cho‘qqi",
-    "p3t": "Undan keyin — katta va kuchli kitoblar"
+    "p3t": "Buyuk arab kutubxonasi"
   },
   "discover": {
     "tab1": "Talabalar",
