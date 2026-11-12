@@ -57,7 +57,7 @@ html[data-theme="light"] .sc-aurora i{opacity:.28;}
 
 /* orbit rings + reflection */
 .sc-ring{position:absolute; left:50%; top:50%; border-radius:50%; pointer-events:none; border:1px dashed color-mix(in srgb, var(--gold) 35%, transparent);
-  transform:translate(-50%,-50%);
+  transform:translate(-50%,-50%);}
 .sc-ring.r1{width:112%; aspect-ratio:1; animation:scSpin 60s linear infinite;}
 .sc-ring.r2{width:86%; aspect-ratio:1; border-style:solid; opacity:.35; animation:scSpin 90s linear infinite reverse;}
 @keyframes scSpin{to{rotate:360deg;}}
