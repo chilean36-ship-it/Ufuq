@@ -1,4 +1,4 @@
-/* "Inside Ufuq" showcase: big tilting video stage with aurora, orbit rings and floating feature chips. */
+/* "Inside Ufuq" showcase: big video stage with aurora and orbit rings. */
 .showcase{position:relative; overflow:hidden; padding:110px 0 130px; background:var(--bg-2);}
 .showcase > .wrap{position:relative; z-index:2;}
 .sc-aurora{position:absolute; inset:0; pointer-events:none; z-index:0;}
@@ -63,25 +63,8 @@ html[data-theme="light"] .sc-aurora i{opacity:.28;}
 @keyframes scSpin{to{rotate:360deg;}}
 .sc-reflect{height:60px; margin:18px 8% 0; border-radius:50%; background:radial-gradient(ellipse at center, color-mix(in srgb, var(--gold) 40%, transparent), transparent 70%); filter:blur(22px); opacity:.6;}
 
-/* floating chips */
-.sc-chip{position:absolute; z-index:3; display:inline-flex; align-items:center; gap:9px; padding:9px 16px 9px 10px; border-radius:99px; font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap;
-  background:color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  border:1px solid color-mix(in srgb, var(--gold) 40%, transparent); box-shadow:0 14px 30px -12px rgba(0,0,0,.5);
-  animation:scFloat 6s ease-in-out infinite;}
-.sc-chip b{display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--gold); color:#121212; font-size:11px;}
-.sc-chip.c1{left:-26px; top:14%; --d:-46; animation-delay:-1s;}
-.sc-chip.c2{right:-30px; top:9%; --d:38; animation-delay:-3s;}
-.sc-chip.c3{left:-44px; top:46%; --d:54; animation-delay:-2s;}
-.sc-chip.c4{right:-40px; bottom:26%; --d:-34; animation-delay:-4s;}
-.sc-chip.c5{left:50%; bottom:-22px; margin-inline-start:-60px; --d:24; animation-delay:-5s;}
-@keyframes scFloat{50%{translate:0 -12px;}}
-
 @media (max-width:900px){
   .sc-stage{padding:0 8px;}
-  .sc-chip{font-size:12px; padding:6px 12px 6px 7px;}
-  .sc-chip.c1{left:-4px; top:-18px;} .sc-chip.c2{right:-4px; top:-18px;}
-  .sc-chip.c3,.sc-chip.c4{display:none;}
-  .sc-chip.c5{bottom:-26px;}
 }
 @media (max-width:560px){
   .showcase{padding:80px 0 100px;}
@@ -91,6 +74,5 @@ html[data-theme="light"] .sc-aurora i{opacity:.28;}
   .sc-bar span{display:none;}
 }
 @media (prefers-reduced-motion:reduce){
-  .sc-aurora i,.sc-ring,.sc-chip,.sc-pulse{animation:none;}
-  .sc-frame,.sc-chip{transition:none;}
+  .sc-aurora i,.sc-ring,.sc-pulse{animation:none;}
 }

@@ -4,7 +4,6 @@ import { useI18n } from '../../context/I18nContext';
 
 const SRC = '/assets/videos/ufuq-features-720.mp4';
 const POSTER = '/assets/videos/ufuq-features-poster.jpg';
-const CHIPS = ['chip1', 'chip2', 'chip3', 'chip4', 'chip5'];
 
 const fmt = (s) => {
   if (!isFinite(s)) return '0:00';
@@ -70,9 +69,6 @@ export default function Showcase() {
           <div className="sc-perspective" ref={stageRef}>
             <span className="sc-ring r1" aria-hidden="true" />
             <span className="sc-ring r2" aria-hidden="true" />
-            {CHIPS.map((c, i) => (
-              <span key={c} className={'sc-chip c' + (i + 1)} aria-hidden="true"><b>{String(i + 1).padStart(2, '0')}</b>{t('showcase.' + c)}</span>
-            ))}
 
             <div className={'sc-frame' + (sound ? ' is-sound' : '') + (playing ? ' is-playing' : '')} ref={frameRef}>
               <div className="sc-bar" aria-hidden="true"><i /><i /><i /><span>ufuqtaleem.com</span></div>
