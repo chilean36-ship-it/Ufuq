@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Reveal from '../../components/Reveal';
 import { useI18n } from '../../context/I18nContext';
 
@@ -20,8 +20,7 @@ const I = {
   full: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>,
 };
 
-/** Big "inside Ufuq" video stage: muted looping preview while on screen, tilts with the pointer,
- *  one tap switches to the full video with sound and custom controls. */
+/** Big "inside Ufuq" video stage: static poster with a centred play button; a click starts the video with sound. */
 export default function Showcase() {
   const { t } = useI18n();
   const stageRef = useRef(null);
@@ -33,43 +32,10 @@ export default function Showcase() {
   const [time, setTime] = useState({ cur: 0, dur: 0 });
   const src = SRC;
 
-  // Muted preview only while the stage is visible (and not for reduced-motion / data-saver visitors).
-  useEffect(() => {
-    const v = vref.current; const el = stageRef.current;
-    if (!v || !el) return undefined;
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const saver = navigator.connection && navigator.connection.saveData;
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) {
-        if (!sound && !reduce && !saver) { v.muted = true; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
-      } else { v.pause(); }
-    }, { threshold: 0.35 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [sound]);
-
-  // Pointer parallax: the frame tilts, the glow follows, chips drift at different depths.
-  const onMove = useCallback((e) => {
-    const el = stageRef.current; if (!el || e.pointerType === 'touch') return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    el.style.setProperty('--rx', (-y * 7).toFixed(2) + 'deg');
-    el.style.setProperty('--ry', (x * 9).toFixed(2) + 'deg');
-    el.style.setProperty('--px', x.toFixed(3));
-    el.style.setProperty('--py', y.toFixed(3));
-    el.style.setProperty('--gx', ((x + 0.5) * 100).toFixed(1) + '%');
-    el.style.setProperty('--gy', ((y + 0.5) * 100).toFixed(1) + '%');
-  }, []);
-  const onLeave = useCallback(() => {
-    const el = stageRef.current; if (!el) return;
-    ['--rx', '--ry', '--px', '--py'].forEach((k) => el.style.setProperty(k, '0'));
-  }, []);
-
   const watch = () => {
     const v = vref.current; if (!v) return;
     setSound(true);
-    v.loop = false; v.muted = false; v.currentTime = 0;
+    v.loop = false; v.muted = false;
     setMuted(false);
     const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; setMuted(true); v.play().catch(() => {}); });
   };
@@ -86,7 +52,7 @@ export default function Showcase() {
     const f = frameRef.current; if (!f) return;
     if (document.fullscreenElement) document.exitFullscreen(); else if (f.requestFullscreen) f.requestFullscreen();
   };
-  const onEnded = () => { setSound(false); setMuted(true); const v = vref.current; if (v) { v.loop = true; v.currentTime = 0; v.muted = true; v.play().catch(() => {}); } };
+  const onEnded = () => { setSound(false); setMuted(true); const v = vref.current; if (v) { v.currentTime = 0; v.load(); } };
 
   const pct = time.dur ? (time.cur / time.dur) * 100 : 0;
 
@@ -101,7 +67,7 @@ export default function Showcase() {
         </Reveal>
 
         <Reveal className="sc-stage">
-          <div className="sc-perspective" ref={stageRef} onPointerMove={onMove} onPointerLeave={onLeave}>
+          <div className="sc-perspective" ref={stageRef}>
             <span className="sc-ring r1" aria-hidden="true" />
             <span className="sc-ring r2" aria-hidden="true" />
             {CHIPS.map((c, i) => (
@@ -116,7 +82,6 @@ export default function Showcase() {
                   src={src}
                   poster={POSTER}
                   muted
-                  loop
                   playsInline
                   preload="metadata"
                   onPlay={() => setPlaying(true)}
@@ -126,12 +91,11 @@ export default function Showcase() {
                   onClick={sound ? toggle : watch}
                   aria-label={t('showcase.title')}
                 />
-                <span className="sc-glare" aria-hidden="true" />
-
+                
                 {!sound && (
                   <button type="button" className="sc-cta" onClick={watch} aria-label={t('showcase.watch')}>
                     <span className="sc-play"><span className="sc-pulse" /><span className="sc-pulse p2" />{I.play}</span>
-                    <span className="sc-cta-text"><strong>{t('showcase.watch')}</strong><small>{t('showcase.hint')}</small></span>
+                    <span className="sc-cta-text"><strong>{t('showcase.watch')}</strong></span>
                   </button>
                 )}
 
