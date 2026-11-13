@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { markFromApp } from '../components/BackToApp';
 import { useDashboardData, LEVEL_NAMES, getTasksForGroup, getTaskSubmissions } from '../context/DashboardDataContext';
 import { useCabinetI18n } from '../context/CabinetI18nContext';
 import { useNotifications } from '../pages/Dashboard/Notifications/useNotifications';
@@ -8,7 +9,7 @@ import { findNextClass, getLiveClassNow, isOverdue, fmtDueDate, getCurrentWeekDa
 import { useApp } from './AppContext';
 import { haptic, readRecents, useCountUp, usePullRefresh, useToast } from './hooks';
 import Sheet from './Sheet';
-import { Ico, Ring } from './ui';
+import { Ico, Logo, Ring } from './ui';
 import { GroupPill } from './AppUi';
 
 const LOCALE = { UZ: 'uz', RU: 'ru', AR: 'ar', EN: 'en' };
@@ -101,24 +102,29 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
     <div className="ua-page ua-home2">
       <div className={'ua-ptr' + (busy ? ' busy' : '')} style={{ height: busy ? 44 : pull * 54, opacity: busy ? 1 : pull }} aria-hidden="true"><span className="ua-spin" style={{ transform: busy ? undefined : `rotate(${pull * 300}deg)` }} /></div>
 
+      <div className="ua-brandrow" style={{ '--i': 0 }}>
+        <span className="ua-brand"><Logo size={30} /><b>Ufuq</b></span>
+        <span className="ua-brand-act">
+          <button type="button" className={'ua-chip2 flame' + (activity.streak > 0 ? ' on' : '')} onClick={() => { haptic(); toast(`${t('streak')}: ${activity.streak} ${t(activity.streak === 1 ? 'dayWord' : 'daysWord')}`); }} aria-label={t('streak')}>
+            <Ico n="flame" size={18} fill={activity.streak > 0} sw={1.6} /><b>{activity.streak}</b>
+          </button>
+          {isPaid && (
+            <button type="button" className="ua-icon-btn ua-bell" onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
+              <Ico n="bell" size={22} />{notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
+            </button>
+          )}
+        </span>
+      </div>
       <header className="ua-top2" style={{ '--i': 0 }}>
-        <button type="button" className="ua-avatar" onClick={() => onNavigate('profile')} aria-label={t('profile')}>
+        <button type="button" className="ua-avatar" onClick={() => { haptic(); onNavigate('me'); }} aria-label={t('tabMe')}>
           {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{(first || '?').charAt(0).toUpperCase()}</span>}
         </button>
         <div className="ua-top2-t"><p className="ua-hint">{t('hello2')}</p><h1>{first || t('tabMe')}</h1></div>
-        <button type="button" className={'ua-chip2 flame' + (activity.streak > 0 ? ' on' : '')} onClick={() => { haptic(); toast(`${t('streak')}: ${activity.streak} ${t(activity.streak === 1 ? 'dayWord' : 'daysWord')}`); }} aria-label={t('streak')}>
-          <Ico n="flame" size={18} fill={activity.streak > 0} sw={1.6} /><b>{activity.streak}</b>
-        </button>
-        {isPaid && (
-          <button type="button" className="ua-icon-btn ua-bell" onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
-            <Ico n="bell" size={22} />{notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
-          </button>
-        )}
       </header>
 
       <div className="ua-gwrap" style={{ '--i': 1 }}><GroupPill /></div>
       {(role === 'admin' || role === 'teacher') && (
-        <a className="ua-staffbar" style={{ '--i': 1 }} href={role === 'admin' ? '/admin' : '/teacher'}><Ico n="settings" size={18} /><span>{role === 'admin' ? ta('adminPanel') : ta('teacherPanel')}</span><Ico n="chev" size={16} /></a>
+        <a className="ua-staffbar" style={{ '--i': 1 }} href={role === 'admin' ? '/admin' : '/teacher'} onClick={markFromApp}><Ico n="settings" size={18} /><span>{role === 'admin' ? ta('adminPanel') : ta('teacherPanel')}</span><Ico n="chev" size={16} /></a>
       )}
 
       {/* hero carousel */}
@@ -191,7 +197,9 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
             return (
               <button type="button" key={i} className={'ua-wd' + (d.isToday ? ' today' : '') + (d.future ? ' future' : '')} onClick={() => { haptic(); setDay({ i, name: engName, d, time: weekClasses[engName] }); }}>
                 <span className="ua-wd-n">{dayNames[i]}</span>
-                <Ring value={d.sec / activity.goalSec} size={40} stroke={4}>{d.sec >= activity.goalSec ? <Ico n="check" size={15} sw={2.6} /> : <small>{d.date.getDate()}</small>}</Ring>
+                {d.sec >= activity.goalSec
+                  ? <span className="ua-wd-done"><Ico n="check" size={18} sw={3} /></span>
+                  : <Ring value={d.sec / activity.goalSec} size={40} stroke={4}><small>{d.date.getDate()}</small></Ring>}
                 <i className={'ua-wd-dot' + (hasClass ? ' on' : '')} />
               </button>
             );
