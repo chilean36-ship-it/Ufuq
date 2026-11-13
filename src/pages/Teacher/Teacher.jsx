@@ -27,7 +27,8 @@ import { getFreshUser, resolveFullName, useLiveName } from '../../lib/profileNam
 import { useLiveAvatar } from '../../lib/avatarSync';
 import useLiveRefresh from '../../lib/liveRefresh';
 import { clearCachedRole, ufuqGetSession } from '../../lib/auth';
-import { fetchPanelProfile, isSuperAdmin, PANEL_ROUTES, verifySuperAdmin } from '../../lib/panelAccess';
+import { fetchPanelProfile, inApp, isSuperAdmin, outRoute, panelRoute, verifySuperAdmin } from '../../lib/panelAccess';
+import PanelTabBar from '../../components/panel/PanelTabBar';
 import panelSwitchDict from '../../i18n/panel-switch';
 import teacherClassDict from '../../i18n/teacher-class';
 import examLevelsDict from '../../i18n/exam-levels';
@@ -126,19 +127,19 @@ function TeacherInner() {
       let session = null;
       try { session = await ufuqGetSession(); } catch (e) { session = null; }
       if (cancelled) return;
-      if (!session) { clearCachedRole(); navigate('/index', { replace: true }); return; }
+      if (!session) { clearCachedRole(); navigate(outRoute('/index'), { replace: true }); return; }
       setUser(session.user);
       setGuard({ ok: false, msgKey: 'Checking permissions…' });
       const { data, error } = await fetchPanelProfile(session.user.id);
       if (cancelled) return;
       if (error || !data) { // the profile could not be read: never guess "student", go to sign-in
         setGuard({ ok: false, msgKey: 'Checking permissions…' });
-        redirectTimer = setTimeout(() => navigate('/index', { replace: true }), 800);
+        redirectTimer = setTimeout(() => navigate(outRoute('/index'), { replace: true }), 800);
         return;
       }
       if (data.role !== 'teacher' && data.role !== 'admin') {
         setGuard({ ok: false, msgKey: "You don't have access to the teacher panel. Redirecting to your dashboard…" });
-        redirectTimer = setTimeout(() => navigate('/dashboard', { replace: true }), 1400);
+        redirectTimer = setTimeout(() => navigate(outRoute('/dashboard'), { replace: true }), 1400);
         return;
       }
       setMyRole(data.role);
@@ -204,7 +205,7 @@ function TeacherInner() {
   const canSwitchToAdmin = guard.ok && isSuperAdmin(myRole, myTier);
 
   const switchToAdmin = useCallback(async () => {
-    if (await verifySuperAdmin()) { navigate(PANEL_ROUTES.admin); return; }
+    if (await verifySuperAdmin()) { navigate(panelRoute('admin')); return; }
     setMyTier('standard'); // rights changed since load: the entry disappears, no navigation
     toast(t('You do not have access to the admin panel.'), 'err');
   }, [navigate, toast, t]);
@@ -281,6 +282,7 @@ function TeacherInner() {
         </div>
       </div>
 
+      {inApp() && isMobile && guard.ok && <PanelTabBar items={['overview', 'groups', 'attendance', 'tasks']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setSidebarOpen((o) => !o)} moreOpen={sidebarOpen} />}
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} placeholder={t('Search pages…')} emptyText={t('No pages match.')}
                       items={[...flatNav, { page: 'profile', label: 'Profile', icon: <ProfileNavIcon /> }].map((n) => ({ page: n.page, icon: n.icon, label: t(n.label) }))}
                       onPick={showPage} />

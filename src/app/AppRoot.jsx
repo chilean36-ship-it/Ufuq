@@ -31,14 +31,14 @@ function StaffScreen({ auth, onStudent }) {
   const { t } = useApp();
   const isAdmin = auth.role === 'admin';
   // main admin (any tier but "standard") and teachers start in the teacher panel; an ordinary admin starts in the admin panel
-  const href = isAdmin && auth.tier === 'standard' ? '/admin' : auth.role === 'teacher' ? '/teacher' : isAdmin && auth.tier ? '/teacher' : '/admin';
-  const label = href === '/admin' ? t('adminPanel') : t('teacherPanel');
+  const href = isAdmin && auth.tier === 'standard' ? '/app/admin' : auth.role === 'teacher' ? '/app/teacher' : isAdmin && auth.tier ? '/app/teacher' : '/app/admin';
+  const label = href === '/app/admin' ? t('adminPanel') : t('teacherPanel');
   return (
     <div className="ua-screen ua-staff-screen">
       <div className="ua-staff-top"><Logo size={64} /><h2>{t('teacherAcc')}</h2><p className="ua-sub">{t('staffHint')}</p></div>
       <div className="ua-staff-list">
         <a className="ua-staff-card gold" href={href} onClick={markFromApp}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{label}</span><Ico n="chev" size={18} /></a>
-        {isAdmin && href !== '/admin' && <a className="ua-staff-card" href="/admin" onClick={markFromApp}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{t('adminPanel')}</span><Ico n="chev" size={18} /></a>}
+        {isAdmin && href !== '/app/admin' && <a className="ua-staff-card" href="/app/admin" onClick={markFromApp}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{t('adminPanel')}</span><Ico n="chev" size={18} /></a>}
         {isAdmin && onStudent && <button type="button" className="ua-staff-card" onClick={onStudent}><span className="ua-row-ic"><Ico n="home" size={22} /></span><span className="ua-row-t">{t('studentApp')}</span><Ico n="chev" size={18} /></button>}
       </div>
       <div className="ua-actions" style={{ width: '100%' }}>

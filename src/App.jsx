@@ -21,6 +21,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const Admin = lazy(() => import('./pages/Admin/Admin'));
 const Teacher = lazy(() => import('./pages/Teacher/Teacher'));
 const LegalPage = lazy(() => import('./pages/Legal/LegalPage'));
+const PanelHost = lazy(() => import('./app/PanelHost')); // admin / teacher panels inside the app (/app/admin, /app/teacher)
 const AppRoot = lazy(() => import('./app/AppRoot')); // the installable Ufuq app (onboarding, sign-in, bottom-tab student app)
 
 /**
@@ -52,6 +53,8 @@ export default function App() {
         </Route>
 
         {/* the Ufuq app (PWA, scope /app) */}
+        <Route path="/app/admin" element={<PanelHost kind="admin" />} />
+        <Route path="/app/teacher" element={<PanelHost kind="teacher" />} />
         <Route path="/app/*" element={<AppRoot />} />
 
         {/* profile uses its own "cabinet" i18n system (English-keyed), not the site's */}

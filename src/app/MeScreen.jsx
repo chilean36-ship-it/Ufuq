@@ -79,7 +79,7 @@ export default function MeScreen({ onNavigate, role, activity }) {
       </section>
 
       {staff && (
-        <a className="ua-card2 ua-staff" href={role === 'admin' ? '/admin' : '/teacher'} onClick={markFromApp} style={{ '--i': 2 }}>
+        <a className="ua-card2 ua-staff" href={role === 'admin' ? '/app/admin' : '/app/teacher'} onClick={markFromApp} style={{ '--i': 2 }}>
           <span><b>{t('teacherAcc')}</b><small>{t('teacherAccSub')}</small></span><span className="ua-chip">{t('openPanel')}</span>
         </a>
       )}
