@@ -23,7 +23,7 @@ const COOLDOWN = 45;
  * → new password → signed in and sent to the right panel.  `initialStep="new"` is used when the person arrived through the
  * link in the email (Supabase signs them in with a recovery session first).
  */
-export default function PasswordResetFlow({ open, onClose, initialStep = 'email', initialEmail = '' }) {
+export default function PasswordResetFlow({ open, onClose, initialStep = 'email', initialEmail = '', onDone }) {
   const t = makeT();
   const tc = makeT('captcha.');
   const cap = useRef(null);
@@ -105,7 +105,8 @@ export default function PasswordResetFlow({ open, onClose, initialStep = 'email'
         }
       } catch (x) { /* default destination */ }
       onClose();
-      navigate(dest, { replace: true });
+      // The Ufuq app passes onDone so the person stays inside the app instead of being sent to the website panel.
+      if (onDone) onDone(dest); else navigate(dest, { replace: true });
     } catch (x) { setErr(/same|different/i.test(String(x.message || '')) ? t('failed') : explain(x)); setBusy(false); }
   }
 

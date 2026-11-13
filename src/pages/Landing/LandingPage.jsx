@@ -19,6 +19,7 @@ import SandCalligraphy from './fx/SandCalligraphy';
 import HeroOrnament from './fx/HeroOrnament';
 import { SandDivider } from './fx/ornaments';
 import AuthModal from './AuthModal';
+import InstallAppButton from '../../components/InstallAppButton';
 import Lightbox from './Lightbox';
 import CardVideo from './CardVideo';
 import { LEGAL_DOCS, legalUi } from '../Legal/legalContent';
@@ -87,6 +88,7 @@ function SiteHeader({ onOpenAuth }) {
           </div>
           <div className="nav-right">
             <LangSelect />
+            <InstallAppButton variant="nav" className="nav-install" />
             <a href="#" className="nav-cta js-open-auth" data-mode="signin"
                onClick={(e) => { e.preventDefault(); onOpenAuth('signin'); }}>{t('nav.signin')}</a>
             <button type="button" className="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu" aria-expanded={menuOpen}
@@ -117,6 +119,7 @@ function Hero({ onOpenAuth }) {
             <a href="#explore" className="btn-ghost">{t('hero.explore')}</a>
             <a href="#" className="btn-primary js-open-auth" data-mode="signup"
                onClick={(e) => { e.preventDefault(); onOpenAuth('signup'); }}>{t('hero.startlearning')}</a>
+            <InstallAppButton variant="hero" className="hero-install" />
           </div>
           <a href="#about-author" className="hero-teacher">
             <span className="hero-teacher-avatar"><img src={media.img('hero_teacher', '/assets/images/img-02.webp')} alt="Ustaz Ali Hifniy" /></span>
@@ -531,6 +534,7 @@ function Footer() {
           <div>
             <div className="foot-logo"><img src={media.img('site_logo', '/assets/images/img-01.webp')} alt="Ufuq logo" /><span>Ufuq</span></div>
             <p className="foot-desc">{t('footer.desc')}</p>
+            <InstallAppButton variant="hero" className="foot-install" />
           </div>
           {FOOTER_COLUMNS.map((col) => (
             <div key={col.h}>

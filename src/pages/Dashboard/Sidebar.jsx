@@ -1,3 +1,4 @@
+import InstallAppButton from '../../components/InstallAppButton';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
@@ -120,6 +121,7 @@ export default function Sidebar({ active, onNavigate, learningOpen, onToggleLear
       </nav>
 
       <div className="sb-foot">
+        <InstallAppButton variant="side" className="sb-install" />
         <a className={'sb-link' + (active === 'settings' ? ' active' : '')} href="#" id="settingsLink" onClick={go('settings')}>
           <span className="sb-icon"><Icon name="settings" /></span>
           <span className="sb-foot-label">{t('Settings')}</span>
