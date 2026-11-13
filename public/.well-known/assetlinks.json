@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.ufuqtaleem.twa",
+        "sha256_cert_fingerprints": ["57:01:89:D3:C8:25:12:46:C1:AD:BF:9A:C3:3B:6A:A6:69:6F:E7:F3:88:21:F9:0C:40:94:3F:BE:1E:FE:77:E0"]
+      }
+    }]
