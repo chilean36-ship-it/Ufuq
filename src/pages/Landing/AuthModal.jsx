@@ -18,7 +18,9 @@ import { isNativeApp } from '../../lib/nativeApp';
  *  - reset-by-email
  * After sign-in the user is routed by role: admin -> /admin, teacher -> /teacher, else -> /dashboard.
  */
-export default function AuthModal({ open, mode, onModeChange, onClose }) {
+export default function AuthModal({ open, mode, onModeChange, onClose: onCloseProp, embedded = false }) {
+  // `embedded` = the Android app's login screen: the form is the page itself, so it can never be closed.
+  const onClose = embedded ? () => {} : onCloseProp;
   const { t } = useI18n();
   const navigate = useNavigate();
 
@@ -189,7 +191,7 @@ export default function AuthModal({ open, mode, onModeChange, onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-        <button type="button" className="auth-close" id="authClose" aria-label="Close" onClick={onClose}>&times;</button>
+        {!embedded && <button type="button" className="auth-close" id="authClose" aria-label="Close" onClick={onClose}>&times;</button>}
 
         <div className="auth-logo-row">
           <img src="/assets/images/img-01.webp" alt="Ufuq" style={{ height: '26px', width: 'auto' }} />

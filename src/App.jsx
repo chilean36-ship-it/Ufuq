@@ -7,10 +7,12 @@ import RequireAuth from './components/RequireAuth';
 import RequireRole from './components/RequireRole';
 import Loader from './components/Loader';
 import InstallPrompt from './components/InstallPrompt';
+import { isNativeApp } from './lib/nativeApp';
 import LandingPage from './pages/Landing/LandingPage';
 
 // Every page except the landing page is split into its own chunk: a visitor on "/index" no longer downloads the
 // student, teacher and admin apps (they were ~2.6 MB in one file).
+const AppLogin = lazy(() => import('./pages/Native/AppLogin')); // the Android app's first screen (no marketing landing page)
 const AboutAuthor = lazy(() => import('./pages/AboutAuthor/AboutAuthor'));
 const Checkout = lazy(() => import('./pages/Checkout/Checkout'));
 const CheckoutResult = lazy(() => import('./pages/Checkout/CheckoutResult'));
@@ -36,7 +38,7 @@ export default function App() {
       <Routes>
         {/* pages with the shared language switcher */}
         <Route element={<SiteLayout />}>
-          <Route path="/index" element={<LandingPage />} />
+          <Route path="/index" element={isNativeApp() ? <AppLogin /> : <LandingPage />} />
           <Route path="/about-author" element={<AboutAuthor />} />
           {['terms', 'privacy', 'cookies', 'refund'].map((d) => (
             <Route key={d} path={`/${d}`} element={<LegalPage doc={d} />} />
