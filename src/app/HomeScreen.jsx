@@ -9,6 +9,7 @@ import { useApp } from './AppContext';
 import { haptic, readRecents, useCountUp, usePullRefresh, useToast } from './hooks';
 import Sheet from './Sheet';
 import { Ico, Ring } from './ui';
+import { GroupPill } from './AppUi';
 
 const LOCALE = { UZ: 'uz', RU: 'ru', AR: 'ar', EN: 'en' };
 const TILES = [
@@ -114,6 +115,8 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
           </button>
         )}
       </header>
+
+      <div className="ua-gwrap" style={{ '--i': 1 }}><GroupPill /></div>
 
       {/* hero carousel */}
       <section className="ua-hero" style={{ '--i': 1 }}>

@@ -21,6 +21,9 @@ html:not([data-theme="light"]) .xr{
 }
 .xr{position:fixed; inset:0; height:100vh; height:100dvh; z-index:100001; display:flex; flex-direction:column; background:var(--x-bg); color:var(--x-ink);
   font-family:inherit; font-size:16px; line-height:1.5; animation:xr-in .2s ease both; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+/* the exam room is a full-screen layer: the global dialog max-width (100vw - 24px on phones) must not shrink it, or the page behind shows through the gap */
+.xr, .xr-modal{max-width:none !important;}
+.xr{width:100%;}
 .xr *, .xr *::before, .xr *::after{box-sizing:border-box;}
 @keyframes xr-in{from{opacity:0} to{opacity:1}}
 body.exam-room-open .ai-launcher, body.exam-room-open [class*="ai-fab"]{display:none !important;}
@@ -303,3 +306,15 @@ html[data-theme="light"] .xr-logo img{filter:brightness(0);}
 .xr-scoremsg{margin:0 0 4px !important; font-weight:700; color:var(--x-ink) !important;}
 .xr-scoresub{margin:0 0 18px !important; font-size:13.5px !important; overflow-wrap:anywhere;}
 .xr-scorebox .xr-sum{margin-top:4px;}
+
+/* ---------- phone comfort (added with the Ufuq app) ---------- */
+@media (max-width:560px){
+  .xr-logo{padding-right:0; border-right:0;} .xr-logo-name{display:none;}
+  .xr-title{font-size:15.5px;}
+  /* "Before you start": the Start button stays on screen while the rules scroll */
+  .xr-intro-actions{position:sticky; bottom:-28px; z-index:3; margin:14px -14px -20px; padding:12px 14px calc(40px + env(safe-area-inset-bottom)); background:var(--x-surface); border-top:1px solid var(--x-line); border-radius:0 0 16px 16px;}
+  .xr-intro-actions .xr-btn{min-height:50px; font-size:16px;}
+  /* thumb-sized answer fields */
+  .xq .pp-line, .xq .pp-select{min-height:54px;}
+  .xq-hint{font-size:12.5px; line-height:1.5;}
+}

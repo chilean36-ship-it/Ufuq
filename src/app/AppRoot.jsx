@@ -105,7 +105,25 @@ export default function AppRoot() {
     document.body.classList.add('ua-body');
     document.documentElement.classList.add('ua-html');
     try { applyUiPrefs(); } catch (e) { /* ignore */ }
-    return () => { document.body.classList.remove('ua-body'); document.documentElement.classList.remove('ua-html'); };
+    // An app does not zoom: lock the page scale while the app is open (restored when leaving /app) and swallow pinch / ctrl+wheel gestures.
+    const vp = document.querySelector('meta[name="viewport"]');
+    const vpWas = vp ? vp.getAttribute('content') : null;
+    if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover');
+    const noGesture = (e) => e.preventDefault();
+    const noCtrlWheel = (e) => { if (e.ctrlKey) e.preventDefault(); };
+    const noMultiTouch = (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); };
+    document.addEventListener('gesturestart', noGesture);
+    document.addEventListener('gesturechange', noGesture);
+    document.addEventListener('wheel', noCtrlWheel, { passive: false });
+    document.addEventListener('touchmove', noMultiTouch, { passive: false });
+    return () => {
+      document.body.classList.remove('ua-body'); document.documentElement.classList.remove('ua-html');
+      if (vp && vpWas) vp.setAttribute('content', vpWas);
+      document.removeEventListener('gesturestart', noGesture);
+      document.removeEventListener('gesturechange', noGesture);
+      document.removeEventListener('wheel', noCtrlWheel);
+      document.removeEventListener('touchmove', noMultiTouch);
+    };
   }, []);
   return (
     <AppProvider>

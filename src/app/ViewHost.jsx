@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCabinetI18n } from '../context/CabinetI18nContext';
 import { useDashboardData } from '../context/DashboardDataContext';
@@ -6,6 +6,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useApp } from './AppContext';
 import { pushRecent } from './hooks';
 import { Ico } from './ui';
+import { GroupPill } from './AppUi';
 import MyGroupView from '../pages/Dashboard/MyGroupView';
 import TasksView from '../pages/Dashboard/TasksView';
 import AttendanceView from '../pages/Dashboard/AttendanceView';
@@ -24,6 +25,7 @@ const TITLES = {
   myGroup: 'tabGroup', library: 'q_library', tasks: 'q_tasks', exam: 'q_exam', progress: 'q_progress', attendance: 'q_attendance',
   certificates: 'q_certs', hifzLive: 'q_hifz', profile: 'profile', settings: 'settings', billing: 'billing',
 };
+const GROUP_VIEWS = ['myGroup', 'tasks', 'exam', 'attendance', 'progress'];   // screens whose content depends on the working group
 const PAID = ['tasks', 'hifzLive', 'attendance', 'progress', 'library', 'exam', 'certificates'];
 
 /**
@@ -37,6 +39,24 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   const { locked, accessPending, groupReady, groupData } = useDashboardData();
   const [theme, toggleTheme, themeMode, setThemeMode] = useTheme();
   const isIndividual = !!(groupData && groupData.type === 'individual');
+  const [chatOpen, setChatOpen] = useState(false);   // the group chat is a full-screen conversation: the app header and tab bar step aside
+  const chatFocus = chatOpen && view === 'myGroup';
+  useEffect(() => {
+    document.body.classList.toggle('ua-chat-open', chatFocus);
+    return () => document.body.classList.remove('ua-chat-open');
+  }, [chatFocus]);
+  // Phone Back while the chat is open closes the chat (like a messenger) instead of leaving the Group screen.
+  useEffect(() => {
+    if (!chatFocus) return undefined;
+    let pushed = false;
+    try { window.history.pushState({ uaChat: 1 }, '', window.location.href); pushed = true; } catch (e) { /* ignore */ }
+    const onPop = () => { pushed = false; const b = document.getElementById('groupChatBackBtn'); if (b) b.click(); };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      if (pushed) { try { window.history.back(); } catch (e) { /* ignore */ } }   // closed with the arrow inside the chat: drop our extra history entry
+    };
+  }, [chatFocus]);
 
   useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; pushRecent(view); }, [view]);
   // Hifz Mushaf is only for 1:1 groups; anyone else who lands here goes Home.
@@ -47,7 +67,7 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
 
   let body = null;
   if (gated) body = <PaywallGate variant={view === 'myGroup' ? 'group' : undefined} onNavigate={onNavigate} />;
-  else if (view === 'myGroup') body = accessPending ? null : <MyGroupView onNavigate={onNavigate} onChatOpenChange={() => {}} />;
+  else if (view === 'myGroup') body = accessPending ? null : <MyGroupView onNavigate={onNavigate} onChatOpenChange={setChatOpen} />;
   else if (view === 'tasks') body = <TasksView />;
   else if (view === 'attendance') body = <AttendanceView />;
   else if (view === 'progress') body = <ProgressView />;
@@ -66,9 +86,10 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
           ? <button type="button" className="ua-icon-btn" onClick={() => navigate(backTo)} aria-label={t('back')}><Ico n="back" /></button>
           : <span className="ua-bar-sp" />}
         <h1>{title || tc('Home')}</h1>
+        {GROUP_VIEWS.includes(view) ? <GroupPill className="in-bar" /> : null}
         <span className="ua-bar-sp" />
       </header>
-      <div className="main"><div className="content">
+      <div className={'main' + (chatFocus ? ' gc-focus' : '')}><div className="content">
         <Suspense fallback={<div className="ua-loading">{t('loading')}</div>}>{body}</Suspense>
       </div></div>
     </div>
