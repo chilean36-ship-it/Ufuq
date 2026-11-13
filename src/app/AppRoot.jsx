@@ -108,10 +108,24 @@ export default function AppRoot() {
     // An app does not zoom: lock the page scale while the app is open (restored when leaving /app) and swallow pinch / ctrl+wheel gestures.
     const vp = document.querySelector('meta[name="viewport"]');
     const vpWas = vp ? vp.getAttribute('content') : null;
-    if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover');
+    if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content');
     const noGesture = (e) => e.preventDefault();
     const noCtrlWheel = (e) => { if (e.ctrlKey) e.preventDefault(); };
     const noMultiTouch = (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); };
+    // The app (and the exam room) fill the VISIBLE area: when the keyboard opens the page shrinks to what is left above it
+    // instead of the keyboard covering the bottom (Chrome on Android overlays by default). --ua-vh is that height.
+    const vv = window.visualViewport;
+    const root = document.documentElement;
+    const syncVV = () => {
+      const h = vv ? vv.height : window.innerHeight;
+      root.style.setProperty('--ua-vh', Math.round(h) + 'px');
+      root.style.setProperty('--ua-vt', Math.round(vv ? vv.offsetTop : 0) + 'px');
+      const kb = (window.innerHeight - h) > 140 || (vv && window.innerHeight - vv.height > 140);
+      document.body.classList.toggle('ua-kb', !!kb);
+    };
+    syncVV();
+    if (vv) { vv.addEventListener('resize', syncVV); vv.addEventListener('scroll', syncVV); }
+    window.addEventListener('resize', syncVV);
     document.addEventListener('gesturestart', noGesture);
     document.addEventListener('gesturechange', noGesture);
     document.addEventListener('wheel', noCtrlWheel, { passive: false });
@@ -119,6 +133,9 @@ export default function AppRoot() {
     return () => {
       document.body.classList.remove('ua-body'); document.documentElement.classList.remove('ua-html');
       if (vp && vpWas) vp.setAttribute('content', vpWas);
+      if (vv) { vv.removeEventListener('resize', syncVV); vv.removeEventListener('scroll', syncVV); }
+      window.removeEventListener('resize', syncVV);
+      root.style.removeProperty('--ua-vh'); root.style.removeProperty('--ua-vt'); document.body.classList.remove('ua-kb');
       document.removeEventListener('gesturestart', noGesture);
       document.removeEventListener('gesturechange', noGesture);
       document.removeEventListener('wheel', noCtrlWheel);

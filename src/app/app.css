@@ -174,3 +174,10 @@ html[data-theme="light"] .ua-chip.warn{ color:#b3262b; }
 .ua-html, .ua-body{ touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 .ua-body input, .ua-body textarea, .ua-body select{ font-size:max(16px, 1em); }
 .ua-body img{ -webkit-user-drag:none; }
+
+/* the app fills the visible area (keyboard-aware) and keeps clear of notches / camera cut-outs on every side */
+.ua-screen, .ua-app{ top:var(--ua-vt, 0px); bottom:auto; height:var(--ua-vh, 100dvh); }
+.ua-app{ padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
+.ua-screen{ padding-left:max(20px, env(safe-area-inset-left)); padding-right:max(20px, env(safe-area-inset-right)); }
+body.ua-kb .ua-tabbar{ display:none; }
+body.ua-kb .ua-scroll{ padding-bottom:0; }

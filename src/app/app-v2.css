@@ -142,6 +142,5 @@
 .ua-gpill{ display:inline-flex; align-items:center; gap:7px; max-width:100%; height:36px; padding:0 13px; border-radius:99px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); font-size:13.5px; font-weight:700; cursor:pointer; }
 .ua-gpill span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ua-gpill svg{ color:var(--gold-bright); flex:none; }
-.ua-gpill.in-bar{ position:absolute; inset-inline-end:8px; top:50%; transform:translateY(-50%); height:34px; max-width:42%; }
-.ua-gpill.in-bar:active{ transform:translateY(-50%) scale(.96); }
+.ua-gpill.in-bar{ position:static; height:34px; max-width:46%; flex:none; margin-inline-end:4px; }
 .ua-bar{ position:sticky; }
