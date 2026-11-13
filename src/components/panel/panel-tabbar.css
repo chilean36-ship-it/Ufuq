@@ -17,7 +17,7 @@ body.ua-panel .topbar{ padding-top:calc(8px + env(safe-area-inset-top)); }
 @media (max-width:860px){
   body.ua-panel .top-search, body.ua-panel .crumb-sub{ display:none; }
   body.ua-panel .topbar .crumb-title{ font:700 19px/1.2 'Fraunces', serif; }
-  body.ua-panel{ overflow-x:hidden; overscroll-behavior-y:none; -webkit-tap-highlight-color:transparent; }
+  body.ua-panel{ -webkit-tap-highlight-color:transparent; }
   body.ua-panel .sidebar.open{ z-index:80; padding-top:env(safe-area-inset-top); padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
 }
 
