@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import BackToApp from '../../components/BackToApp';
 import { useNavigate } from 'react-router-dom';
 import useScrollTop from '../../hooks/useScrollTop';
 import useHashView, { readHashView } from '../../hooks/useHashView';
@@ -337,6 +338,7 @@ export default function Admin() {
   return (
     <CabinetI18nProvider dict={adminDict}>
       <AdminInner />
+      <BackToApp />
     </CabinetI18nProvider>
   );
 }

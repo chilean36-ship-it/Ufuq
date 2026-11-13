@@ -195,7 +195,7 @@ export default function WrittenExams() {
     const pct = d.state === 'graded' && sb.total_score != null ? Number(sb.total_score) : null;
     const tone = pct === null ? '' : (pct >= 80 ? ' good' : pct >= 50 ? ' mid' : ' bad');
     return (
-      <article className={'ex2-row ' + d.state} key={ex.id}>
+      <article className={'ex2-row ' + d.state + (next && next.ex.id === ex.id ? ' is-next' : '')} key={ex.id}>
         <span className={'ex2-ico ' + (ex.exam_kind || 'custom')}>{kindIcon(ex)}</span>
         <div className="ex2-main">
           <div className="ex2-tags">

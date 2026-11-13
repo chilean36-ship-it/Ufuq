@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { markFromApp } from '../components/BackToApp';
 import { supabase } from '../lib/supabaseClient';
 import { getSessionAndRole, hasStoredSession, isOAuthCallback, ufuqSignOut } from '../lib/auth';
 import BlockedNotice from '../components/BlockedNotice';
@@ -36,8 +37,8 @@ function StaffScreen({ auth, onStudent }) {
     <div className="ua-screen ua-staff-screen">
       <div className="ua-staff-top"><Logo size={64} /><h2>{t('teacherAcc')}</h2><p className="ua-sub">{t('staffHint')}</p></div>
       <div className="ua-staff-list">
-        <a className="ua-staff-card gold" href={href}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{label}</span><Ico n="chev" size={18} /></a>
-        {isAdmin && href !== '/admin' && <a className="ua-staff-card" href="/admin"><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{t('adminPanel')}</span><Ico n="chev" size={18} /></a>}
+        <a className="ua-staff-card gold" href={href} onClick={markFromApp}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{label}</span><Ico n="chev" size={18} /></a>
+        {isAdmin && href !== '/admin' && <a className="ua-staff-card" href="/admin" onClick={markFromApp}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{t('adminPanel')}</span><Ico n="chev" size={18} /></a>}
         {isAdmin && onStudent && <button type="button" className="ua-staff-card" onClick={onStudent}><span className="ua-row-ic"><Ico n="home" size={22} /></span><span className="ua-row-t">{t('studentApp')}</span><Ico n="chev" size={18} /></button>}
       </div>
       <div className="ua-actions" style={{ width: '100%' }}>

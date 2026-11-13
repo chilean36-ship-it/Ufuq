@@ -54,7 +54,7 @@ export function Ring({ value = 0, size = 96, stroke = 9, children, color = 'url(
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <defs><linearGradient id="uaRingG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#E5C878" /><stop offset="1" stopColor="#C9A24B" /></linearGradient></defs>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeOpacity=".14" strokeWidth={stroke} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0.001, value))} transform={`rotate(-90 ${size / 2} ${size / 2})`} style={{ transition: 'stroke-dashoffset .8s cubic-bezier(.3,.8,.3,1)' }} />
+        {value > 0.002 && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0.001, value))} transform={`rotate(-90 ${size / 2} ${size / 2})`} style={{ transition: 'stroke-dashoffset .8s cubic-bezier(.3,.8,.3,1)' }} />}
       </svg>
       <span className="ua-ring-in">{children}</span>
     </span>
