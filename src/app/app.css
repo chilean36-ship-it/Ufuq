@@ -169,3 +169,8 @@ html[data-theme="light"] .ua-chip.warn{ color:#b3262b; }
 .ua-sheet{ width:100%; max-width:560px; padding:22px 20px calc(22px + env(safe-area-inset-bottom)); background:var(--bg-2); border-radius:22px 22px 0 0; border:1px solid var(--line); animation:uaUp .25s ease both; } .ua-sheet h3{ margin:0 0 6px; font:700 21px 'Fraunces',serif; } .ua-sheet p{ margin:0 0 18px; color:var(--text-muted); }
 @keyframes uaUp{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
 @media (prefers-reduced-motion:reduce){ .ua-logo i, .ua-ai-orb, .ua-pulse, .ua-onb-body, .ua-page, .ua-sheet{ animation:none !important; } }
+
+/* no pinch-zoom / double-tap zoom; fields at 16px so phones never zoom into them on focus */
+.ua-html, .ua-body{ touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+.ua-body input, .ua-body textarea, .ua-body select{ font-size:max(16px, 1em); }
+.ua-body img{ -webkit-user-drag:none; }

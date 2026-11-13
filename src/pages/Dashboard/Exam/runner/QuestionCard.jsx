@@ -1,5 +1,6 @@
 import { isAnswered } from './runnerShared';
 import RichQ from '../../../../components/RichQ';
+import { GUARD_IS_MOBILE } from '../../../../hooks/useExamGuard';
 
 /** One question of the exam room (part / section heading, word list, the question text and the answer box passed in as `field`). */
 export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ctx, scale, field, onToggleFlag }) {
@@ -29,7 +30,7 @@ export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ct
             <p className={'xq-text' + (item.audio ? ' xq-text-ar' : '')} dir="auto"><RichQ text={item.body} /></p>
             {field}
           </article>
-          <p className="xq-hint">{t('Your answers are saved automatically.')}</p>
+          <p className="xq-hint">{t('Your answers are saved automatically.')}{GUARD_IS_MOBILE && total > 1 ? ' ' + t('Swipe left or right to change the question.') : ''}</p>
     </>
   );
 }

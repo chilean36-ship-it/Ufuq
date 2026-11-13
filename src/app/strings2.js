@@ -1,5 +1,6 @@
 // Extra texts for the redesigned app screens (merged into APP_DICT by strings.js).
 const EN = {
+  groupSwitch: 'Switch group', groupsTitle: 'Your groups', groupOne: 'Group',
   why_media: 'Films, music and news',
   slide1t: 'Live lessons with Ustaz Ali', slide1s: 'Join your group class from your phone and never miss a lesson.',
   slide2t: 'Practise with Ufuq AI', slide2s: 'Ask, speak and get corrections any time of the day.',
@@ -19,6 +20,7 @@ const EN = {
   installBanner: 'Install for the best experience', startsAt: 'Starts', hello2: 'Hello',
 };
 const UZ = {
+  groupSwitch: 'Guruhni almashtirish', groupsTitle: 'Guruhlaringiz', groupOne: 'Guruh',
   why_media: 'Film, musiqa va yangiliklar',
   slide1t: 'Ustoz Ali bilan jonli darslar', slide1s: 'Guruh darsiga telefondan qo‘shiling — birorta darsni qoldirmang.',
   slide2t: 'Ufuq AI bilan mashq qiling', slide2s: 'Kun davomida istalgan payt so‘rang, gapiring va tuzatish oling.',
@@ -38,6 +40,7 @@ const UZ = {
   installBanner: 'Eng yaxshi tajriba uchun o‘rnating', startsAt: 'Boshlanadi', hello2: 'Salom',
 };
 const RU = {
+  groupSwitch: 'Сменить группу', groupsTitle: 'Ваши группы', groupOne: 'Группа',
   why_media: 'Фильмы, музыка и новости',
   slide1t: 'Живые уроки с устазом Али', slide1s: 'Заходите на групповой урок с телефона и не пропускайте занятия.',
   slide2t: 'Практика с Ufuq AI', slide2s: 'Спрашивайте, говорите и получайте исправления в любое время.',
@@ -57,6 +60,7 @@ const RU = {
   installBanner: 'Установите для лучшего опыта', startsAt: 'Начало', hello2: 'Привет',
 };
 const AR = {
+  groupSwitch: 'تبديل المجموعة', groupsTitle: 'مجموعاتك', groupOne: 'المجموعة',
   why_media: 'الأفلام والموسيقى والأخبار',
   slide1t: 'دروس مباشرة مع الأستاذ علي', slide1s: 'انضم إلى حصة مجموعتك من هاتفك ولا تفوّت أي درس.',
   slide2t: 'تدرّب مع Ufuq AI', slide2s: 'اسأل وتحدّث وتلقَّ التصحيح في أي وقت.',

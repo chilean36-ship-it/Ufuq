@@ -21,6 +21,8 @@ const IS_IPAD = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1
 // Phones and tablets: departures are detected by page visibility, pagehide and Back only. Window focus is not used
 // there, because mobile browsers fire focus/blur for things that are not leaving the exam.
 const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(UA) || IS_IPAD;
+/** True on phones and tablets (the exam does not use full screen there). */
+export const GUARD_IS_MOBILE = IS_MOBILE;
 const HAS_FS = typeof document !== 'undefined' && !!document.documentElement
   && typeof document.documentElement.requestFullscreen === 'function';
 
@@ -164,7 +166,7 @@ export default function useExamGuard({ active, onViolation, onLimit, wantFullscr
 export const GUARD_CSS = `
 body.exam-guard-on, body.exam-guard-on *{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 body.exam-guard-on textarea, body.exam-guard-on input[type="text"]{ -webkit-user-select:text; user-select:text; }
-.exam-guard-overlay{ position:fixed; inset:0; z-index:100000; background:rgba(8,10,10,.88); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.exam-guard-overlay{ max-width:none !important; position:fixed; inset:0; z-index:100000; background:rgba(8,10,10,.88); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:20px; }
 .exam-guard-box{ max-width:440px; width:100%; background:#1B2427; color:#EDEAE3; border:1px solid rgba(229,120,100,.5); border-radius:18px; padding:26px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.6); }
 .exam-guard-box h3{ margin:0 0 8px; font-size:20px; color:#F0A592; }
 .exam-guard-box p{ margin:0 0 16px; color:#B9B3AA; font-size:14.5px; line-height:1.55; }

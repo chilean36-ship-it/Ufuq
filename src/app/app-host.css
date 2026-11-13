@@ -5,12 +5,10 @@
    one title (the app header) and a staggered entrance. Scoped to .ua-host so the website is untouched.
    ===================================================================================================== */
 .ua-host .content{ padding:10px 16px 28px; }
-.ua-host .content > *{ animation:uaRise .5s cubic-bezier(.2,.8,.2,1) both; }
-.ua-host .content > * > *:nth-child(1){ animation:uaRise .5s cubic-bezier(.2,.8,.2,1) both; }
-.ua-host .content > * > *:nth-child(2){ animation:uaRise .5s .06s cubic-bezier(.2,.8,.2,1) both; }
-.ua-host .content > * > *:nth-child(3){ animation:uaRise .5s .12s cubic-bezier(.2,.8,.2,1) both; }
-.ua-host .content > * > *:nth-child(4){ animation:uaRise .5s .18s cubic-bezier(.2,.8,.2,1) both; }
-.ua-host .content > * > *:nth-child(n+5){ animation:uaRise .5s .24s cubic-bezier(.2,.8,.2,1) both; }
+/* a soft fade-in of the whole screen. Opacity only and fill-mode 'backwards': the animation never leaves a final state behind, so it
+   cannot un-hide modals / overlays that the views keep at opacity:0, and it never creates a containing block for fixed children. */
+.ua-host .content > *{ animation:uaHostIn .32s ease backwards; }
+@keyframes uaHostIn{ from{ opacity:0; } }
 
 /* one title: the app header already shows it */
 .ua-host .content h1:not(#profileNameDisplay), .ua-host .welcome .eyebrow{ display:none; }
@@ -36,7 +34,7 @@ html[data-theme="light"] .ua-host .tk2-primary, html[data-theme="light"] .ua-hos
 html[data-theme="light"] .ua-host .btn-join-group, html[data-theme="light"] .ua-host .btn-edit-profile, html[data-theme="light"] .ua-host .group-join-btn, html[data-theme="light"] .ua-host .task-submit-btn, html[data-theme="light"] .ua-host .group-page-join{ color:#fff; }
 .ua-host .tk2-primary:active, .ua-host .st-btn.st-primary:active, .ua-host .bl-upgrade:active, .ua-host .group-page-chat-btn:active, .ua-host .btn-join-group:active, .ua-host .btn-edit-profile:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.25); }
 /* secondary buttons */
-.ua-host .st-btn:not(.st-primary), .ua-host .gm-action, .ua-host .btn-logout{ min-height:46px; border-radius:16px; border:1.5px solid var(--line); background:transparent; font-weight:600; }
+.ua-host .st-btn:not(.st-primary):not(.st-solid):not(.st-danger), .ua-host .gm-action, .ua-host .btn-logout{ min-height:46px; border-radius:16px; border:1.5px solid var(--line); background:transparent; font-weight:600; }
 
 /* pill tabs / segmented controls */
 .ua-host .tk2-tab, .ua-host .lib-tab, .ua-host .list-seg-btn, .ua-host .st-lang, .ua-host .st-theme, .ua-host .am-nav{ border-radius:99px; }
@@ -54,15 +52,38 @@ html[data-theme="light"] .ua-host .btn-join-group, html[data-theme="light"] .ua-
 /* lists, rows, badges */
 .ua-host .st-nav-item, .ua-host .gm-stat{ border-radius:16px; }
 .ua-host .panel-head-note, .ua-host .pv-chip{ border-radius:99px; }
-.ua-host table{ border-radius:16px; overflow:hidden; }
 
 /* overlays opened from inside a view sit above the tab bar */
 .ua-app .exam-fs{ z-index:520; }
 .ua-app .edit-modal, .ua-app .group-welcome-modal, .ua-app .intro-welcome-modal, .ua-app .delete-modal{ border-radius:26px; }
 
-@media (prefers-reduced-motion:reduce){ .ua-host .content > *, .ua-host .content > * > *{ animation:none !important; } }
+@media (prefers-reduced-motion:reduce){ .ua-host .content > *{ animation:none !important; } }
 
 /* layouts that were built for a wide screen: single column, nothing wider than the phone */
 .ua-host .st-layout{ display:block; } .ua-host .st-layout > *{ min-width:0; max-width:100%; } .ua-host .st-nav{ overflow-x:auto; scrollbar-width:none; } .ua-host .st-nav::-webkit-scrollbar{ display:none; }
 .ua-host .content, .ua-host .main{ overflow-x:clip; }
 .ua-host .empty-state{ padding:34px 16px; border:1px dashed var(--line); border-radius:20px; text-align:center; color:var(--text-muted); font-size:14px; line-height:1.5; }
+
+/* group chat = a full-screen conversation, like a messenger: no app header, no tab bar, the chat owns the screen */
+body.ua-chat-open .ua-tabbar{ transform:translateY(140%); opacity:0; pointer-events:none; }
+body.ua-chat-open .ua-bar{ display:none; }
+body.ua-chat-open .ua-scroll{ padding-bottom:0; overflow:hidden; }
+body.ua-chat-open .ua-route, body.ua-chat-open .ua-host{ height:100%; }
+body.ua-chat-open .ua-host{ display:flex; flex-direction:column; }
+.ua-host .main.gc-focus{ flex:1; min-height:0; height:auto !important; display:flex; flex-direction:column; overflow:hidden !important; }
+.ua-host .main.gc-focus .content{ padding:0; flex:1; min-height:0; display:flex; max-width:none; }
+.ua-tabbar{ transition:transform .3s cubic-bezier(.2,.9,.2,1), opacity .2s; }
+
+/* while an exam is open nothing of the app is reachable: no tab bar, no AI, no notifications, no toasts behind it */
+body.exam-room-open .ua-tabbar, body.exam-room-open .ua-bar, body.exam-room-open .uai-panel, body.exam-room-open .ua-toast, body.exam-room-open .ua-sheet-ov, body.exam-room-open .ua-confetti{ visibility:hidden !important; pointer-events:none !important; }
+.ua-host{ padding-bottom:env(safe-area-inset-bottom); }
+
+/* light theme: status colours that were tuned for dark backgrounds need a darker shade to stay readable */
+html[data-theme="light"] .ua-host .ah-pill.present, html[data-theme="light"] .ua-host .attendance-status.present, html[data-theme="light"] .ua-host .st-pill-live{ color:#1c7a45; }
+html[data-theme="light"] .ua-host .ah-pill.absent, html[data-theme="light"] .ua-host .attendance-status.absent{ color:#b4452c; }
+html[data-theme="light"] .ua-chip2.on{ color:#C2570C; border-color:rgba(194,87,12,.4); }
+
+html[data-theme="light"] .ua-hw.od .ua-hw-d{ color:#b4262b; }
+/* a disabled primary action reads as disabled (not as pale text on a pale button) */
+.ua-host .group-page-join:disabled, .ua-host .tk2-primary:disabled, .ua-host .btn-join-group:disabled{ background:var(--bg-3); color:var(--text-muted); box-shadow:none; opacity:1; cursor:default; }
+body.ua-chat-open .ua-host{ padding-bottom:env(safe-area-inset-bottom); }

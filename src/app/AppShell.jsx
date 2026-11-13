@@ -20,6 +20,8 @@ import LearnScreen from './LearnScreen';
 import AiScreen from './AiScreen';
 
 import ViewHost from './ViewHost';
+import { AppUiCtx, GroupSheet } from './AppUi';
+import { useMemo } from 'react';
 import hostCss from './app-host.css?inline';
 
 const AiChat = lazy(() => import('../pages/Dashboard/AiChat/AiChat'));
@@ -73,9 +75,12 @@ function OfflineBar() {
 function Inner() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { refreshGroup, switchGroup, role, user } = useDashboardData();
+  const { refreshGroup, switchGroup, role, user, groupCode } = useDashboardData();
   const activity = useActivity(user && user.id);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [groupsOpen, setGroupsOpen] = useState(false);
+  const [switchNonce, setSwitchNonce] = useState(0);   // bumped when the working group changes: the open screen remounts and reloads for it
+  const ui = useMemo(() => ({ openGroups: () => setGroupsOpen(true) }), []);
   const [aiSuppress, setAiSuppress] = useState(false);
   const { lang } = useCabinetI18n();
   const { setLang } = useApp();
@@ -93,6 +98,7 @@ function Inner() {
   useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; }, [tabSeg]);
 
   return (
+    <AppUiCtx.Provider value={ui}>
     <div className="ua-app">
       <PageStyle css={tokensCss} />
       <PageStyle css={shellCss} />
@@ -101,7 +107,7 @@ function Inner() {
       <PageStyle css={hostCss} />
       <OfflineBar />
       <div className="ua-scroll" id="uaScroll">
-        <div className="ua-route" key={pathname.split('/')[2] || 'home'}>
+        <div className="ua-route" key={(pathname.split('/')[2] || 'home') + ':' + switchNonce}>
         <Routes>
           <Route index element={<HomeScreen onNavigate={onNavigate} onUpgrade={openUpgrade} activity={activity} />} />
           <Route path="learn" element={<LearnScreen onNavigate={onNavigate} />} />
@@ -115,12 +121,14 @@ function Inner() {
         </div>
       </div>
       <TabBar />
+      <GroupSheet open={groupsOpen} onClose={() => setGroupsOpen(false)} onPick={(code) => { setGroupsOpen(false); if (code !== groupCode) { switchGroup(code); setSwitchNonce((n) => n + 1); } }} />
       <Suspense fallback={null}>
         <AiChat hideLauncher suppress={aiSuppress} />
         <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
       </Suspense>
       <ResultModals refreshGroup={refreshGroup} switchGroup={switchGroup} onNavigate={onNavigate} />
     </div>
+    </AppUiCtx.Provider>
   );
 }
 

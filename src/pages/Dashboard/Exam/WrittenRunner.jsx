@@ -5,7 +5,7 @@ import {
   gradeExam, submitExam, saveAnswers as saveAnswersRpc, friendlyExamError, beginExam, fetchRemaining, translateFeedback,
 } from './writtenData';
 import { pickFeedback, needsFeedbackTranslation } from '../../../lib/aiFeedback';
-import useExamGuard from '../../../hooks/useExamGuard';
+import useExamGuard, { GUARD_IS_MOBILE } from '../../../hooks/useExamGuard';
 import ExamGuardOverlay from '../../../components/ExamGuardOverlay';
 import ExamShell from '../../../components/ExamShell';
 import { logViolation } from './integrity';
@@ -398,6 +398,42 @@ export default function WrittenRunner({ exam, existingSub, userId, onSubChange, 
     return () => window.removeEventListener('keydown', onKey);
   }, [phase, goIdx]);
 
+  // Phones: swipe sideways to move between questions, and an answer box you tap is scrolled above the keyboard.
+  useEffect(() => {
+    if (phase !== 'exam') return undefined;
+    const body = document.getElementById('xrBody');
+    if (!body) return undefined;
+    const buzz = () => { try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(8); } catch (e) { /* ignore */ } };
+    let x0 = 0; let y0 = 0; let t0 = 0; let ok = false;
+    const start = (e) => {
+      if (!e.touches || e.touches.length !== 1) { ok = false; return; }
+      const tg = e.target;
+      ok = !(tg && tg.closest && tg.closest('textarea, input, select, [contenteditable]'));
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    };
+    const end = (e) => {
+      if (!ok) return;
+      ok = false;
+      const p = e.changedTouches && e.changedTouches[0];
+      if (!p) return;
+      const dx = p.clientX - x0; const dy = p.clientY - y0;
+      if (Math.abs(dx) > 70 && Math.abs(dy) < 45 && Date.now() - t0 < 600) {
+        const next = document.documentElement.dir === 'rtl' ? dx > 0 : dx < 0;
+        goIdx((c) => c + (next ? 1 : -1));
+        buzz();
+      }
+    };
+    const onFocusIn = (e) => {
+      if (window.innerWidth > 860) return;
+      const el = e.target;
+      if (el && /^(TEXTAREA|INPUT|SELECT)$/.test(el.tagName)) setTimeout(() => { try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { /* ignore */ } }, 350);
+    };
+    body.addEventListener('touchstart', start, { passive: true });
+    body.addEventListener('touchend', end, { passive: true });
+    body.addEventListener('focusin', onFocusIn);
+    return () => { body.removeEventListener('touchstart', start); body.removeEventListener('touchend', end); body.removeEventListener('focusin', onFocusIn); };
+  }, [phase, goIdx]);
+
   // AI comments are written in all four languages. A result saved before that (Uzbek only) is translated once,
   // the first time it is opened in another language; until it arrives the Uzbek text is shown.
   useEffect(() => {
@@ -514,7 +550,7 @@ export default function WrittenRunner({ exam, existingSub, userId, onSubChange, 
     const startErr = startError;
     const resumed = Object.values(texts).some((v) => isAnswered(v));
     const rules = [
-      ['\u26F6', t('The exam opens in full screen.')],
+      ...(GUARD_IS_MOBILE ? [] : [['\u26F6', t('The exam opens in full screen.')]]),
       ['\u2298', t('Copying, pasting, cutting, right-click, printing and text selection are disabled.')],
       ['\u26A0', t('Leaving the page, switching tabs or windows, or exiting full screen is recorded and shown to your teacher.')],
       ...(mins ? [['\u23F1', t('Time limit') + ': ' + mins + ' ' + t('min') + '. ' + t('The timer starts when you press Start and cannot be paused.')]] : []),
