@@ -13,6 +13,7 @@ import profileViewCss from '../pages/Profile/profile-view.css?inline';
 import cabinetDict from '../pages/Dashboard/cabinetDict';
 import { useApp } from './AppContext';
 import { Ico } from './ui';
+import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
 import MeScreen from './MeScreen';
 import LearnScreen from './LearnScreen';
@@ -27,13 +28,14 @@ const UpgradeModal = lazy(() => import('../pages/Dashboard/UpgradeModal'));
 
 /** Where each cabinet view lives inside the app (the reused views call onNavigate('<cabinet view name>')). */
 export const VIEW_ROUTE = {
-  home: '/app', myGroup: '/app/group', billing: '/app/me/billing', profile: '/app/me/profile', settings: '/app/me/settings',
+  home: '/app', learn: '/app/learn', me: '/app/me', myGroup: '/app/group', billing: '/app/me/billing', profile: '/app/me/profile', settings: '/app/me/settings',
   library: '/app/learn/library', tasks: '/app/learn/tasks', exam: '/app/learn/exam', progress: '/app/learn/progress',
   attendance: '/app/learn/attendance', certificates: '/app/learn/certificates', hifzLive: '/app/learn/hifz',
 };
 
 function TabBar() {
   const { t } = useApp();
+  const { pathname } = useLocation();
   const tabs = [
     { to: '/app', end: true, icon: 'home', label: 'tabHome' },
     { to: '/app/learn', icon: 'learn', label: 'tabLearn' },
@@ -41,11 +43,14 @@ function TabBar() {
     { to: '/app/group', icon: 'group', label: 'tabGroup' },
     { to: '/app/me', icon: 'me', label: 'tabMe' },
   ];
+  const seg = pathname.split('/')[2] || '';
+  const idx = Math.max(0, ['', 'learn', 'ai', 'group', 'me'].indexOf(seg));
   return (
-    <nav className="ua-tabbar" aria-label="Main">
+    <nav className="ua-tabbar" aria-label="Main" style={{ '--idx': idx }}>
+      <span className={'ua-tab-pill' + (idx === 2 ? ' ai' : '')} aria-hidden="true" />
       {tabs.map((x) => (
-        <NavLink key={x.to} to={x.to} end={x.end} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
-          <span className="ua-tab-ic"><Ico n={x.icon} size={x.center ? 24 : 23} sw={x.center ? 1.9 : 1.8} /></span>
+        <NavLink key={x.to} to={x.to} end={x.end} onClick={() => haptic(6)} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
+          <span className="ua-tab-ic"><Ico n={x.icon} size={x.center ? 25 : 23} sw={x.center ? 1.9 : 1.8} /></span>
           <span className="ua-tab-l">{t(x.label)}</span>
         </NavLink>
       ))}
@@ -67,7 +72,8 @@ function OfflineBar() {
 function Inner() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { refreshGroup, switchGroup, role } = useDashboardData();
+  const { refreshGroup, switchGroup, role, user } = useDashboardData();
+  const activity = useActivity(user && user.id);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [aiSuppress, setAiSuppress] = useState(false);
   const { lang } = useCabinetI18n();
@@ -81,6 +87,9 @@ function Inner() {
 
   useEffect(() => { setAiSuppress(pathname.startsWith('/app/me/billing')); }, [pathname]);
   useEffect(() => { document.title = 'Ufuq'; }, []);
+  // every tab opens at its top, not where the previous tab was scrolled to
+  const tabSeg = pathname.split('/').slice(0, 4).join('/');
+  useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; }, [tabSeg]);
 
   return (
     <div className="ua-app">
@@ -90,16 +99,18 @@ function Inner() {
       <PageStyle css={profileViewCss} />
       <OfflineBar />
       <div className="ua-scroll" id="uaScroll">
+        <div className="ua-route" key={pathname.split('/')[2] || 'home'}>
         <Routes>
-          <Route index element={<HomeScreen onNavigate={onNavigate} onUpgrade={openUpgrade} />} />
+          <Route index element={<HomeScreen onNavigate={onNavigate} onUpgrade={openUpgrade} activity={activity} />} />
           <Route path="learn" element={<LearnScreen onNavigate={onNavigate} />} />
           <Route path="learn/:view" element={<ViewRoute section="learn" onNavigate={onNavigate} onUpgrade={openUpgrade} />} />
           <Route path="ai" element={<AiScreen />} />
           <Route path="group" element={<ViewHost view="myGroup" back={false} onNavigate={onNavigate} onUpgrade={openUpgrade} />} />
-          <Route path="me" element={<MeScreen onNavigate={onNavigate} role={role} />} />
+          <Route path="me" element={<MeScreen onNavigate={onNavigate} role={role} activity={activity} />} />
           <Route path="me/:view" element={<ViewRoute section="me" onNavigate={onNavigate} onUpgrade={openUpgrade} />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
+        </div>
       </div>
       <TabBar />
       <Suspense fallback={null}>

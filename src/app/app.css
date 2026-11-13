@@ -3,8 +3,8 @@
 .ua-body{ font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; display:block; min-height:0; }
 .ua-body #root{ display:block; }
 .ua-body *{ box-sizing:border-box; }
-.ua-body button{ font-family:inherit; color:inherit; -webkit-user-select:none; user-select:none; touch-action:manipulation; }
-.ua-body a{ color:inherit; }
+:where(.ua-body) button{ font-family:inherit; color:inherit; } .ua-body button{ -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+:where(.ua-body) a{ color:inherit; }
 
 /* ---- full-screen frame ---- */
 .ua-screen, .ua-app{ position:fixed; inset:0; margin:0 auto; width:100%; max-width:560px; background:var(--bg); display:flex; flex-direction:column; }

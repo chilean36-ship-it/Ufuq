@@ -23,6 +23,13 @@ const P = {
   star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z',
   share: 'M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7',
   plus: 'M12 5v14M5 12h14',
+  flame: 'M12 2.5c.6 3.6 5.5 5.2 5.5 10.3a5.5 5.5 0 01-11 0c0-2.2 1-3.6 2.2-4.6.1 1.8.9 2.9 1.9 3.3-.4-3.3.1-6.2 1.4-9z',
+  bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0',
+  search: 'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',
+  clock: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',
+  send: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
+  lang: 'M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2v3M22 22l-5-10-5 10M14 18h6',
+  heart: 'M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z',
   settings: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z',
 };
 
@@ -37,4 +44,19 @@ export function Ico({ n, size = 22, sw = 1.8, fill = false }) {
 /** The Ufuq emblem in gold (CSS mask of the logo image). */
 export function Logo({ size = 72 }) {
   return <span className="ua-logo" style={{ width: size, height: size }} aria-hidden="true"><i /></span>;
+}
+
+/** Progress ring (daily goal). value 0..1; children are centred inside. */
+export function Ring({ value = 0, size = 96, stroke = 9, children, color = 'url(#uaRingG)' }) {
+  const r = (size - stroke) / 2; const c = 2 * Math.PI * r;
+  return (
+    <span className="ua-ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <defs><linearGradient id="uaRingG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#E5C878" /><stop offset="1" stopColor="#C9A24B" /></linearGradient></defs>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeOpacity=".14" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0.001, value))} transform={`rotate(-90 ${size / 2} ${size / 2})`} style={{ transition: 'stroke-dashoffset .8s cubic-bezier(.3,.8,.3,1)' }} />
+      </svg>
+      <span className="ua-ring-in">{children}</span>
+    </span>
+  );
 }
