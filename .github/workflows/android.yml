@@ -1,0 +1,57 @@
+name: Android app
+
+# Builds the Ufuq Android app (Capacitor shell around ufuqtaleem.com, see capacitor.config.json).
+#  - every run produces an installable debug APK (artifact "ufuq-debug-apk")
+#  - when the 4 signing secrets exist, it also produces the signed release bundle for Google Play (artifact "ufuq-release-aab")
+# Secrets (Settings > Secrets and variables > Actions): ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['android/**', 'capacitor.config.json', '.github/workflows/android.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      HAS_KEYS: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm run build          # Capacitor needs the web folder (dist) to exist; the app itself loads the live site
+      - run: npx cap sync android
+      - name: Debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ufuq-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+      - name: Release bundle + APK (signed)
+        if: ${{ env.HAS_KEYS == 'true' }}
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/ufuq.jks"
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/ufuq.jks"
+          ./gradlew bundleRelease assembleRelease --no-daemon
+      - if: ${{ env.HAS_KEYS == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufuq-release-aab
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk

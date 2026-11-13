@@ -13,12 +13,17 @@
     "test": "node test/align.test.mjs && node test/mushafPages.test.mjs && node test/hifzLive.test.mjs && node test/botGuard.test.mjs && node test/captcha.test.mjs && node test/examGuard.test.mjs && node test/aiFeedback.test.mjs && node test/listening.test.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@supabase/supabase-js": "^2.45.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@eslint/js": "^9.39.5",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^9.39.5",

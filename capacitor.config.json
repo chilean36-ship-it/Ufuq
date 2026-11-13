@@ -1,0 +1,30 @@
+{
+  "appId": "com.ufuqtaleem.app",
+  "appName": "Ufuq",
+  "webDir": "dist",
+  "server": {
+    "url": "https://ufuqtaleem.com",
+    "cleartext": false,
+    "errorPath": "app-offline.html",
+    "allowNavigation": ["ufuqtaleem.com", "*.ufuqtaleem.com", "*.supabase.co", "*.paymob.com", "*.paymobsolutions.com", "challenges.cloudflare.com"]
+  },
+  "android": {
+    "appendUserAgent": "UfuqApp/1.0",
+    "allowMixedContent": false,
+    "backgroundColor": "#121212"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#121212",
+      "androidScaleType": "CENTER_INSIDE",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#121212",
+      "overlaysWebView": false
+    }
+  }
+}

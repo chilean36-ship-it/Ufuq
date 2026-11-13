@@ -1,5 +1,7 @@
 // "Install app" support (PWA). Chrome / Edge / Android fire `beforeinstallprompt` once, early - possibly before React has
 // mounted - so the event is captured here (imported from main.jsx) and kept until the install banner asks for it.
+import { isNativeApp } from './nativeApp';
+
 let deferred = null;
 const listeners = new Set();
 const notify = () => listeners.forEach((fn) => { try { fn(); } catch (e) { /* ignore */ } });
@@ -15,6 +17,7 @@ export const onInstallChange = (fn) => { listeners.add(fn); return () => listene
 /** True when the site is already running as an installed app (home-screen icon / app window). */
 export function isStandalone() {
   try {
+    if (isNativeApp()) return true; // already inside the Android app: never offer "install"
     return (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: minimal-ui)').matches))
       || window.navigator.standalone === true;
   } catch (e) { return false; }

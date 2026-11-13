@@ -6,7 +6,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 // Deliberately lenient: real bugs (undefined names, broken hooks) are errors, style/cleanliness are warnings,
 // so `npm run lint` is useful from day one on a code base that never had a linter.
 export default [
-  { ignores: ['dist/**', 'node_modules/**', 'public/**', 'supabase/**', 'workers/**', 'asr-space/**', 'archive/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'public/**', 'supabase/**', 'workers/**', 'asr-space/**', 'archive/**', 'android/**'] },
   js.configs.recommended,
   {
     files: ['src/**/*.{js,jsx}'],

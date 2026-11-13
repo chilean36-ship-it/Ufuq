@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Ufuq</title>
+<style>
+  html,body{margin:0;height:100%;background:#121212;color:#edeae3;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;text-align:center;box-sizing:border-box}
+  .logo{width:84px;height:84px;border-radius:22px;background:#1a1a1a;display:grid;place-items:center}
+  .logo img{width:52px;height:52px;object-fit:contain}
+  h1{margin:6px 0 0;font-size:21px;font-weight:600}
+  p{margin:0;max-width:320px;font-size:14.5px;line-height:1.5;color:#a8a29b}
+  button{margin-top:10px;border:0;border-radius:10px;padding:13px 26px;font:600 15px/1 inherit;font-family:inherit;background:#c9a24b;color:#121212;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <div class="logo"><img src="/favicon-96.png" alt=""></div>
+  <h1 id="t">No internet connection</h1>
+  <p id="s">Check your Wi-Fi or mobile data, then try again.</p>
+  <button id="b" type="button">Try again</button>
+</main>
+<script>
+  var L={uz:["Internet yo'q","Wi-Fi yoki mobil internetni tekshiring va qayta urinib ko'ring.","Qayta urinish"],
+         ru:["Нет подключения к интернету","Проверьте Wi-Fi или мобильный интернет и попробуйте снова.","Повторить"],
+         ar:["لا يوجد اتصال بالإنترنت","تحقق من الواي فاي أو بيانات الجوال ثم حاول مرة أخرى.","إعادة المحاولة"]};
+  var l=null;try{l=(localStorage.getItem("ufuq-language")||"").toLowerCase()}catch(e){}
+  if(!L[l]){l=(navigator.language||"en").slice(0,2).toLowerCase()}
+  if(L[l]){document.getElementById("t").textContent=L[l][0];document.getElementById("s").textContent=L[l][1];document.getElementById("b").textContent=L[l][2];if(l==="ar")document.documentElement.dir="rtl"}
+  document.getElementById("b").onclick=function(){location.href="https://ufuqtaleem.com/"};
+</script>
+</body>
+</html>
