@@ -10,6 +10,9 @@ on:
     branches: [main, 'claude/**']
     paths: ['android/**', 'capacitor.config.json', '.github/workflows/android.yml']
 
+permissions:
+  contents: write   # lets the job publish the APK as a GitHub Release
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,6 +45,16 @@ jobs:
         with:
           name: ufuq-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+      # A fixed download link for the test build: https://github.com/<owner>/<repo>/releases/download/android-latest/Ufuq.apk
+      - name: Publish test APK (GitHub Release "android-latest")
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Ufuq.apk
+          gh release view android-latest >/dev/null 2>&1 || gh release create android-latest --prerelease --target "$GITHUB_SHA" \
+            --title "Ufuq Android app (test build)" \
+            --notes "Test build of the Ufuq Android app. Install Ufuq.apk on an Android phone (allow installs from this source). The app opens the live site, so it always shows the latest version."
+          gh release upload android-latest Ufuq.apk --clobber
       - name: Release bundle + APK (signed)
         if: ${{ env.HAS_KEYS == 'true' }}
         working-directory: android
