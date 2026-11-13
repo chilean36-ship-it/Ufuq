@@ -26,7 +26,12 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: android-actions/setup-android@v3
+      # The ubuntu runner already ships the Android SDK; only accept the licences and make sure API 36 is there.
+      - name: Android SDK
+        run: |
+          SDKM="$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | head -n1)"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0"
       - run: npm ci
       - run: npm run build          # Capacitor needs the web folder (dist) to exist; the app itself loads the live site
       - run: npx cap sync android
