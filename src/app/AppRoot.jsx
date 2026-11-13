@@ -6,10 +6,13 @@ import { applyUiPrefs } from '../lib/uiPrefs';
 import tokensCss from '../styles/tokens.css?inline';
 import PageStyle from '../components/PageStyle';
 import appCss from './app.css?inline';
+import appCss2 from './app-v2.css?inline';
 import { AppProvider, isOnboarded, useApp } from './AppContext';
 import Onboarding from './Onboarding';
 import AuthScreen from './AuthScreen';
 import { Logo } from './ui';
+import { ToastProvider } from './hooks';
+import Celebrate from './Celebrate';
 import { useTheme } from '../hooks/useTheme';
 
 const AppShell = lazy(() => import('./AppShell'));
@@ -108,7 +111,8 @@ export default function AppRoot() {
     <AppProvider>
       <PageStyle css={tokensCss} />
       <PageStyle css={appCss} />
-      <Root />
+      <PageStyle css={appCss2} />
+      <ToastProvider><Celebrate /><Root /></ToastProvider>
     </AppProvider>
   );
 }

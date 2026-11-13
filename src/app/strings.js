@@ -221,4 +221,6 @@ const AR = {
   yourGoal: 'الهدف اليومي', version: 'الإصدار',
 };
 
-export const APP_DICT = { EN, UZ, RU, AR };
+import { EXTRA } from './strings2';
+
+export const APP_DICT = { EN: { ...EN, ...EXTRA.EN }, UZ: { ...UZ, ...EXTRA.UZ }, RU: { ...RU, ...EXTRA.RU }, AR: { ...AR, ...EXTRA.AR } };

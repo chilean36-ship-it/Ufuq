@@ -4,6 +4,7 @@ import { useCabinetI18n } from '../context/CabinetI18nContext';
 import { useDashboardData } from '../context/DashboardDataContext';
 import { useTheme } from '../hooks/useTheme';
 import { useApp } from './AppContext';
+import { pushRecent } from './hooks';
 import { Ico } from './ui';
 import MyGroupView from '../pages/Dashboard/MyGroupView';
 import TasksView from '../pages/Dashboard/TasksView';
@@ -37,7 +38,7 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   const [theme, toggleTheme, themeMode, setThemeMode] = useTheme();
   const isIndividual = !!(groupData && groupData.type === 'individual');
 
-  useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; }, [view]);
+  useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; pushRecent(view); }, [view]);
   // Hifz Mushaf is only for 1:1 groups; anyone else who lands here goes Home.
   useEffect(() => { if (view === 'hifzLive' && groupReady && !isIndividual) navigate('/app', { replace: true }); }, [view, groupReady, isIndividual, navigate]);
 

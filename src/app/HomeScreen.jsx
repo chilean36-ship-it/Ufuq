@@ -1,52 +1,57 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDashboardData, LEVEL_NAMES, getTasksForGroup, getTaskSubmissions } from '../context/DashboardDataContext';
 import { useCabinetI18n } from '../context/CabinetI18nContext';
 import { useNotifications } from '../pages/Dashboard/Notifications/useNotifications';
 import NotificationsPanel from '../pages/Dashboard/Notifications/NotificationsPanel';
 import useLiveRefresh from '../hooks/useLiveRefresh';
-import { findNextClass, getLiveClassNow, isOverdue, fmtDueDate } from '../pages/Dashboard/weekUtils';
-import { useApp, readPrefs } from './AppContext';
-import { Ico } from './ui';
+import { findNextClass, getLiveClassNow, isOverdue, fmtDueDate, getCurrentWeekDates, scheduleDaysToWeekArray } from '../pages/Dashboard/weekUtils';
+import { useApp } from './AppContext';
+import { haptic, readRecents, useCountUp, usePullRefresh, useToast } from './hooks';
+import Sheet from './Sheet';
+import { Ico, Ring } from './ui';
 
 const LOCALE = { UZ: 'uz', RU: 'ru', AR: 'ar', EN: 'en' };
-const QUICK = [
-  { id: 'library', icon: 'lib', label: 'q_library' },
-  { id: 'tasks', icon: 'task', label: 'q_tasks' },
-  { id: 'exam', icon: 'exam', label: 'q_exam' },
-  { id: 'progress', icon: 'chart', label: 'q_progress' },
-  { id: 'attendance', icon: 'cal', label: 'q_attendance' },
-  { id: 'certificates', icon: 'cert', label: 'q_certs' },
+const TILES = [
+  { id: 'library', icon: 'lib', label: 'q_library', tone: 'amber' },
+  { id: 'tasks', icon: 'task', label: 'q_tasks', tone: 'emerald' },
+  { id: 'exam', icon: 'exam', label: 'q_exam', tone: 'violet' },
+  { id: 'progress', icon: 'chart', label: 'q_progress', tone: 'sky' },
+  { id: 'attendance', icon: 'cal', label: 'q_attendance', tone: 'rose' },
+  { id: 'certificates', icon: 'cert', label: 'q_certs', tone: 'amber' },
+  { id: 'myGroup', icon: 'group', label: 'tabGroup', tone: 'sky' },
+  { id: 'billing', icon: 'card', label: 'billing', tone: 'emerald' },
 ];
+const META = Object.fromEntries(TILES.map((x) => [x.id, x]));
+META.hifzLive = { id: 'hifzLive', icon: 'book', label: 'q_hifz', tone: 'violet' };
 
-function dayLabel(date, lang, t) {
-  const now = new Date();
-  const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const diff = Math.round((d1 - d0) / 86400000);
-  if (diff === 0) return t('today');
-  if (diff === 1) return t('tomorrow');
-  try { return new Intl.DateTimeFormat(LOCALE[lang] || 'en', { weekday: 'long', day: 'numeric', month: 'short' }).format(date); } catch (e) { return ''; }
+const DESC = { library: 'd_library', tasks: 'd_tasks', exam: 'd_exam', progress: 'd_progress', attendance: 'd_attendance', certificates: 'd_certs', hifzLive: 'd_hifz' };
+export const desc = (id, t) => (DESC[id] ? t(DESC[id]) : '');
+
+function useNow(ms = 1000) {
+  const [n, setN] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setN(Date.now()), ms); return () => clearInterval(id); }, [ms]);
+  return n;
+}
+const pad = (n) => String(n).padStart(2, '0');
+function clock(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60);
+  return (h ? pad(h) + ':' : '') + pad(m) + ':' + pad(s % 60);
 }
 
-function untilText(start, t) {
-  const mins = Math.max(0, Math.round((start.getTime() - Date.now()) / 60000));
-  if (mins >= 24 * 60) return '';
-  const h = Math.floor(mins / 60); const m = mins % 60;
-  return `${t('startsIn')} ${h ? h + ' ' + t('hrs') + ' ' : ''}${m} ${t('min')}`;
-}
-
-/** Native Home: greeting, level, next lesson, homework and quick access. All data is the same live data as the website. */
-export default function HomeScreen({ onNavigate, onUpgrade }) {
+/** Native Home: stories-style hero carousel, week strip, shelves and category tiles. */
+export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
   const { t, lang } = useApp();
+  const toast = useToast();
   const { t: tc } = useCabinetI18n();
-  const { user, name, level, avatarUrl, groupCode, groupData, groupReady, locked, isPaid } = useDashboardData();
-  const [, setTick] = useState(0);
+  const { user, name, level, avatarUrl, groupCode, groupData, groupReady, locked, isPaid, refreshGroup } = useDashboardData();
+  const now = useNow(1000);
   const [tasks, setTasks] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [slide, setSlide] = useState(0);
+  const [day, setDay] = useState(null);
+  const track = useRef(null);
   const notifs = useNotifications(user && user.id, isPaid);
-  const prefs = readPrefs();
-
-  useEffect(() => { const id = setInterval(() => setTick((n) => n + 1), 30000); return () => clearInterval(id); }, []);
 
   const joined = !!groupCode && !locked;
   const userId = user && user.id;
@@ -61,97 +66,186 @@ export default function HomeScreen({ onNavigate, onUpgrade }) {
   useEffect(() => { load(); }, [load]);
   useLiveRefresh(load, [{ table: 'tasks', filter: groupCode ? 'group_code=eq.' + groupCode : undefined }, { table: 'task_submissions', filter: userId ? 'user_id=eq.' + userId : undefined }], { enabled: joined && !!userId });
 
+  const { pull, busy } = usePullRefresh(async () => { await Promise.all([refreshGroup(true), load()]); toast(t('refreshed')); });
+
   const live = joined && groupData ? getLiveClassNow(groupData.scheduleDays) : null;
-  const next = useMemo(() => (joined && groupData ? findNextClass(groupData.scheduleDays) : null), [joined, groupData, Math.floor(Date.now() / 60000)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const next = useMemo(() => (joined && groupData ? findNextClass(groupData.scheduleDays) : null), [joined, groupData, Math.floor(now / 60000)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const weekClasses = useMemo(() => {
+    if (!joined || !groupData) return {};
+    const wk = getCurrentWeekDates();
+    const out = {};
+    scheduleDaysToWeekArray(groupData.scheduleDays, wk).forEach((e) => { if (e.time) out[e.day] = e.time; });
+    return out;
+  }, [joined, groupData]);
 
   const pending = (tasks || []).filter((x) => !x.done).sort((a, b) => new Date(a.due) - new Date(b.due));
   const overdueN = pending.filter((x) => x.overdue).length;
   const first = ((name || '').trim().split(/\s+/)[0]) || '';
   const noGroup = groupReady && !groupCode;
+  const minToday = Math.floor(activity.todaySec / 60);
+  const countMin = useCountUp(minToday);
+  const levelN = useCountUp(level, 600);
+
+  const onScroll = (e) => { const el = e.currentTarget; setSlide(Math.round(el.scrollLeft / (el.firstChild ? el.firstChild.offsetWidth + 12 : 1))); };
+  const goSlide = (i) => { const el = track.current; if (el && el.children[i]) { el.scrollTo({ left: el.children[i].offsetLeft - el.offsetLeft - 16, behavior: 'smooth' }); haptic(6); } };
+
+  const recents = readRecents().filter((v) => META[v]).slice(0, 5);
+  const shelfRecents = recents.length ? recents : ['library', 'tasks', 'exam'];
+  const dayNames = useMemo(() => {
+    const f = new Intl.DateTimeFormat(LOCALE[lang] || 'en', { weekday: 'short' });
+    return activity.week.map((d) => f.format(d.date));
+  }, [activity.week, lang]);
 
   return (
-    <div className="ua-page ua-home">
-      <header className="ua-home-top">
+    <div className="ua-page ua-home2">
+      <div className={'ua-ptr' + (busy ? ' busy' : '')} style={{ height: busy ? 44 : pull * 54, opacity: busy ? 1 : pull }} aria-hidden="true"><span className="ua-spin" style={{ transform: busy ? undefined : `rotate(${pull * 300}deg)` }} /></div>
+
+      <header className="ua-top2" style={{ '--i': 0 }}>
         <button type="button" className="ua-avatar" onClick={() => onNavigate('profile')} aria-label={t('profile')}>
           {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{(first || '?').charAt(0).toUpperCase()}</span>}
         </button>
-        <div className="ua-home-hi">
-          <p className="ua-hello">{t('hello')}{first ? ',' : ''} <b>{first}</b></p>
-          <p className="ua-hint">{t('homeSub')}</p>
-        </div>
+        <div className="ua-top2-t"><p className="ua-hint">{t('hello2')}</p><h1>{first || t('tabMe')}</h1></div>
+        <button type="button" className={'ua-chip2 flame' + (activity.streak > 0 ? ' on' : '')} onClick={() => { haptic(); toast(`${t('streak')}: ${activity.streak} ${t(activity.streak === 1 ? 'dayWord' : 'daysWord')}`); }} aria-label={t('streak')}>
+          <Ico n="flame" size={18} fill={activity.streak > 0} sw={1.6} /><b>{activity.streak}</b>
+        </button>
         {isPaid && (
           <button type="button" className="ua-icon-btn ua-bell" onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" /></svg>
-            {notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
+            <Ico n="bell" size={22} />{notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
           </button>
         )}
       </header>
 
-      <section className="ua-card ua-level">
-        <div className="ua-level-row">
-          <div><p className="ua-k">{t('level')}</p><p className="ua-level-n">{level} <small>{t('ofLevels')}</small></p></div>
-          <span className="ua-chip">{tc(LEVEL_NAMES[level - 1]) || LEVEL_NAMES[level - 1]}</span>
+      {/* hero carousel */}
+      <section className="ua-hero" style={{ '--i': 1 }}>
+        <div className="ua-hero-track" ref={track} onScroll={onScroll}>
+          <article className={'ua-hcard lesson' + (live ? ' live' : '')} onClick={() => onNavigate('myGroup')}>
+            <span className="ua-hcard-bg" aria-hidden="true" />
+            {noGroup ? (
+              <>
+                <p className="ua-k light">{t('tabGroup')}</p><h3>{t('noGroupTitle')}</h3>
+                <button type="button" className="ua-pill" onClick={(e) => { e.stopPropagation(); onNavigate('billing'); }}>{t('seePlans')}</button>
+              </>
+            ) : locked ? (
+              <>
+                <p className="ua-k light">{t('lockedTitle')}</p><h3>{t('lockedSub')}</h3>
+                <button type="button" className="ua-pill" onClick={(e) => { e.stopPropagation(); onUpgrade(); }}>{t('seePlans')}</button>
+              </>
+            ) : live ? (
+              <>
+                <p className="ua-k light"><i className="ua-pulse" /> {t('liveNow')}</p>
+                <h3>{groupData.name}</h3>
+                <button type="button" className="ua-pill"><Ico n="video" size={18} /> {t('joinLesson')}</button>
+              </>
+            ) : next ? (
+              <>
+                <p className="ua-k light">{t('nextLesson')}</p>
+                <div className="ua-count">{clock(next.start.getTime() - now)}</div>
+                <p className="ua-hcard-s">{new Intl.DateTimeFormat(LOCALE[lang] || 'en', { weekday: 'long' }).format(next.start)} · {next.time} · {groupData.name}</p>
+              </>
+            ) : (
+              <><p className="ua-k light">{t('nextLesson')}</p><h3>{t('noSchedule')}</h3></>
+            )}
+          </article>
+
+          <article className={'ua-hcard goal' + (activity.reached ? ' done' : '')} onClick={() => onNavigate('me')}>
+            <span className="ua-hcard-bg" aria-hidden="true" />
+            <div className="ua-goal-row">
+              <Ring value={activity.ratio} size={104} stroke={10}><b className="ua-ring-n">{countMin}</b><small>{t('minShort')}</small></Ring>
+              <div>
+                <p className="ua-k light">{t('goalToday')}</p>
+                <h3>{activity.reached ? t('goalDone') : `${Math.max(1, Math.ceil((activity.goalSec - activity.todaySec) / 60))} ${t('minShort')} ${t('goalLeft')}`}</h3>
+                <p className="ua-hcard-s">{countMin} {t('ofGoal')} {activity.goalMin} {t('minShort')}</p>
+              </div>
+            </div>
+          </article>
+
+          <article className="ua-hcard level" onClick={() => onNavigate('progress')}>
+            <span className="ua-hcard-bg" aria-hidden="true" />
+            <p className="ua-k light">{t('level')}</p>
+            <div className="ua-level-big"><b>{levelN}</b><span>{t('ofLevels')}</span></div>
+            <p className="ua-hcard-s">{tc(LEVEL_NAMES[level - 1]) || LEVEL_NAMES[level - 1]}</p>
+            <div className="ua-meter light"><i style={{ width: (level / LEVEL_NAMES.length) * 100 + '%' }} /></div>
+          </article>
         </div>
-        <div className="ua-meter"><i style={{ width: Math.min(100, (level / LEVEL_NAMES.length) * 100) + '%' }} /></div>
-        {prefs.goal ? <p className="ua-k small">{t('yourGoal')}: {t('goal_' + prefs.goal)} / {t('perDay')}</p> : null}
+        <div className="ua-dots" role="tablist">{[0, 1, 2].map((i) => <button key={i} type="button" className={slide === i ? 'on' : ''} aria-label={String(i + 1)} onClick={() => goSlide(i)} />)}</div>
       </section>
 
-      {noGroup && (
-        <section className="ua-card ua-cta">
-          <h3>{t('noGroupTitle')}</h3><p>{t('noGroupSub')}</p>
-          <div className="ua-cta-row">
-            <button type="button" className="ua-btn ua-btn-primary" onClick={() => onNavigate('billing')}>{t('seePlans')}</button>
-            <button type="button" className="ua-btn ua-btn-ghost" onClick={() => onNavigate('myGroup')}>{t('tabGroup')}</button>
-          </div>
-        </section>
-      )}
-      {!noGroup && locked && (
-        <section className="ua-card ua-cta">
-          <h3>{t('lockedTitle')}</h3><p>{t('lockedSub')}</p>
-          <div className="ua-cta-row"><button type="button" className="ua-btn ua-btn-primary" onClick={onUpgrade}>{t('seePlans')}</button></div>
-        </section>
-      )}
+      {/* week strip */}
+      <section className="ua-card2" style={{ '--i': 2 }}>
+        <div className="ua-card2-h"><h3>{t('weekTitle')}</h3><span className="ua-hint">{activity.week.filter((d) => d.sec >= 60).length}/7</span></div>
+        <div className="ua-week">
+          {activity.week.map((d, i) => {
+            const engName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i];
+            const hasClass = !!weekClasses[engName];
+            return (
+              <button type="button" key={i} className={'ua-wd' + (d.isToday ? ' today' : '') + (d.future ? ' future' : '')} onClick={() => { haptic(); setDay({ i, name: engName, d, time: weekClasses[engName] }); }}>
+                <span className="ua-wd-n">{dayNames[i]}</span>
+                <Ring value={d.sec / activity.goalSec} size={38} stroke={4}>{d.sec >= activity.goalSec ? <Ico n="check" size={15} sw={2.6} /> : <small>{d.date.getDate()}</small>}</Ring>
+                <i className={'ua-wd-dot' + (hasClass ? ' on' : '')} />
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-      {joined && (
-        <section className={'ua-card ua-lesson' + (live ? ' live' : '')}>
-          <p className="ua-k">{live ? <><i className="ua-pulse" /> {t('liveNow')}</> : t('nextLesson')}</p>
-          {live ? (
-            <><h3>{groupData.name}</h3><button type="button" className="ua-btn ua-btn-primary" onClick={() => onNavigate('myGroup')}><Ico n="video" size={20} /> {t('joinLesson')}</button></>
-          ) : next ? (
-            <>
-              <h3>{dayLabel(next.start, lang, t)} · {next.time}</h3>
-              <p className="ua-hint">{groupData.name}{untilText(next.start, t) ? ' · ' + untilText(next.start, t) : ''}</p>
-              <button type="button" className="ua-btn ua-btn-soft" onClick={() => onNavigate('myGroup')}>{t('tabGroup')}</button>
-            </>
-          ) : <h3 className="muted">{t('noSchedule')}</h3>}
-        </section>
-      )}
+      {/* continue shelf */}
+      <section style={{ '--i': 3 }}>
+        <div className="ua-sh-h"><h3>{t('continueLearning')}</h3><button type="button" className="ua-link" onClick={() => onNavigate('learn')}>{t('seeAll')}</button></div>
+        <div className="ua-shelf">
+          {shelfRecents.map((id) => (
+            <button type="button" key={id} className={'ua-scard ' + META[id].tone} onClick={() => { haptic(); onNavigate(id); }}>
+              <span className="ua-scard-ic"><Ico n={META[id].icon} size={24} /></span>
+              <b>{t(META[id].label)}</b><small>{desc(id, t)}</small>
+            </button>
+          ))}
+        </div>
+      </section>
 
+      {/* homework shelf */}
       {joined && (
-        <section className="ua-card">
-          <div className="ua-card-head">
-            <h3>{t('homework')}</h3>
-            {tasks && pending.length > 0 && <span className={'ua-chip' + (overdueN ? ' warn' : '')}>{pending.length} {t('hwPending')}{overdueN ? ` · ${overdueN} ${t('hwOverdue')}` : ''}</span>}
-          </div>
-          {tasks === null ? <div className="ua-skel" /> : pending.length === 0 ? <p className="ua-hint">{t('hwNone')}</p> : (
-            <ul className="ua-tasks">
-              {pending.slice(0, 3).map((x) => (
-                <li key={x.id} className={x.overdue ? 'od' : ''}><span className="ua-tdot" /><span className="ua-tt">{x.title}</span><span className="ua-td">{fmtDueDate(x.due)}</span></li>
+        <section style={{ '--i': 4 }}>
+          <div className="ua-sh-h"><h3>{t('hwShelf')}</h3>{pending.length > 0 && <span className={'ua-chip' + (overdueN ? ' warn' : '')}>{pending.length} {t('hwPending')}</span>}</div>
+          {tasks === null ? <div className="ua-skel" /> : pending.length === 0 ? (
+            <div className="ua-empty"><Ico n="check" size={22} sw={2.4} /><span>{t('hwAllDone')}</span></div>
+          ) : (
+            <div className="ua-shelf">
+              {pending.slice(0, 8).map((x) => (
+                <button type="button" key={x.id} className={'ua-hw' + (x.overdue ? ' od' : '')} onClick={() => onNavigate('tasks')}>
+                  <span className="ua-hw-d">{x.overdue ? t('hwOverdue') : t('hwDue')} · {fmtDueDate(x.due)}</span>
+                  <b>{x.title}</b>
+                </button>
               ))}
-            </ul>
+            </div>
           )}
-          <button type="button" className="ua-link" onClick={() => onNavigate('tasks')}>{t('openTasks')} <Ico n="chev" size={16} /></button>
         </section>
       )}
 
-      <h4 className="ua-section">{t('quick')}</h4>
-      <div className="ua-grid">
-        {QUICK.map((q) => (
-          <button type="button" key={q.id} className="ua-tile" onClick={() => onNavigate(q.id)}>
-            <span className="ua-tile-ic"><Ico n={q.icon} size={24} /></span><span>{t(q.label)}</span>
-          </button>
-        ))}
-      </div>
+      {/* categories */}
+      <section style={{ '--i': 5 }}>
+        <div className="ua-sh-h"><h3>{t('quick')}</h3></div>
+        <div className="ua-tiles">
+          {TILES.map((x) => (
+            <button type="button" key={x.id} className={'ua-tile2 ' + x.tone} onClick={() => { haptic(); onNavigate(x.id); }}>
+              <span className="ua-tile2-ic"><Ico n={x.icon} size={26} /></span><span>{t(x.label)}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* AI banner */}
+      <button type="button" className="ua-ai-banner" style={{ '--i': 6 }} onClick={() => window.dispatchEvent(new Event('ufuq-ai-open'))}>
+        <span className="ua-ai-banner-t"><b>{t('aiPromoT')}</b><small>{t('aiPromoS')}</small><span className="ua-pill dark">{t('askAi')}</span></span>
+        <span className="ua-ai-banner-ic"><Ico n="ai" size={44} sw={1.4} /></span>
+      </button>
+
+      <Sheet open={!!day} onClose={() => setDay(null)} title={day ? new Intl.DateTimeFormat(LOCALE[lang] || 'en', { weekday: 'long', day: 'numeric', month: 'long' }).format(day.d.date) : ''}>
+        {day && (
+          <div className="ua-daysheet">
+            <div className="ua-ds-row"><span className="ua-row-ic"><Ico n="video" size={20} /></span><div><b>{day.time ? `${t('classAt')} ${day.time}` : t('noClass')}</b>{day.time && groupData && <small>{groupData.name}</small>}</div></div>
+            <div className="ua-ds-row"><span className="ua-row-ic"><Ico n="clock" size={20} /></span><div><b>{Math.floor(day.d.sec / 60)} {t('minShort')}</b><small>{t('activityToday')}</small></div></div>
+          </div>
+        )}
+      </Sheet>
 
       {isPaid && <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifs.items} onMarkRead={notifs.markRead} onMarkAll={notifs.markAllRead} onNavigate={(v) => { setNotifOpen(false); onNavigate(v); }} />}
     </div>
