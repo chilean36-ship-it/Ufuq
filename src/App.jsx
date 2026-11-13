@@ -19,6 +19,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const Admin = lazy(() => import('./pages/Admin/Admin'));
 const Teacher = lazy(() => import('./pages/Teacher/Teacher'));
 const LegalPage = lazy(() => import('./pages/Legal/LegalPage'));
+const AppRoot = lazy(() => import('./app/AppRoot')); // the installable Ufuq app (onboarding, sign-in, bottom-tab student app)
 
 /**
  * Routes mirror the old multi-page site (cleanUrls):
@@ -46,6 +47,9 @@ export default function App() {
           <Route path="/checkout/result" element={<RequireAuth><CheckoutResult /></RequireAuth>} />
           <Route path="/invoice/:id" element={<RequireAuth><Invoice /></RequireAuth>} />
         </Route>
+
+        {/* the Ufuq app (PWA, scope /app) */}
+        <Route path="/app/*" element={<AppRoot />} />
 
         {/* profile uses its own "cabinet" i18n system (English-keyed), not the site's */}
         <Route path="/profile" element={<ProfileRoute />} />

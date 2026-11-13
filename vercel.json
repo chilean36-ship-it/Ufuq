@@ -82,7 +82,7 @@
       ]
     },
     {
-      "source": "/dashboard",
+      "source": "/(dashboard|app(/.*)?)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -135,7 +135,7 @@
       ]
     },
     {
-      "source": "/(dashboard|teacher|admin|profile|checkout|invoice)(.*)",
+      "source": "/(dashboard|teacher|admin|profile|checkout|invoice|app)(.*)",
       "headers": [
         {
           "key": "X-Robots-Tag",
