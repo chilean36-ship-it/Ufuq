@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useDashboardData } from '../context/DashboardDataContext';
 import { useApp } from './AppContext';
-import { haptic, readRecents } from './hooks';
+import { haptic } from './hooks';
 import { desc } from './HomeScreen';
 import { Ico } from './ui';
 
@@ -24,7 +24,6 @@ export default function LearnScreen({ onNavigate }) {
   const items = useMemo(() => ITEMS.filter((i) => !i.individualOnly || isIndividual), [isIndividual]);
   const term = q.trim().toLowerCase();
   const shown = items.filter((i) => !term || t(i.label).toLowerCase().includes(term) || desc(i.id, t).toLowerCase().includes(term));
-  const recents = readRecents().map((id) => items.find((i) => i.id === id)).filter(Boolean).slice(0, 4);
 
   return (
     <div className="ua-page ua-learn">
@@ -34,15 +33,6 @@ export default function LearnScreen({ onNavigate }) {
         <input type="search" inputMode="search" enterKeyHint="search" placeholder={t('searchPh')} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t('search')} />
         {q && <button type="button" className="ua-search-x" onClick={() => setQ('')} aria-label="Clear"><Ico n="x" size={16} sw={2.4} /></button>}
       </label>
-
-      {!term && recents.length > 0 && (
-        <section style={{ '--i': 2 }}>
-          <div className="ua-sh-h"><h3>{t('recent')}</h3></div>
-          <div className="ua-chips">
-            {recents.map((i) => <button type="button" key={i.id} className={'ua-chip3 ' + i.tone} onClick={() => { haptic(); onNavigate(i.id); }}><Ico n={i.icon} size={18} />{t(i.label)}</button>)}
-          </div>
-        </section>
-      )}
 
       <div className="ua-cats">
         {shown.map((i, n) => (

@@ -45,12 +45,14 @@ const HOME_CSS = `
 /** Unified lock state for every Home panel: no buttons, just the reason and where to see it. */
 function Locked({ noGroup }) {
   const { t } = useCabinetI18n();
+  const { lockReason } = useDashboardData();
+  const byAttendance = lockReason === 'attendance';
   // A paid student who is in no running group (removed, or his group was switched off) is not asked to pay again.
   return (
     <div className="hp-locked" role="status">
       <span className="hp-locked-orb" aria-hidden="true">{LOCK_ICON}</span>
-      <p className="hp-locked-title">{noGroup ? t('No group yet') : t('Payment not made')}</p>
-      <p className="hp-locked-sub">{noGroup ? t('You will see this section as soon as you are in a running group.') : t('Pay to see this section.')}</p>
+      <p className="hp-locked-title">{noGroup ? t('No group yet') : byAttendance ? t('Attendance limit reached') : t('Payment not made')}</p>
+      <p className="hp-locked-sub">{noGroup ? t('You will see this section as soon as you are in a running group.') : byAttendance ? t('Talk to your teacher or the administrator to open it again.') : t('Pay to see this section.')}</p>
     </div>
   );
 }

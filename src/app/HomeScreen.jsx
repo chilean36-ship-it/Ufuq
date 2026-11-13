@@ -42,10 +42,10 @@ function clock(ms) {
 
 /** Native Home: stories-style hero carousel, week strip, shelves and category tiles. */
 export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
-  const { t, lang } = useApp();
+  const { t, lang, t: ta } = useApp();
   const toast = useToast();
   const { t: tc } = useCabinetI18n();
-  const { user, name, level, avatarUrl, groupCode, groupData, groupReady, locked, isPaid, refreshGroup } = useDashboardData();
+  const { user, name, level, avatarUrl, groupCode, groupData, groupReady, locked, lockReason, isPaid, refreshGroup, role } = useDashboardData();
   const now = useNow(1000);
   const [tasks, setTasks] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -117,6 +117,9 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
       </header>
 
       <div className="ua-gwrap" style={{ '--i': 1 }}><GroupPill /></div>
+      {(role === 'admin' || role === 'teacher') && (
+        <a className="ua-staffbar" style={{ '--i': 1 }} href={role === 'admin' ? '/admin' : '/teacher'}><Ico n="settings" size={18} /><span>{role === 'admin' ? ta('adminPanel') : ta('teacherPanel')}</span><Ico n="chev" size={16} /></a>
+      )}
 
       {/* hero carousel */}
       <section className="ua-hero" style={{ '--i': 1 }}>
@@ -127,6 +130,11 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
               <>
                 <p className="ua-k light">{t('tabGroup')}</p><h3>{t('noGroupTitle')}</h3>
                 <button type="button" className="ua-pill" onClick={(e) => { e.stopPropagation(); onNavigate('billing'); }}>{t('seePlans')}</button>
+              </>
+            ) : locked && lockReason === 'attendance' ? (
+              <>
+                <p className="ua-k light">{tc('Attendance limit reached')}</p><h3>{tc('Talk to your teacher or the administrator to open it again.')}</h3>
+                <button type="button" className="ua-pill" onClick={(e) => { e.stopPropagation(); onNavigate('attendance'); }}>{tc('See my attendance')}</button>
               </>
             ) : locked ? (
               <>
@@ -183,24 +191,11 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
             return (
               <button type="button" key={i} className={'ua-wd' + (d.isToday ? ' today' : '') + (d.future ? ' future' : '')} onClick={() => { haptic(); setDay({ i, name: engName, d, time: weekClasses[engName] }); }}>
                 <span className="ua-wd-n">{dayNames[i]}</span>
-                <Ring value={d.sec / activity.goalSec} size={38} stroke={4}>{d.sec >= activity.goalSec ? <Ico n="check" size={15} sw={2.6} /> : <small>{d.date.getDate()}</small>}</Ring>
+                <Ring value={d.sec / activity.goalSec} size={40} stroke={4}>{d.sec >= activity.goalSec ? <Ico n="check" size={15} sw={2.6} /> : <small>{d.date.getDate()}</small>}</Ring>
                 <i className={'ua-wd-dot' + (hasClass ? ' on' : '')} />
               </button>
             );
           })}
-        </div>
-      </section>
-
-      {/* continue shelf */}
-      <section style={{ '--i': 3 }}>
-        <div className="ua-sh-h"><h3>{t('continueLearning')}</h3><button type="button" className="ua-link" onClick={() => onNavigate('learn')}>{t('seeAll')}</button></div>
-        <div className="ua-shelf">
-          {shelfRecents.map((id) => (
-            <button type="button" key={id} className={'ua-scard ' + META[id].tone} onClick={() => { haptic(); onNavigate(id); }}>
-              <span className="ua-scard-ic"><Ico n={META[id].icon} size={24} /></span>
-              <b>{t(META[id].label)}</b><small>{desc(id, t)}</small>
-            </button>
-          ))}
         </div>
       </section>
 

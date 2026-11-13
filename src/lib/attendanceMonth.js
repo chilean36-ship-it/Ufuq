@@ -69,10 +69,11 @@ export function computeMonthAttendance({ scheduleDays, records, year, month, min
   const allowed = MAX_ABSENCES;
   const left = allowed - absent;
 
+  // The 3rd missed lesson of the month reaches the limit and pauses the lesson sections (see supabase/migrations/20261202_attendance_lock.sql).
   let level = 'good';
   if (total) {
-    if (left < 0) level = 'danger';
-    else if (absent > 0 && left <= 1) level = 'warn';  // 2 ta qoldirilgan → 1 qoldi, 3 ta → limit
+    if (absent >= allowed) level = 'danger';
+    else if (absent > 0) level = 'warn';
   }
 
   return {

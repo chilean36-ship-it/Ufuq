@@ -16,6 +16,8 @@
 
   /* Modals and dialogs leave a margin on both sides of a phone screen. */
   [role="dialog"], [role="alertdialog"] { max-width: calc(100vw - 24px); }
+  /* ...but full-screen layers (they fill the screen with inset:0 / a bottom sheet) must keep the full width, otherwise they sit 24px short on the left */
+  .apx-lb, .plb, .xr, .xr-modal, .exam-guard-overlay, .uk-overlay, .uai-panel, .gc-confirm-scrim { max-width: none; }
 }
 
 /* Long text in tight places (buttons, chips, titles) truncates rather than breaking the layout. */

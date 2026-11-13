@@ -130,6 +130,20 @@ export function DashboardDataProvider({ children }) {
   useEffect(() => { loadAccess(); }, [loadAccess]);
   useLiveRefresh(() => loadAccess());
 
+  // Attendance lock (supabase/migrations/20261202_attendance_lock.sql): 3 missed lessons in a month close the lesson sections like an
+  // unpaid plan, until a teacher / admin allows access. Dormant until that migration is installed: if the server function does not
+  // exist, nobody is ever locked by it.
+  const [attLock, setAttLock] = useState(null);
+  const loadAttLock = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.rpc('my_attendance_lock');
+      setAttLock(!error && data && typeof data === 'object' ? data : null);
+    } catch (e) { /* keep the last known state */ }
+  }, [user]);
+  useEffect(() => { loadAttLock(); }, [loadAttLock]);
+  useLiveRefresh(() => loadAttLock());
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -195,8 +209,8 @@ export function DashboardDataProvider({ children }) {
   }, [user]);
 
   const value = useMemo(
-    () => ({ user, name, setName, role, level, levelFree, status, avatarUrl, setAvatarUrl, isPaid: status === 'active' || role === 'teacher' || (access ? !!access.exempt : role === 'admin'), access, refreshAccess: loadAccess, locked: !!(access && access.enforced && access.has_access === false), accessPending: !!user && access === null, notif, setNotif, groupCode, groupData, groupReady, groups, switchGroup, setGroupCode, setGroupData, refreshGroup: (silent) => loadGroup(() => false, silent === true) }),
-    [user, name, setName, role, level, levelFree, status, avatarUrl, notif, access, loadAccess, groupCode, groupData, groupReady, groups, switchGroup, loadGroup]
+    () => ({ user, name, setName, role, level, levelFree, status, avatarUrl, setAvatarUrl, isPaid: status === 'active' || role === 'teacher' || (access ? !!access.exempt : role === 'admin'), access, refreshAccess: loadAccess, payLocked: !!(access && access.enforced && access.has_access === false), attLock, attendanceLocked: !!(attLock && attLock.locked && role === 'student'), lockReason: (access && access.enforced && access.has_access === false) ? 'payment' : (attLock && attLock.locked && role === 'student' ? 'attendance' : null), refreshAttLock: loadAttLock, locked: !!(access && access.enforced && access.has_access === false) || !!(attLock && attLock.locked && role === 'student'), accessPending: !!user && access === null, notif, setNotif, groupCode, groupData, groupReady, groups, switchGroup, setGroupCode, setGroupData, refreshGroup: (silent) => loadGroup(() => false, silent === true) }),
+    [user, name, setName, role, level, levelFree, status, avatarUrl, notif, access, loadAccess, attLock, loadAttLock, groupCode, groupData, groupReady, groups, switchGroup, loadGroup]
   );
   return <DashboardDataContext.Provider value={value}>{children}</DashboardDataContext.Provider>;
 }

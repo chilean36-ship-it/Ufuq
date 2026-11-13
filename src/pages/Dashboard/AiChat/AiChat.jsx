@@ -193,6 +193,7 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
     setSideOpen(false);
     setOpen(false);
     setFull(false);
+    try { window.dispatchEvent(new Event('ufuq-ai-closed')); } catch (e) { /* ignore */ }
   }, [stopSpeaking, stopDictation]);
 
   useEffect(() => { if (suppress && open) closeChat(); }, [suppress, open, closeChat]);

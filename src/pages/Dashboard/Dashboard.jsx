@@ -58,7 +58,7 @@ const PAID_VIEWS = ['tasks', 'hifzLive', 'attendance', 'progress', 'library', 'e
 
 function DashboardInner({ initialView = 'home' }) {
   const { t } = useCabinetI18n();
-  const { user, name, isPaid, locked, accessPending, avatarUrl, setAvatarUrl, groupData, groupReady, groups, groupCode, switchGroup, refreshGroup, role, access } = useDashboardData();
+  const { user, name, isPaid, locked, accessPending, avatarUrl, setAvatarUrl, groupData, groupReady, groups, groupCode, switchGroup, refreshGroup, role, access, lockReason } = useDashboardData();
   const isIndividual = !!(groupData && groupData.type === 'individual');
   const [theme, toggleTheme, themeMode, setThemeMode] = useTheme();
   const [sbCollapsed, toggleSbCollapsed, setSbCollapsed] = useSidebarCollapsed();
@@ -169,14 +169,14 @@ function DashboardInner({ initialView = 'home' }) {
         />
         <div className="content" key={switchNonce}>
           {view !== 'billing' && <PaymentBanner onUpgrade={() => setUpgradeOpen(true)} />}
-          {locked && PAID_VIEWS.includes(view) && <PaywallGate onNavigate={navigate} />}
+          {locked && PAID_VIEWS.includes(view) && !(lockReason === 'attendance' && view === 'attendance') && <PaywallGate onNavigate={navigate} />}
           {locked && view === 'myGroup' && <PaywallGate variant="group" onNavigate={navigate} />}
           {view === 'home' && <HomeView onNavigate={navigate} />}
           {view === 'myGroup' && !locked && !accessPending && <MyGroupView onNavigate={navigate} onChatOpenChange={setGcChatOpen} />}
           {view === 'hifzLive' && isIndividual && !locked && <Suspense fallback={null}><HifzLiveView /></Suspense>}
           {view === 'tasks' && !locked && <TasksView />}
           {view === 'certificates' && !locked && <Suspense fallback={null}><CertificatesView /></Suspense>}
-          {view === 'attendance' && !locked && <AttendanceView />}
+          {view === 'attendance' && (!locked || lockReason === 'attendance') && <AttendanceView />}
           {view === 'progress' && !locked && <ProgressView />}
           {view === 'library' && !locked && <Suspense fallback={null}><LibraryView /></Suspense>}
           {view === 'exam' && !locked && <Suspense fallback={null}><ExamView /></Suspense>}

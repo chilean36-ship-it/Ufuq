@@ -37,7 +37,7 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   const navigate = useNavigate();
   const { t } = useApp();
   const { t: tc } = useCabinetI18n();
-  const { locked, accessPending, groupReady, groupData, groups } = useDashboardData();
+  const { locked, lockReason, accessPending, groupReady, groupData, groups } = useDashboardData();
   const [theme, toggleTheme, themeMode, setThemeMode] = useTheme();
   const isIndividual = !!(groupData && groupData.type === 'individual');
   const hasGroups = (groups || []).length > 1;
@@ -66,7 +66,8 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   useEffect(() => { if (view === 'hifzLive' && groupReady && !isIndividual) navigate('/app', { replace: true }); }, [view, groupReady, isIndividual, navigate]);
 
   const title = TITLES[view] ? t(TITLES[view]) : '';
-  const gated = !!locked && (PAID.includes(view) || view === 'myGroup');
+  // an attendance lock keeps the Attendance screen open so the student can see why
+  const gated = !!locked && (PAID.includes(view) || view === 'myGroup') && !(lockReason === 'attendance' && view === 'attendance');
 
   let body = null;
   if (gated) body = <PaywallGate variant={view === 'myGroup' ? 'group' : undefined} onNavigate={onNavigate} />;

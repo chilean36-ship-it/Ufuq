@@ -54,10 +54,10 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
     return otherReaders.filter((r) => r.ts >= ts).map((r) => r.name || t('Student'));
   };
 
-  const flash = useCallback((text) => {
+  const flash = useCallback((text, ms = 1600) => {
     setToast(text);
     clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 1600);
+    toastTimer.current = setTimeout(() => setToast(''), ms);
   }, []);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
@@ -231,6 +231,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
     if (isText && menuMsg.content) menuItems.push({ action: 'copy', label: 'Copy', icon: 'copy' });
     if (mine && isText) menuItems.push({ action: 'edit', label: 'Edit', icon: 'edit' });
     if (canModerate) menuItems.push({ action: 'pin', label: menuMsg.is_pinned ? 'Unpin' : 'Pin', icon: 'pin', active: menuMsg.is_pinned });
+    if (mine && !String(menuMsg.id).startsWith('temp-')) menuItems.push({ action: 'info', label: 'Seen by', icon: 'info' });
     if (mine || canModerate) menuItems.push({ action: 'delete', label: 'Delete', icon: 'delete', danger: true });
   }
   const runMenuAction = (action) => {
@@ -240,6 +241,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
     if (action === 'delete') setConfirmId(msg.id);
     else if (action === 'pin') chat.togglePin(msg.id);
     else if (action === 'copy') copyText(msg.content || '').then(() => flash(t('Copied')));
+    else if (action === 'info') { const names = seenByFor(msg); flash(names.length ? t('Seen by') + ': ' + names.join(', ') : t('Not seen yet'), 3600); }
     else if (action === 'edit') {
       if (msg.message_type === 'voice') return;
       chat.setComposer({ type: 'edit', id: msg.id, preview: msg.content });

@@ -136,3 +136,15 @@ html[data-theme="light"] .ua-app .ua-host .group-chat-send, html[data-theme="lig
 body.ua-kb .ua-app .ua-host .gc-footer-wrap{ padding-bottom:6px; }
 .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-meta, .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-time{ color:rgba(22,20,17,.68); opacity:1; }
 html[data-theme="light"] .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-meta, html[data-theme="light"] .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-time{ color:rgba(255,255,255,.85); }
+
+/* audio player sheet: full width, never taller than the screen */
+.ua-app .apx-lb, body .apx-lb{ max-width:none !important; width:100%; left:0; right:0; }
+@media (max-width:640px){ .apx-lb .apx-card{ max-height:94dvh; max-height:calc(var(--ua-vh, 100dvh) - 8px); overflow-y:auto; border-radius:26px 26px 0 0; padding-bottom:calc(20px + env(safe-area-inset-bottom)); } }
+
+/* board photo viewer: the picture owns the gestures (pinch, double-tap, drag) and fills the screen */
+.ua-app .photo-lightbox{ padding:0; }
+.ua-app .photo-lightbox-inner{ width:100%; max-height:none; height:100%; padding:10px 0 calc(12px + env(safe-area-inset-bottom)); }
+.photo-zoomwrap{ flex:1; width:100%; min-height:0; height:calc(var(--ua-vh, 100dvh) - 150px); }
+
+/* group screen: no subtitle line under the title */
+.ua-host .group-page-head p, .ua-host .gp2 .group-page-head p{ display:none; }

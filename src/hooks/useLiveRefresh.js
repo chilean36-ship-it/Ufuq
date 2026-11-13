@@ -1,6 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
+let lastTouch = Date.now();
+if (typeof window !== 'undefined') {
+  const touch = () => { lastTouch = Date.now(); };
+  ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach((e) => window.addEventListener(e, touch, { passive: true, capture: true }));
+}
+
 /**
  * Keeps a view's numbers in step with the database while it is on screen.
  *
@@ -35,11 +41,19 @@ export default function useLiveRefresh(refresh, tables, { enabled = true, interv
     const onVisible = () => { if (document.visibilityState === 'visible') run(); };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', run);
-    const poll = setInterval(() => { if (document.visibilityState === 'visible') run(); }, Math.min(interval, 5000));
+    // Safety-net poll: jittered (devices never line up), 4x slower while the person is idle. Realtime does the real work.
+    let pollTimer = 0; let stopped = false;
+    const pollNext = () => {
+      const idle = Date.now() - lastTouch > 90000;
+      const base = Math.max(interval, 12000) * (idle ? 4 : 1);
+      pollTimer = setTimeout(() => { if (stopped) return; if (document.visibilityState === 'visible') run(); pollNext(); }, base * (0.85 + Math.random() * 0.3));
+    };
+    pollNext();
+    const poll = { stop: () => { stopped = true; clearTimeout(pollTimer); } };
 
     return () => {
       clearTimeout(timer);
-      clearInterval(poll);
+      poll.stop();
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', run);
       supabase.removeChannel(channel);

@@ -7,6 +7,7 @@ import AudioPlayer from './AudioPlayer';
 import MediaTab from './MediaTab';
 import './library-audio.css';
 import Loader from '../../../components/Loader';
+import ZoomPan from '../../../components/ZoomPan';
 
 const WAVE_HEIGHTS = [22, 40, 62, 34, 78, 48, 90, 56, 30, 70, 44, 84, 38, 60, 26, 52, 74, 36, 64, 28, 46, 80, 32, 58];
 /** Deterministic little waveform illustration per card, purely decorative. */
@@ -78,7 +79,11 @@ function PhotoLightbox({ photo, onClose, saved, onToggleSave }) {
     <div className={'photo-lightbox' + (open ? ' open' : '')} id="photoLightbox" aria-hidden={open ? 'false' : 'true'} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="photo-lightbox-inner">
         <button type="button" className="photo-lightbox-close" id="photoLightboxClose" aria-label={t('Close')} onClick={onClose}>&times;</button>
-        {open && <img id="photoLightboxImg" src={photo.urls[idx]} alt="" onError={() => { if (idx + 1 < photo.urls.length) setIdx(idx + 1); }} />}
+        {open && (
+          <div className="photo-zoomwrap">
+            <ZoomPan src={photo.urls[idx]} onError={() => { if (idx + 1 < photo.urls.length) setIdx(idx + 1); }} />
+          </div>
+        )}
         <div className="photo-lightbox-caption" id="photoLightboxCaption">{open ? (photo.caption ? `${photo.caption} · ${photo.date}` : photo.date) : ''}</div>
         {open && (
           <button type="button" className={'list-save-btn photo-lightbox-save' + (saved ? ' saved' : '')} onClick={() => onToggleSave(photo)}>
