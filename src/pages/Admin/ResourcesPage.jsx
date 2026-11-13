@@ -144,7 +144,7 @@ export default function ResourcesPage() {
                 : vc && vc.error && /plan not found/i.test(vc.error) ? t('Vercel gives traffic numbers through its API only to paid plans. This site is on the free plan (limit 100 GB per month), so open the usage page:')
                 : vc && vc.error ? vc.error
                 : <>{t('No traffic line found in the Vercel feed.')} {(vc && vc.services || []).map((s) => s.name + ' ' + s.qty + ' ' + s.unit).join(', ')}</>}{' '}
-              <a href="https://vercel.com/khalilov16122005-5171/~/usage" target="_blank" rel="noopener noreferrer">{t('Open Vercel usage')}</a>
+              <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer">{t('Open Vercel usage')}</a>
             </Notice>}
         </div>
         <p className="hint">{t('Updated')}: {new Date(d.at).toLocaleString()}</p>

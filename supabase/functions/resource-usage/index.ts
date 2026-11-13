@@ -50,7 +50,7 @@ async function cloudflareUsage() {
 }
 
 // Vercel: this month's site traffic from the billing charges feed (FOCUS, one JSON object per line).
-//   VERCEL_TOKEN (account token, read) + VERCEL_TEAM (team slug or id, e.g. khalilov16122005-5171); limit VERCEL_BANDWIDTH_GB (default 100 = Hobby)
+//   VERCEL_TOKEN (account token, read) + VERCEL_TEAM (team slug or id); limit VERCEL_BANDWIDTH_GB (default 100 = Hobby)
 async function vercelUsage() {
   const token = key("VERCEL_TOKEN"), team = key("VERCEL_TEAM");
   if (!token || !team) return { configured: false, need: ["VERCEL_TOKEN", "VERCEL_TEAM"].filter((k) => !key(k)) };
