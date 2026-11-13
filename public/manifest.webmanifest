@@ -6,22 +6,113 @@
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "any",
   "background_color": "#121212",
   "theme_color": "#121212",
   "lang": "en",
   "dir": "auto",
-  "categories": ["education"],
+  "categories": [
+    "education"
+  ],
   "prefer_related_applications": false,
   "icons": [
-    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "My lessons", "short_name": "Lessons", "url": "/dashboard?source=shortcut", "icons": [{ "src": "/favicon-96.png", "sizes": "96x96", "type": "image/png" }] },
-    { "name": "My profile", "short_name": "Profile", "url": "/profile?source=shortcut", "icons": [{ "src": "/favicon-96.png", "sizes": "96x96", "type": "image/png" }] }
+    {
+      "name": "My lessons",
+      "short_name": "Lessons",
+      "url": "/dashboard?source=shortcut",
+      "icons": [
+        {
+          "src": "/favicon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My profile",
+      "short_name": "Profile",
+      "url": "/profile?source=shortcut",
+      "icons": [
+        {
+          "src": "/favicon-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/wide-home.webp",
+      "sizes": "1280x720",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Learn Arabic with Ufuq"
+    },
+    {
+      "src": "/screenshots/wide-explore.webp",
+      "sizes": "1280x720",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Everything you need to learn Arabic"
+    },
+    {
+      "src": "/screenshots/wide-programs.webp",
+      "sizes": "1280x720",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Your learning map"
+    },
+    {
+      "src": "/screenshots/narrow-home.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Learn Arabic with Ufuq"
+    },
+    {
+      "src": "/screenshots/narrow-explore.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Everything you need to learn Arabic"
+    },
+    {
+      "src": "/screenshots/narrow-programs.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Your learning map"
+    }
   ]
 }
