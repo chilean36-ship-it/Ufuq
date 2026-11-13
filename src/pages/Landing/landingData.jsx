@@ -138,17 +138,19 @@ export const FOOTER_COLUMNS = [
   {
     h: 'footer.h1',
     links: [
-      { href: '#explore', key: 'footer.explore' },
-      { href: '#pricing', key: 'footer.pricing' },
-      { href: '#stories', key: 'footer.stories' },
+      { href: '/index', key: 'footer.explore' },
+      { href: '/programs', key: 'nav.programs' },
+      { href: '/pricing', key: 'footer.pricing' },
+      { href: '/stories', key: 'footer.stories' },
+      { href: '/faq', key: 'nav.faq' },
     ],
   },
   {
     h: 'footer.h2',
     links: [
       { href: '#about', key: 'footer.about' },
-      { href: '#about-author', key: 'footer.teachers' },
-      { href: '#contacts', key: 'footer.contact' },
+      { href: '/about-author', key: 'footer.teachers' },
+      { href: '/contacts', key: 'footer.contact' },
     ],
   },
   {
@@ -160,3 +162,12 @@ export const FOOTER_COLUMNS = [
     ],
   },
 ];
+
+/** Crawlable landing sections: /programs, /pricing … show the landing page scrolled to that section, with their own title + description. */
+export const SECTION_SEO = {
+  programs: { id: 'programs', title: 'Arabic Courses & Programs — Ufuq Taleem', desc: 'Ufuq Taleem Arabic programs: live lessons, audio library, homework and an AI practice assistant, from beginner to advanced levels.' },
+  pricing: { id: 'pricing', title: 'Pricing & Plans — Ufuq Taleem', desc: 'Ufuq Taleem pricing: monthly and yearly plans for online Arabic learning with a native teacher.' },
+  stories: { id: 'stories', title: 'Student Stories & Reviews — Ufuq Taleem', desc: 'What students say about learning Arabic online with Ustaz Ali at Ufuq Taleem.' },
+  faq: { id: 'faq', title: 'FAQ — Ufuq Taleem', desc: 'Answers to common questions about learning Arabic online at Ufuq Taleem: lessons, levels, payments and access.' },
+  contacts: { id: 'contacts', title: 'Contact Us — Ufuq Taleem', desc: 'Contact Ufuq Taleem: questions about Arabic courses, enrollment and support.' },
+};

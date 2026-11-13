@@ -37,6 +37,9 @@ export default function App() {
         {/* pages with the shared language switcher */}
         <Route element={<SiteLayout />}>
           <Route path="/index" element={<LandingPage />} />
+          {['programs', 'pricing', 'stories', 'faq', 'contacts'].map((p) => (
+            <Route key={p} path={`/${p}`} element={<LandingPage />} />
+          ))}
           <Route path="/about-author" element={<AboutAuthor />} />
           {['terms', 'privacy', 'cookies', 'refund'].map((d) => (
             <Route key={d} path={`/${d}`} element={<LegalPage doc={d} />} />

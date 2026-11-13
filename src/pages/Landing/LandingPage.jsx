@@ -26,7 +26,7 @@ import { useLandingMedia } from '../../lib/landingMedia';
 import usePlanPrices from '../../lib/usePlanPrices';
 import {
   NAV_LINKS, ABOUT_CREDS, EXPLORE_CARDS, PROGRAMS, PROG_ARROW, DISCOVER_TABS,
-  FACES, QUOTES, PRICING_FEATURES, FAQ, FOOTER_COLUMNS,
+  FACES, QUOTES, PRICING_FEATURES, FAQ, FOOTER_COLUMNS, SECTION_SEO,
 } from './landingData';
 
 const PLAY_ICON = (
@@ -567,7 +567,7 @@ function Footer() {
 
 /* ------------------------------------------------------------------ page */
 export default function LandingPage() {
-  const { hash } = useLocation();
+  const { hash, pathname } = useLocation();
   const navigate = useNavigate();
   const [auth, setAuth] = useState({ open: false, mode: 'signup' });
   const [lightbox, setLightbox] = useState(null);
@@ -625,6 +625,29 @@ export default function LandingPage() {
     const el = document.getElementById(hash.slice(1));
     if (el) el.scrollIntoView();
   }, [hash]);
+
+  // /programs, /pricing, /faq … : own title / description / canonical, and scroll to the section once the page has rendered.
+  const seo = SECTION_SEO[pathname.replace(/^/|/$/g, '')];
+  useEffect(() => {
+    if (!seo) return undefined;
+    const prevTitle = document.title;
+    document.title = seo.title;
+    const desc = document.querySelector('meta[name="description"]');
+    const prevDesc = desc && desc.getAttribute('content');
+    if (desc) desc.setAttribute('content', seo.desc);
+    let canon = document.querySelector('link[rel="canonical"]');
+    const madeCanon = !canon;
+    if (!canon) { canon = document.createElement('link'); canon.rel = 'canonical'; document.head.appendChild(canon); }
+    const prevCanon = canon.getAttribute('href');
+    canon.setAttribute('href', 'https://ufuqtaleem.com/' + seo.id);
+    const timer = setTimeout(() => { const el = document.getElementById(seo.id); if (el) el.scrollIntoView(); }, checking ? 800 : 50);
+    return () => {
+      clearTimeout(timer);
+      document.title = prevTitle;
+      if (desc && prevDesc != null) desc.setAttribute('content', prevDesc);
+      if (madeCanon) canon.remove(); else canon.setAttribute('href', prevCanon);
+    };
+  }, [seo, checking]);
 
   if (checking) {
     return <Loader />;
