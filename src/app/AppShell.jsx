@@ -23,6 +23,7 @@ import ViewHost from './ViewHost';
 import { AppUiCtx, GroupSheet } from './AppUi';
 import { useMemo } from 'react';
 import hostCss from './app-host.css?inline';
+import nativeCss from './app-native.css?inline';
 
 const AiChat = lazy(() => import('../pages/Dashboard/AiChat/AiChat'));
 const LevelResultModal = lazy(() => import('../pages/Dashboard/LevelResult/LevelResultModal'));
@@ -105,6 +106,7 @@ function Inner() {
       <PageStyle css={pageCss} />
       <PageStyle css={profileViewCss} />
       <PageStyle css={hostCss} />
+      <PageStyle css={nativeCss} />
       <OfflineBar />
       <div className="ua-scroll" id="uaScroll">
         <div className="ua-route" key={(pathname.split('/')[2] || 'home') + ':' + switchNonce}>

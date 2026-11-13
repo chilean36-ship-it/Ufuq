@@ -5,12 +5,13 @@ import { useDashboardData } from '../context/DashboardDataContext';
 import { useTheme } from '../hooks/useTheme';
 import { useApp } from './AppContext';
 import { pushRecent } from './hooks';
+import useChatEnhance from './chatEnhance';
 import { Ico } from './ui';
 import { GroupPill } from './AppUi';
 import MyGroupView from '../pages/Dashboard/MyGroupView';
 import TasksView from '../pages/Dashboard/TasksView';
-import AttendanceView from '../pages/Dashboard/AttendanceView';
-import ProgressView from '../pages/Dashboard/ProgressView';
+import AttendanceScreen from './AttendanceScreen';
+import ProgressScreen from './ProgressScreen';
 import BillingView from '../pages/Dashboard/BillingView';
 import PaywallGate from '../pages/Dashboard/PaywallGate';
 import ProfileView from '../pages/Profile/ProfileView';
@@ -36,11 +37,13 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   const navigate = useNavigate();
   const { t } = useApp();
   const { t: tc } = useCabinetI18n();
-  const { locked, accessPending, groupReady, groupData } = useDashboardData();
+  const { locked, accessPending, groupReady, groupData, groups } = useDashboardData();
   const [theme, toggleTheme, themeMode, setThemeMode] = useTheme();
   const isIndividual = !!(groupData && groupData.type === 'individual');
+  const hasGroups = (groups || []).length > 1;
   const [chatOpen, setChatOpen] = useState(false);   // the group chat is a full-screen conversation: the app header and tab bar step aside
   const chatFocus = chatOpen && view === 'myGroup';
+  useChatEnhance(chatFocus);
   useEffect(() => {
     document.body.classList.toggle('ua-chat-open', chatFocus);
     return () => document.body.classList.remove('ua-chat-open');
@@ -69,8 +72,8 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   if (gated) body = <PaywallGate variant={view === 'myGroup' ? 'group' : undefined} onNavigate={onNavigate} />;
   else if (view === 'myGroup') body = accessPending ? null : <MyGroupView onNavigate={onNavigate} onChatOpenChange={setChatOpen} />;
   else if (view === 'tasks') body = <TasksView />;
-  else if (view === 'attendance') body = <AttendanceView />;
-  else if (view === 'progress') body = <ProgressView />;
+  else if (view === 'attendance') body = <AttendanceScreen />;
+  else if (view === 'progress') body = <ProgressScreen />;
   else if (view === 'library') body = <LibraryView />;
   else if (view === 'exam') body = <ExamView />;
   else if (view === 'certificates') body = <CertificatesView />;
@@ -86,8 +89,7 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
           ? <button type="button" className="ua-icon-btn" onClick={() => navigate(backTo)} aria-label={t('back')}><Ico n="back" /></button>
           : <span className="ua-bar-sp" />}
         <h1>{title || tc('Home')}</h1>
-        {GROUP_VIEWS.includes(view) ? <GroupPill className="in-bar" /> : null}
-        <span className="ua-bar-sp" />
+        {GROUP_VIEWS.includes(view) && hasGroups ? <GroupPill className="in-bar" /> : <span className="ua-bar-sp" />}
       </header>
       <div className={'main' + (chatFocus ? ' gc-focus' : '')}><div className="content">
         <Suspense fallback={<div className="ua-loading">{t('loading')}</div>}>{body}</Suspense>

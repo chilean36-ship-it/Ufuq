@@ -1,0 +1,79 @@
+/* Native screens that replace cabinet views inside the app (Attendance, Progress …) + shared motion helpers.
+   Loaded after app.css / app-v2.css / app-host.css. */
+.ua-native{ display:flex; flex-direction:column; gap:14px; padding:0; }
+.ua-native > [style*="--i:"]{ animation:uaRise .5s cubic-bezier(.2,.8,.2,1) backwards; animation-delay:calc(var(--i) * 55ms); }
+
+/* month switcher */
+.ua-monthbar{ display:flex; align-items:center; justify-content:space-between; padding:4px; border-radius:99px; background:var(--bg-2); border:1px solid var(--line); }
+.ua-monthbar b{ font:700 17px 'Fraunces',serif; }
+.ua-monthbar .ua-icon-btn:disabled{ opacity:.3; }
+[dir="ltr"] .ua-icon-btn.flip svg{ transform:scaleX(-1); } [dir="rtl"] .ua-monthbar .ua-icon-btn:not(.flip) svg{ transform:scaleX(-1); }
+
+/* hero */
+.ua-hero2{ position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; gap:12px; padding:22px 16px 18px; border-radius:28px; border:1px solid color-mix(in srgb, var(--lv, var(--gold)) 45%, var(--line)); background:linear-gradient(165deg, color-mix(in srgb, var(--lv, var(--gold)) 22%, var(--bg-2)), var(--bg-2) 70%); text-align:center; }
+.ua-hero2::before{ content:''; position:absolute; inset:-40% -20% auto auto; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, var(--lv, var(--gold)) 35%, transparent), transparent 70%); pointer-events:none; }
+.ua-hero2 > *{ position:relative; }
+.ua-hero2.prog{ align-items:flex-start; text-align:start; background:linear-gradient(135deg,#7C5CE6,#3b2494); color:#fff; border-color:transparent; }
+.ua-hero2.prog::before{ background:radial-gradient(circle, rgba(255,255,255,.28), transparent 70%); }
+.ua-hero2-msg{ margin:0; font-size:14.5px; line-height:1.5; color:var(--text); max-width:34ch; text-wrap:balance; }
+.ua-ring-n.big{ font-size:34px; }
+.ua-dots2{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; max-width:100%; }
+.ua-dots2 i{ width:18px; height:18px; border-radius:7px; background:var(--bg-3); animation:uaPopIn .4s cubic-bezier(.3,1.6,.5,1) backwards; animation-delay:calc(var(--d) * 30ms + .2s); }
+.ua-dots2 i.present, .ua-legend2 i.present{ background:#4CAF7A; } .ua-dots2 i.absent, .ua-legend2 i.absent{ background:#E4544C; }
+@keyframes uaPopIn{ from{ transform:scale(.3); opacity:0; } }
+.ua-legend2{ display:flex; gap:14px; font-size:12.5px; color:var(--text-muted); } .ua-legend2 span{ display:inline-flex; align-items:center; gap:6px; } .ua-legend2 i{ width:10px; height:10px; border-radius:4px; background:var(--bg-3); display:inline-block; }
+
+/* three stat tiles */
+.ua-tiles3{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.ua-t3{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:14px 6px; border-radius:22px; background:var(--bg-2); border:1px solid var(--line); }
+.ua-t3 b{ font:700 30px/1.1 'Fraunces',serif; font-variant-numeric:tabular-nums; } .ua-t3 small{ font-size:11.5px; font-weight:600; color:var(--text-muted); text-align:center; }
+.ua-t3.ok b{ color:#4CAF7A; } .ua-t3.bad b{ color:#E4544C; } .ua-t3.gold b{ color:var(--gold-bright); }
+html[data-theme="light"] .ua-t3.ok b{ color:#1c7a45; } html[data-theme="light"] .ua-t3.bad b{ color:#b4262b; }
+.ua-note{ margin:-4px 2px 0; font-size:12.5px; color:var(--text-muted); text-align:center; }
+
+/* history rows */
+.ua-hist{ display:flex; flex-direction:column; gap:8px; }
+.ua-hrow{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:18px; background:var(--bg-2); border:1px solid var(--line); animation:uaRise .45s cubic-bezier(.2,.8,.2,1) backwards; animation-delay:calc(var(--i, 0) * 45ms); }
+.ua-hrow-ic{ width:36px; height:36px; flex:none; border-radius:12px; display:grid; place-items:center; background:var(--bg-3); }
+.ua-hrow.present .ua-hrow-ic{ background:rgba(76,175,122,.16); color:#4CAF7A; } .ua-hrow.absent .ua-hrow-ic{ background:rgba(228,84,76,.16); color:#E4544C; }
+.ua-hrow-t{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; } .ua-hrow-t b{ font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ua-hrow-t small{ font-size:12.5px; color:var(--text-muted); }
+.ua-hrow-p{ font-size:13px; font-weight:700; color:var(--text-muted); white-space:nowrap; } .ua-hrow.present .ua-hrow-p{ color:#4CAF7A; } .ua-hrow.absent .ua-hrow-p{ color:#E4544C; }
+html[data-theme="light"] .ua-hrow.present .ua-hrow-p{ color:#1c7a45; } html[data-theme="light"] .ua-hrow.absent .ua-hrow-p{ color:#b4262b; }
+.ua-hrow.bar{ flex-wrap:wrap; row-gap:8px; } .ua-bar2{ flex:0 0 100%; height:8px; border-radius:99px; background:var(--bg-3); overflow:hidden; } .ua-bar2 i{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); transform-origin:left; animation:uaGrow .8s cubic-bezier(.2,.8,.2,1) backwards; animation-delay:calc(var(--d) * 70ms + .25s); }
+[dir="rtl"] .ua-bar2 i{ transform-origin:right; }
+@keyframes uaGrow{ from{ transform:scaleX(0); } }
+
+/* progress hero */
+.ua-prog-now{ display:flex; align-items:baseline; gap:10px; } .ua-prog-now b{ font:700 64px/1 'Fraunces',serif; } .ua-prog-now span{ opacity:.8; font-size:16px; }
+.ua-prog-now i{ font-style:normal; font-weight:800; font-size:14px; padding:4px 10px; border-radius:99px; background:rgba(255,255,255,.2); } .ua-prog-now i.up{ background:rgba(111,207,151,.3); } .ua-prog-now i.down{ background:rgba(255,120,120,.3); }
+.ua-skel.tall{ height:220px; border-radius:24px; }
+
+/* ---------- motion polish used across the app ---------- */
+.ua-tab.on .ua-tab-ic svg{ animation:uaTabBounce .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes uaTabBounce{ 0%{ transform:scale(.7) translateY(4px); } 60%{ transform:scale(1.18); } 100%{ transform:none; } }
+.ua-host .tk2-card, .ua-host .audio-card, .ua-host .st-card, .ua-host .ex2-lvlcard, .ua-host .pv-panel, .ua-host .bl-card, .ua-host .cf-card, .ua-host .gm-stat{ animation:uaCardIn .5s cubic-bezier(.2,.8,.2,1) backwards; }
+.ua-host .tk2-card:nth-child(2), .ua-host .audio-card:nth-child(2), .ua-host .st-card:nth-child(2), .ua-host .pv-panel:nth-child(2){ animation-delay:.06s; }
+.ua-host .tk2-card:nth-child(3), .ua-host .audio-card:nth-child(3), .ua-host .st-card:nth-child(3), .ua-host .pv-panel:nth-child(3){ animation-delay:.12s; }
+.ua-host .tk2-card:nth-child(4), .ua-host .audio-card:nth-child(4), .ua-host .st-card:nth-child(4), .ua-host .pv-panel:nth-child(4){ animation-delay:.18s; }
+.ua-host .tk2-card:nth-child(n+5), .ua-host .audio-card:nth-child(n+5), .ua-host .st-card:nth-child(n+5), .ua-host .pv-panel:nth-child(n+5){ animation-delay:.24s; }
+@keyframes uaCardIn{ from{ opacity:0; transform:translateY(14px); } }
+/* every real button gets a soft ring pulse on keyboard focus and a lift on hover (desktop) */
+@media (hover:hover){ .ua-tile2:hover .ua-tile2-ic, .ua-cat:hover .ua-cat-ic, .ua-scard:hover .ua-scard-ic{ transform:translateY(-2px) scale(1.04); } }
+.ua-tile2-ic, .ua-cat-ic, .ua-scard-ic{ transition:transform .2s cubic-bezier(.3,1.6,.5,1); }
+@media (prefers-reduced-motion:reduce){ .ua-native > *, .ua-hrow, .ua-dots2 i, .ua-bar2 i, .ua-tab.on .ua-tab-ic svg, .ua-host .tk2-card, .ua-host .audio-card, .ua-host .st-card{ animation:none !important; } }
+
+/* the cabinet stylesheet resets `.content section{padding:0}`; these cards are <section>s and need their padding back */
+.ua-host .ua-native section.ua-hero2{ padding:22px 16px 18px; }
+.ua-host .ua-native section.ua-hero2.prog{ padding:20px 18px 18px; }
+.ua-host .ua-native section.ua-card2{ padding:16px; }
+
+/* filter chips: one swipeable row instead of wrapping onto several lines */
+.ua-host .tk2-tabs, .ua-host .lib-tabs, .ua-host .ex2-tabs, .ua-host [class$="-filters"]{ display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; gap:8px; margin-inline:-16px; padding:2px 16px 6px; scrollbar-width:none; scroll-snap-type:x proximity; scroll-padding-inline:16px; }
+.ua-host .tk2-tabs::-webkit-scrollbar, .ua-host .lib-tabs::-webkit-scrollbar, .ua-host .ex2-tabs::-webkit-scrollbar{ display:none; }
+.ua-host .tk2-tab, .ua-host .lib-tab, .ua-host .ex2-tab{ flex:none; scroll-snap-align:start; white-space:nowrap; }
+
+/* exams list: the hero is a <section> (padding reset by the cabinet sheet) and the wrapper must not be a second card */
+.ua-host .we-panel{ background:transparent; border:0; border-radius:0; padding:0; box-shadow:none; }
+.ua-host .content section.ex2-hero{ padding:20px 18px; border-radius:24px; }
+.ua-host .ex2-hero .ex2-btn, .ua-host .ex2-hero-act .ex2-btn{ min-height:50px; border-radius:16px; font-weight:700; }
+.ua-host .ex2-row{ border-radius:20px; }

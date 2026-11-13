@@ -17,7 +17,7 @@
 
 /* cards */
 .ua-host .panel, .ua-host .tk2-card, .ua-host .st-card, .ua-host .pv-panel, .ua-host .bl-card, .ua-host .pgx-panel,
-.ua-host .ex2-lvlcard, .ua-host .we-panel, .ua-host .am-hero, .ua-host .group-main-card, .ua-host .group-members-card, .ua-host .lib-panel .audio-card, .ua-host .audio-card{
+.ua-host .ex2-lvlcard, .ua-host .am-hero, .ua-host .group-main-card, .ua-host .group-members-card, .ua-host .lib-panel .audio-card, .ua-host .audio-card{
   border-radius:24px; border:1px solid var(--line); background:var(--bg-2); box-shadow:none;
 }
 .ua-host .panel{ padding:16px; }
@@ -87,3 +87,52 @@ html[data-theme="light"] .ua-hw.od .ua-hw-d{ color:#b4262b; }
 /* a disabled primary action reads as disabled (not as pale text on a pale button) */
 .ua-host .group-page-join:disabled, .ua-host .tk2-primary:disabled, .ua-host .btn-join-group:disabled{ background:var(--bg-3); color:var(--text-muted); box-shadow:none; opacity:1; cursor:default; }
 body.ua-chat-open .ua-host{ padding-bottom:env(safe-area-inset-bottom); }
+
+/* =====================================================================================================
+   Group chat — Telegram-like. (higher specificity than chat.css, which is injected after this sheet)
+   ===================================================================================================== */
+.ua-app .ua-host .group-chat-card.group-chat-card--full{ border:0; border-radius:0; box-shadow:none; background:var(--bg); }
+.ua-app .ua-host .group-chat-full-head{ padding:6px 8px; gap:6px; min-height:60px; border-bottom:1px solid var(--line); background:var(--bg-2); }
+.ua-app .ua-host .group-chat-back-btn{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; }
+.ua-app .ua-host .gc-header-avatar{ width:42px; height:42px; font-size:17px; background:linear-gradient(145deg,var(--gold-bright),var(--gold)); color:#161411; }
+.ua-app .ua-host .gc-header-info h3{ font:700 16.5px 'Inter',sans-serif; }
+.ua-app .ua-host .gc-header-meta{ font-size:12.5px; }
+.ua-app .ua-host .gc-header-icon-btn{ width:44px; height:44px; border-radius:50%; }
+/* the wallpaper */
+.ua-app .ua-host .group-chat-body{ padding:8px 10px 10px; gap:3px; background:radial-gradient(420px 260px at 85% 8%, var(--gold-dim), transparent 70%), radial-gradient(380px 240px at 8% 92%, rgba(111,207,151,.07), transparent 70%), var(--bg); scroll-behavior:auto; overscroll-behavior:contain; }
+.ua-app .ua-host .gc-day-sep{ position:sticky; top:6px; z-index:3; align-self:center; margin:8px 0; padding:5px 14px; font-size:12px; font-weight:600; letter-spacing:0; border:0; background:color-mix(in srgb, var(--bg-2) 88%, transparent); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); box-shadow:0 1px 6px rgba(0,0,0,.18); text-transform:none; }
+.ua-app .ua-host .gc-day-sep::before, .ua-app .ua-host .gc-day-sep::after{ display:none; }
+/* bubbles */
+.ua-app .ua-host .group-chat-card .gc-msg-row{ position:relative; max-width:84%; gap:6px; }
+.ua-app .ua-host .group-chat-card .gc-msg-row.gc-grouped{ margin-top:1px; }
+.ua-app .ua-host .group-chat-card .gc-msg-bubble{ padding:7px 12px 6px; border-radius:18px 18px 18px 5px; font-size:15.5px; line-height:1.42; box-shadow:0 1px 1px rgba(0,0,0,.14); }
+.ua-app .ua-host .group-chat-card .gc-msg-row.gc-grouped .gc-msg-bubble{ border-top-left-radius:6px; }
+.ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-msg-bubble{ border-radius:18px 18px 5px 18px; background:linear-gradient(160deg,var(--gold-bright),var(--gold)); color:#161411; font-weight:500; }
+.ua-app .ua-host .group-chat-card .gc-msg-row.is-mine.gc-grouped .gc-msg-bubble{ border-top-right-radius:6px; }
+html[data-theme="light"] .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-msg-bubble{ color:#fff; }
+.ua-app .ua-host .gc-msg-name{ font-size:13px; font-weight:700; margin:0 0 2px 10px; }
+.ua-app .ua-host .gc-msg-avatar{ width:30px; height:30px; font-size:13px; }
+.ua-app .ua-host .gc-msg-avatar-gap{ width:30px; flex:none; }
+.ua-app .ua-host .gc-msg-more-btn{ display:none !important; }   /* menu = long-press (or right-click) like Telegram */
+.ua-app .ua-host .gc-bubble-meta{ font-size:11.5px; opacity:.75; }
+/* swipe to reply */
+.ua-app .ua-host .gc-msg-row.ua-swipe::before{ content:''; position:absolute; left:-44px; top:50%; width:32px; height:32px; margin-top:-16px; border-radius:50%; background:var(--gold-dim) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9A24B' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14L4 9l5-5'/%3E%3Cpath d='M20 20v-7a4 4 0 00-4-4H4'/%3E%3C/svg%3E") center/18px no-repeat; opacity:var(--sw,0); transform:scale(calc(.6 + var(--sw,0) * .4)); }
+/* new messages slide in */
+.ua-app .ua-host .group-chat-body > .gc-msg-row:nth-last-child(-n+3){ animation:uaMsgIn .26s cubic-bezier(.2,.9,.2,1) backwards; }
+@keyframes uaMsgIn{ from{ opacity:0; transform:translateY(10px) scale(.97); } }
+/* composer: a pill, a round send button */
+.ua-app .ua-host .gc-footer-wrap{ padding:6px 8px calc(8px + env(safe-area-inset-bottom)); background:var(--bg); border-top:0; }
+.ua-app .ua-host .group-chat-footer{ gap:8px; align-items:flex-end; }
+.ua-app .ua-host .gc-input-shell{ min-height:48px; border-radius:26px; border:1px solid var(--line); background:var(--bg-2); box-shadow:none; padding:0 4px; align-items:flex-end; }
+.ua-app .ua-host .gc-input-shell:focus-within{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+.ua-app .ua-host .group-chat-input{ font-size:16px; line-height:1.4; max-height:132px; padding:13px 6px; background:transparent; border:0; box-shadow:none; min-height:0; border-radius:0; }
+.ua-app .ua-host .gc-emoji-btn, .ua-app .ua-host .gc-attach-btn{ width:42px; height:46px; display:grid; place-items:center; }
+.ua-app .ua-host .group-chat-send, .ua-app .ua-host .gc-mic-btn{ width:48px; height:48px; flex:none; border-radius:50%; border:0; display:grid; place-items:center; background:linear-gradient(145deg,var(--gold-bright),var(--gold)); color:#161411; box-shadow:0 6px 16px -6px rgba(201,162,75,.8); animation:uaPop .22s cubic-bezier(.3,1.6,.5,1) both; }
+html[data-theme="light"] .ua-app .ua-host .group-chat-send, html[data-theme="light"] .ua-app .ua-host .gc-mic-btn{ color:#fff; }
+@keyframes uaPop{ from{ transform:scale(.5); opacity:0; } }
+.ua-app .ua-host .gc-jump-btn{ width:44px; height:44px; right:12px; bottom:12px; box-shadow:0 8px 20px rgba(0,0,0,.35); }
+.ua-app .ua-host .gc-composer-bar{ margin:0 8px; border-radius:14px; }
+/* keyboard up: more room for messages */
+body.ua-kb .ua-app .ua-host .gc-footer-wrap{ padding-bottom:6px; }
+.ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-meta, .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-time{ color:rgba(22,20,17,.68); opacity:1; }
+html[data-theme="light"] .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-meta, html[data-theme="light"] .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .gc-bubble-time{ color:rgba(255,255,255,.85); }
