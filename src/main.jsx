@@ -9,6 +9,7 @@ import './styles/ui-prefs.css';
 import './styles/captcha.css';
 import './styles/ui-fields.css';
 import './styles/mobile-safety.css';
+import './lib/pwaInstall'; // starts listening for the browser's install event right away
 import { applyUiPrefs } from './lib/uiPrefs';
 import { installLinkUrlHider } from './lib/hideLinkUrls';
 

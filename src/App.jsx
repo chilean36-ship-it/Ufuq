@@ -6,6 +6,7 @@ import SiteLayout from './components/SiteLayout';
 import RequireAuth from './components/RequireAuth';
 import RequireRole from './components/RequireRole';
 import Loader from './components/Loader';
+import InstallPrompt from './components/InstallPrompt';
 import LandingPage from './pages/Landing/LandingPage';
 
 // Every page except the landing page is split into its own chunk: a visitor on "/index" no longer downloads the
@@ -30,6 +31,7 @@ export default function App() {
     <>
       <ScrollManager />
       <RecoveryGate />
+      <InstallPrompt />
       <Suspense fallback={<Loader />}>
       <Routes>
         {/* pages with the shared language switcher */}
