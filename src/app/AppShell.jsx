@@ -20,6 +20,7 @@ import LearnScreen from './LearnScreen';
 import AiScreen from './AiScreen';
 
 import ViewHost from './ViewHost';
+import hostCss from './app-host.css?inline';
 
 const AiChat = lazy(() => import('../pages/Dashboard/AiChat/AiChat'));
 const LevelResultModal = lazy(() => import('../pages/Dashboard/LevelResult/LevelResultModal'));
@@ -97,6 +98,7 @@ function Inner() {
       <PageStyle css={shellCss} />
       <PageStyle css={pageCss} />
       <PageStyle css={profileViewCss} />
+      <PageStyle css={hostCss} />
       <OfflineBar />
       <div className="ua-scroll" id="uaScroll">
         <div className="ua-route" key={pathname.split('/')[2] || 'home'}>
