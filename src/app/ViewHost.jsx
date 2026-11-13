@@ -72,7 +72,7 @@ export default function ViewHost({ view, back, backTo = '/app', onNavigate, onUp
   let body = null;
   if (gated) body = <PaywallGate variant={view === 'myGroup' ? 'group' : undefined} onNavigate={onNavigate} />;
   else if (view === 'myGroup') body = accessPending ? null : <MyGroupView onNavigate={onNavigate} onChatOpenChange={setChatOpen} />;
-  else if (view === 'tasks') body = <TasksView />;
+  else if (view === 'tasks') body = <TasksView native />;
   else if (view === 'attendance') body = <AttendanceScreen />;
   else if (view === 'progress') body = <ProgressScreen />;
   else if (view === 'library') body = <LibraryView />;

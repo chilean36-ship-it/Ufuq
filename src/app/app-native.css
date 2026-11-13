@@ -77,3 +77,8 @@ html[data-theme="light"] .ua-hrow.present .ua-hrow-p{ color:#1c7a45; } html[data
 .ua-host .content section.ex2-hero{ padding:20px 18px; border-radius:24px; }
 .ua-host .ex2-hero .ex2-btn, .ua-host .ex2-hero-act .ex2-btn{ min-height:50px; border-radius:16px; font-weight:700; }
 .ua-host .ex2-row{ border-radius:20px; }
+
+.ua-tk-hero{ flex-direction:row; align-items:center; gap:16px; margin-bottom:12px; }
+.ua-tk-hero-t{ display:flex; flex-direction:column; gap:4px; } .ua-tk-hero-t b{ font:700 22px 'Fraunces',serif; } .ua-tk-hero-t span{ font-size:14px; opacity:.85; }
+.ua-tk-seg{ margin:14px 0 12px; }
+.ua-host .tk2 .tk2-card{ border-radius:22px; }
