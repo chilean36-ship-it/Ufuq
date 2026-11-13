@@ -162,3 +162,4 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 - Removed: `ufuq_group_for_level`, `ufuq_level_group_name` (unused).
 - Test: `npm run test:sql` (throw-away local Postgres; fixture `test/sql/level_system_baseline.sql`).
 - After applying: open Admin > Groups and place the students listed under "Students in switched-off groups" (4 on 2026-11-10: Group A7 x2, A6, E4).
+- APPLIED (2026-11-13): listening migrations `20261126_level9_final_listening.sql`, `20261127_level2_midterm_listening.sql`, `20261127b_level2_final_listening.sql`: data only. Five listening questions (Gemini fusha audio in `public/listening/levelN/g/`) appended to every paper of Level 9 final, Level 2 midterm and Level 2 final (all papers unpublished). Done so far: Level 1 (both), Level 2 (both), Level 9 final. Pending audio: the other levels (text in `Ufuq web/listening-all-levels`, generator `tools/gen-gemini.mjs`, SQL generator `tools/make-sql.mjs`).
