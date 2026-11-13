@@ -344,8 +344,14 @@ export function useGroupChat({ groupCode, user, myName, t }) {
   }, [commitMessages]);
 
   // Composer submit: edit mode edits, reply mode replies, otherwise a plain message.
+  // flood guard: at most 8 messages / edits per 10 seconds from one person (protects the group and the database from spam or a stuck key)
+  const sendTimes = useRef([]);
   const submitComposer = useCallback((text) => {
     if (!text.trim()) return;
+    const now = Date.now();
+    sendTimes.current = sendTimes.current.filter((x) => now - x < 10000);
+    if (sendTimes.current.length >= 8) return;
+    sendTimes.current.push(now);
     const mode = composerRef.current;
     setComposer(null);
     if (mode && mode.type === 'edit') editMessage(mode.id, text);

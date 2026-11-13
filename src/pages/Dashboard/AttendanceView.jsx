@@ -24,14 +24,13 @@ export function LessonBlocks({ lessons, thin }) {
   );
 }
 
-/** Warning / status line for a month's numbers. */
+/** Status line for a month's numbers: "<state> — lessons missed this month: N". The state follows N (0 = good standing, 3 = limit). */
 export function statusMessage(t, s) {
   if (!s.total) return t('No lessons scheduled this month.');
-  if (s.level === 'danger') return t("Warning — you've exceeded the allowed absences by {n}. Please talk to your teacher.").replace('{n}', s.over);
-  if (s.level === 'warn') return s.left === 0
-    ? t("Limit reached — you can't miss any more lessons this month.")
-    : t('Careful — absences left before the limit: {n}.').replace('{n}', s.left);
-  return t('Good standing — absences left this month: {n}.').replace('{n}', s.left);
+  const base = (key) => t(key).replace('{n}', s.absent);
+  if (s.level === 'danger') return base('Limit reached — lessons missed this month: {n}. Lesson sections are paused until your teacher allows access.');
+  if (s.level === 'warn') return base('Careful — lessons missed this month: {n}.');
+  return base('Good standing — lessons missed this month: {n}.');
 }
 
 /** Attendance page — monthly attendance: a month's lessons = 100 %, every missed lesson lowers it equally. */
@@ -134,13 +133,7 @@ export default function AttendanceView() {
                 <div className="am-stat"><b id="attPresentBig">{stats ? stats.present : '—'}</b><span>{t('Present')}</span></div>
                 <div className="am-stat"><b id="attAbsentBig">{stats ? stats.absent : '—'}</b><span>{t('Absent')}</span></div>
                 <div className="am-stat"><b>{stats ? stats.allowed : '—'}</b><span>{t('Allowed absences')}</span></div>
-                <div className="am-stat em"><b>{stats ? Math.max(0, stats.left) : '—'}</b><span>{t('Absences left')}</span></div>
               </div>
-              {stats && stats.total > 0 && (
-                <p className="am-note">
-                  {t('Each missed lesson')}: −{fmtPct(stats.perLesson)}% · {t('Allowed absences')}: {MAX_ABSENCES}
-                </p>
-              )}
             </div>
           </div>
 

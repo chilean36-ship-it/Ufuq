@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
+import { useDashboardData } from '../../context/DashboardDataContext';
 
 /* "Subscription required" window shown in place of a section that needs a paid plan.
    Only what says "not paid" lives here: lock badge, status, title, one explanation, the way to pay (CTA → /checkout).
@@ -128,12 +129,16 @@ html[dir="rtl"] .pw-btn:hover .pw-arrow{ transform:scaleX(-1) translateX(3px); }
 
 export default function PaywallGate({ onNavigate, variant }) {
   const { t } = useCabinetI18n();
+  const { lockReason, attLock } = useDashboardData();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const timer = useRef(0);
   const isGroup = variant === 'group';
-  const title = isGroup ? t('You are not subscribed') : t('Subscription required');
-  const sub = isGroup
+  const byAttendance = lockReason === 'attendance';
+  const title = byAttendance ? t('Access paused: too many missed lessons') : isGroup ? t('You are not subscribed') : t('Subscription required');
+  const sub = byAttendance
+    ? t('You missed {n} lessons this month, so the lesson sections are paused. Please talk to your teacher or the administrator — they can allow access again.').replace('{n}', String((attLock && attLock.absent) || 3))
+    : isGroup
     ? t('Your group opens after you pay for a plan. Choose a plan to join your group, see the lessons and chat with your classmates.')
     : t('This section opens after you pay for a plan. You can still see your cabinet, your billing history and your profile.');
 
@@ -152,17 +157,23 @@ export default function PaywallGate({ onNavigate, variant }) {
       <style>{CSS}</style>
       <div className={'pw-dialog' + (busy ? ' pw-leaving' : '')} role="alertdialog" aria-labelledby="pw-title" aria-describedby="pw-sub">
         <div className="pw-orb">{LOCK}</div>
-        <span className="pw-status">{t('Payment not made')}</span>
+        <span className="pw-status">{byAttendance ? t('Attendance limit reached') : t('Payment not made')}</span>
         <h2 className="pw-title" id="pw-title">{title}</h2>
         <p className="pw-sub" id="pw-sub">{sub}</p>
-        <div className="pw-actions">
-          <button type="button" className="pw-btn" onClick={goPay} aria-busy={busy ? 'true' : 'false'} aria-disabled={busy ? 'true' : undefined}>
-            {busy ? <span className="pw-spin" aria-hidden="true" /> : null}
-            <span>{busy ? t('Opening checkout…') : t('Choose a plan')}</span>
-            {busy ? null : ARROW}
-          </button>
-          <button type="button" className="pw-link" disabled={busy} onClick={() => onNavigate('billing')}>{t('Open Billing')}</button>
-        </div>
+        {byAttendance ? (
+          <div className="pw-actions">
+            <button type="button" className="pw-btn" onClick={() => onNavigate('attendance')}><span>{t('See my attendance')}</span></button>
+          </div>
+        ) : (
+          <div className="pw-actions">
+            <button type="button" className="pw-btn" onClick={goPay} aria-busy={busy ? 'true' : 'false'} aria-disabled={busy ? 'true' : undefined}>
+              {busy ? <span className="pw-spin" aria-hidden="true" /> : null}
+              <span>{busy ? t('Opening checkout…') : t('Choose a plan')}</span>
+              {busy ? null : ARROW}
+            </button>
+            <button type="button" className="pw-link" disabled={busy} onClick={() => onNavigate('billing')}>{t('Open Billing')}</button>
+          </div>
+        )}
       </div>
     </div>
   );

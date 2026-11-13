@@ -144,3 +144,24 @@
 .ua-gpill svg{ color:var(--gold-bright); flex:none; }
 .ua-gpill.in-bar{ position:static; height:34px; max-width:46%; flex:none; margin-inline-end:4px; }
 .ua-bar{ position:sticky; }
+
+/* ---- v3 fixes ---- */
+/* the route wrapper must NOT keep a transform/opacity animation state: Chrome then treats it as the containing block of every
+   position:fixed modal inside it (group info, "class not started" …), which pushed them to the wrong place and under the tab bar */
+.ua-route{ animation:uaRouteIn .28s ease backwards; }
+@keyframes uaRouteIn{ from{ opacity:0; } }
+/* ring: the number sits exactly in the middle */
+.ua-ring-in{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; text-align:center; }
+.ua-wd .ua-ring-in small{ font-size:13px; line-height:1; margin:0; }
+/* centre tab: the label no longer hides under the round button */
+.ua-tab.center .ua-tab-ic{ margin-top:-18px; }
+.ua-tab.center .ua-tab-l{ margin-top:5px; }
+
+/* staff (teacher / admin) entry */
+.ua-staff-screen{ justify-content:flex-start; gap:18px; padding-top:calc(env(safe-area-inset-top) + 36px); }
+.ua-staff-top{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; }
+.ua-staff-top h2{ margin:10px 0 0; font:700 24px 'Fraunces',serif; }
+.ua-staff-list{ display:flex; flex-direction:column; gap:10px; }
+.ua-staff-card{ display:flex; align-items:center; gap:14px; width:100%; min-height:64px; padding:12px 16px; border-radius:20px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); font:600 16px 'Inter',sans-serif; text-decoration:none; text-align:start; cursor:pointer; }
+.ua-staff-card .ua-row-t{ flex:1; } .ua-staff-card.gold{ border-color:var(--gold); background:linear-gradient(135deg,var(--gold-dim),var(--bg-2)); }
+.ua-staffbar{ display:flex; align-items:center; gap:10px; margin:0 16px; padding:12px 14px; border-radius:18px; border:1px solid var(--gold); background:var(--gold-dim); color:var(--gold-bright); font-weight:700; font-size:14.5px; text-decoration:none; } .ua-staffbar span{ flex:1; }

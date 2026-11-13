@@ -10,7 +10,7 @@ import appCss2 from './app-v2.css?inline';
 import { AppProvider, isOnboarded, useApp } from './AppContext';
 import Onboarding from './Onboarding';
 import AuthScreen from './AuthScreen';
-import { Logo } from './ui';
+import { Ico, Logo } from './ui';
 import { ToastProvider } from './hooks';
 import Celebrate from './Celebrate';
 import { useTheme } from '../hooks/useTheme';
@@ -26,16 +26,21 @@ function Splash({ label }) {
   );
 }
 
-function StaffScreen({ auth }) {
+function StaffScreen({ auth, onStudent }) {
   const { t } = useApp();
-  const href = auth.role === 'admin' ? '/admin' : '/teacher';
+  const isAdmin = auth.role === 'admin';
+  // main admin (any tier but "standard") and teachers start in the teacher panel; an ordinary admin starts in the admin panel
+  const href = isAdmin && auth.tier === 'standard' ? '/admin' : auth.role === 'teacher' ? '/teacher' : isAdmin && auth.tier ? '/teacher' : '/admin';
+  const label = href === '/admin' ? t('adminPanel') : t('teacherPanel');
   return (
-    <div className="ua-screen ua-splash">
-      <Logo size={72} />
-      <h2 className="center">{t('teacherAcc')}</h2>
-      <p className="ua-sub center">{t('teacherAccSub')}</p>
+    <div className="ua-screen ua-staff-screen">
+      <div className="ua-staff-top"><Logo size={64} /><h2>{t('teacherAcc')}</h2><p className="ua-sub">{t('staffHint')}</p></div>
+      <div className="ua-staff-list">
+        <a className="ua-staff-card gold" href={href}><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{label}</span><Ico n="chev" size={18} /></a>
+        {isAdmin && href !== '/admin' && <a className="ua-staff-card" href="/admin"><span className="ua-row-ic"><Ico n="settings" size={22} /></span><span className="ua-row-t">{t('adminPanel')}</span><Ico n="chev" size={18} /></a>}
+        {isAdmin && onStudent && <button type="button" className="ua-staff-card" onClick={onStudent}><span className="ua-row-ic"><Ico n="home" size={22} /></span><span className="ua-row-t">{t('studentApp')}</span><Ico n="chev" size={18} /></button>}
+      </div>
       <div className="ua-actions" style={{ width: '100%' }}>
-        <a className="ua-btn ua-btn-primary" href={href}>{t('openPanel')}</a>
         <button type="button" className="ua-btn ua-btn-ghost" onClick={async () => { await ufuqSignOut(); window.location.reload(); }}>{t('signOut')}</button>
       </div>
     </div>
@@ -49,6 +54,7 @@ function Root() {
   const [auth, setAuth] = useState(null);
   const [guest, setGuest] = useState(() => (isOnboarded() ? 'signin' : 'onboarding'));
   const [failed, setFailed] = useState(false);
+  const [studentView, setStudentView] = useState(() => { try { return sessionStorage.getItem('ufuq-staff-student') === '1'; } catch (e) { return false; } });
   const alive = useRef(true);
 
   const check = useCallback(async () => {
@@ -68,7 +74,7 @@ function Root() {
     }
     if (!alive.current) return;
     if (!result) { setAuth(null); setPhase('guest'); return; }
-    setAuth({ user: result.user, role: result.role, fullName: result.full_name, status: result.status });
+    setAuth({ user: result.user, role: result.role, fullName: result.full_name, status: result.status, tier: result.admin_tier || null });
     setPhase('in');
     // clean ?code= / #access_token= left by Google/Apple sign-in
     if (oauth) window.history.replaceState(null, '', '/app');
@@ -92,7 +98,8 @@ function Root() {
   if (phase === 'checking') return <Splash />;
   if (phase === 'in' && auth) {
     if (auth.role === 'student' && auth.status === 'blocked') return <BlockedNotice />;
-    if (auth.role !== 'student') return <StaffScreen auth={auth} />;
+    // admins may use the student app too (as on the website); teachers go to their panel
+    if (auth.role !== 'student' && !(auth.role === 'admin' && studentView)) return <StaffScreen auth={auth} onStudent={auth.role === 'admin' ? () => { try { sessionStorage.setItem('ufuq-staff-student', '1'); } catch (e) { /* ignore */ } setStudentView(true); } : null} />;
     return <Suspense fallback={<Splash />}><AppShell auth={auth} /></Suspense>;
   }
   if (guest === 'onboarding') return <Onboarding onFinish={() => setGuest('signup')} onHaveAccount={() => setGuest('signin')} />;
@@ -109,9 +116,10 @@ export default function AppRoot() {
     const vp = document.querySelector('meta[name="viewport"]');
     const vpWas = vp ? vp.getAttribute('content') : null;
     if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content');
-    const noGesture = (e) => e.preventDefault();
-    const noCtrlWheel = (e) => { if (e.ctrlKey) e.preventDefault(); };
-    const noMultiTouch = (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); };
+    const zoomable = (e) => !!(e.target && e.target.closest && e.target.closest('[data-zoomable]'));
+    const noGesture = (e) => { if (!zoomable(e)) e.preventDefault(); };
+    const noCtrlWheel = (e) => { if (e.ctrlKey && !zoomable(e)) e.preventDefault(); };
+    const noMultiTouch = (e) => { if (e.touches && e.touches.length > 1 && !zoomable(e)) e.preventDefault(); };
     // The app (and the exam room) fill the VISIBLE area: when the keyboard opens the page shrinks to what is left above it
     // instead of the keyboard covering the bottom (Chrome on Android overlays by default). --ua-vh is that height.
     const vv = window.visualViewport;

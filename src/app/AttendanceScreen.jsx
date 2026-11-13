@@ -86,9 +86,8 @@ export default function AttendanceScreen() {
       <div className="ua-tiles3" style={{ '--i': 2 }}>
         <div className="ua-t3 ok"><b>{stats ? stats.present : '—'}</b><small>{t('Present')}</small></div>
         <div className="ua-t3 bad"><b>{stats ? stats.absent : '—'}</b><small>{t('Absent')}</small></div>
-        <div className="ua-t3 gold"><b>{stats ? Math.max(0, stats.left) : '—'}</b><small>{t('Absences left')}</small></div>
+        <div className="ua-t3 gold"><b>{MAX_ABSENCES}</b><small>{t('Allowed absences')}</small></div>
       </div>
-      {stats && stats.total > 0 && <p className="ua-note" style={{ '--i': 3 }}>{t('Each missed lesson')}: −{fmtPct(stats.perLesson)}% · {t('Allowed absences')}: {MAX_ABSENCES}</p>}
 
       <div className="ua-sh-h" style={{ '--i': 4 }}><h3>{t('Session history')}</h3>{stats && history.length > 0 && <span className="ua-chip">{history.filter((l) => l.status === 'present').length}/{history.length}</span>}</div>
       <div className="ua-hist">

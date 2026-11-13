@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import ZoomPan from './ZoomPan';
 
 /**
  * Full-size photo viewer that opens ON the page (no new tab): dark backdrop, big photo, ‹ › between the photos of one student,
@@ -16,10 +17,8 @@ const CSS = `
 .plb-btn:hover{ background:rgba(255,255,255,.18); }
 .plb-btn:focus-visible{ outline:2px solid #E5C878; outline-offset:2px; }
 .plb-btn svg{ width:18px; height:18px; }
-.plb-stage{ position:relative; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:0 64px 18px; overflow:auto; }
-.plb-img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; cursor:zoom-in; box-shadow:0 20px 60px rgba(0,0,0,.6); }
-.plb-stage.zoom{ align-items:flex-start; justify-content:flex-start; }
-.plb-stage.zoom .plb-img{ max-width:none; max-height:none; cursor:zoom-out; }
+.plb-stage{ position:relative; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:0 64px 18px; overflow:hidden; }
+.plb-zp{ cursor:zoom-in; } .plb-stage.zoom .plb-zp{ cursor:grab; }
 .plb-nav{ position:absolute; top:50%; transform:translateY(-50%); width:46px; height:46px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.22); border-radius:50%; background:rgba(0,0,0,.55); color:#fff; cursor:pointer; z-index:2; }
 .plb-nav:hover{ background:rgba(255,255,255,.2); }
 .plb-nav.prev{ inset-inline-start:10px; } .plb-nav.next{ inset-inline-end:10px; }
@@ -34,6 +33,7 @@ const ico = (d) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 
 export default function PhotoLightbox({ photos, index, onIndex, onClose, onDownload, labels }) {
   const [zoom, setZoom] = useState(false);
+  const zp = useRef(null);
   const n = photos ? photos.length : 0;
   const open = n > 0 && index != null && index >= 0 && index < n;
   const L = { close: 'Close', prev: 'Previous', next: 'Next', download: 'Download', ...(labels || {}) };
@@ -61,12 +61,15 @@ export default function PhotoLightbox({ photos, index, onIndex, onClose, onDownl
         <div className="plb-name" dir="auto">{n > 1 && <b>{index + 1} / {n}</b>}{p.name}</div>
         <div className="plb-act">
           {onDownload && <button type="button" className="plb-btn" onClick={() => onDownload(p)}>{ico(<><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M7 10l5 5 5-5M12 15V3" /></>)}{L.download}</button>}
+          <button type="button" className="plb-btn" onClick={() => zp.current && zp.current.zoomBy(1.5)} aria-label="Zoom in">{ico(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M11 8v6M8 11h6" /></>)}</button>
+          <button type="button" className="plb-btn" onClick={() => zp.current && zp.current.zoomBy(1 / 1.5)} aria-label="Zoom out">{ico(<><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M8 11h6" /></>)}</button>
           <button type="button" className="plb-btn" onClick={onClose} aria-label={L.close} autoFocus>{ico(<path d="M18 6L6 18M6 6l12 12" />)}</button>
         </div>
       </div>
-      <div className={'plb-stage' + (zoom ? ' zoom' : '')} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={'plb-stage' + (zoom ? ' zoom' : '')}>
         {index > 0 && <button type="button" className="plb-nav prev" onClick={() => onIndex(index - 1)} aria-label={L.prev}>{ico(<path d="M15 6l-6 6 6 6" />)}</button>}
-        <img className="plb-img" src={p.url} alt="" onClick={() => setZoom((z) => !z)} />
+        <ZoomPan ref={zp} src={p.url} className="plb-zp" onZoomChange={setZoom}
+                 onSwipe={(d) => { const to = index + d; if (to >= 0 && to < n) onIndex(to); }} />
         {index < n - 1 && <button type="button" className="plb-nav next" onClick={() => onIndex(index + 1)} aria-label={L.next}>{ico(<path d="M9 6l6 6-6 6" />)}</button>}
       </div>
       {n > 1 && <div className="plb-dots">{photos.map((_, i) => <i key={i} className={i === index ? 'on' : ''} />)}</div>}

@@ -9,6 +9,7 @@ import PageStyle from '../../components/PageStyle';
 import Loader from '../../components/Loader';
 import PhotoLightbox from '../../components/PhotoLightbox';
 import tasksCss from './tasks.css?inline';
+import { Ring } from '../../app/ui';
 
 const svgp = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
 const IC = {
@@ -230,7 +231,7 @@ function TaskCard({ task, submission, onSubmitted, t, toast, max }) {
 const FILTERS = ['all', 'todo', 'submitted', 'overdue'];
 
 /** Tasks (homework): cards with a clear status, photo / file upload, and the teacher's grade + comment. */
-export default function TasksView() {
+export default function TasksView({ native = false }) {
   const { t } = useCabinetI18n();
   const { user, groupCode, groupReady } = useDashboardData();
   const joined = !!groupCode;
@@ -276,12 +277,29 @@ export default function TasksView() {
   return (
     <section id="tasksView" className="tk2">
       <PageStyle css={tasksCss} />
-      <div className="inner-page-head">
-        <div>
-          <h1>{t('Tasks')}</h1>
-          <p>{t('Homework and assignments from your teacher. Upload your work before the deadline.')}</p>
+      {!native && (
+        <div className="inner-page-head">
+          <div>
+            <h1>{t('Tasks')}</h1>
+            <p>{t('Homework and assignments from your teacher. Upload your work before the deadline.')}</p>
+          </div>
         </div>
-      </div>
+      )}
+      {native && joined && tasks && tasks.length > 0 && (
+        <>
+          <section className="ua-hero2 prog ua-tk-hero" style={{ '--i': 0 }}>
+            <Ring value={view.counts.all ? view.counts.submitted / view.counts.all : 0} size={96} stroke={10} color="#fff">
+              <b className="ua-ring-n">{view.counts.submitted}/{view.counts.all}</b>
+            </Ring>
+            <div className="ua-tk-hero-t"><b>{t('Tasks')}</b><span>{t('Submitted')}: {view.counts.submitted}</span></div>
+          </section>
+          <div className="ua-tiles3" style={{ '--i': 1 }}>
+            <div className="ua-t3 gold"><b>{view.counts.todo}</b><small>{t('To do')}</small></div>
+            <div className="ua-t3 ok"><b>{view.counts.submitted}</b><small>{t('Submitted')}</small></div>
+            <div className="ua-t3 bad"><b>{view.counts.overdue}</b><small>{t('Overdue')}</small></div>
+          </div>
+        </>
+      )}
 
       {!joined ? (
         <div className="panel" id="tasksLockedPanel">
@@ -297,10 +315,10 @@ export default function TasksView() {
         <div className="tk2-empty">{IC.clip}<h3>{t('No tasks assigned yet.')}</h3><p>{t('When your teacher adds homework, it will appear here.')}</p></div>
       ) : (
         <>
-          <div className="tk2-tabs" role="tablist" aria-label={t('Tasks')}>
+          <div className={native ? 'ua-seg ua-tk-seg' : 'tk2-tabs'} role="tablist" aria-label={t('Tasks')}>
             {FILTERS.map((k) => (
-              <button key={k} type="button" role="tab" aria-selected={filter === k} className={'tk2-tab' + (filter === k ? ' on' : '') + (k === 'overdue' && view.counts.overdue ? ' alert' : '')} onClick={() => setFilter(k)}>
-                {FLABEL[k]}<i>{view.counts[k]}</i>
+              <button key={k} type="button" role="tab" aria-selected={filter === k} className={(native ? '' : 'tk2-tab') + (filter === k ? ' on' : '') + (k === 'overdue' && view.counts.overdue ? ' alert' : '')} onClick={() => setFilter(k)}>
+                {FLABEL[k]}{native ? ' ' + view.counts[k] : <i>{view.counts[k]}</i>}
               </button>
             ))}
           </div>

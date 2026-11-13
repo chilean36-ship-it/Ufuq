@@ -1,5 +1,6 @@
 // Extra texts for the redesigned app screens (merged into APP_DICT by strings.js).
 const EN = {
+  adminPanel: 'Admin panel', teacherPanel: 'Teacher panel', studentApp: 'Student app', staffHint: 'Choose where to go',
   bestWord: 'Best', avgWord: 'Average',
   groupSwitch: 'Switch group', groupsTitle: 'Your groups', groupOne: 'Group',
   why_media: 'Films, music and news',
@@ -21,6 +22,7 @@ const EN = {
   installBanner: 'Install for the best experience', startsAt: 'Starts', hello2: 'Hello',
 };
 const UZ = {
+  adminPanel: 'Admin paneli', teacherPanel: 'O‘qituvchi paneli', studentApp: 'Talaba ilovasi', staffHint: 'Qayerga o‘tishni tanlang',
   bestWord: 'Eng yaxshi', avgWord: 'O‘rtacha',
   groupSwitch: 'Guruhni almashtirish', groupsTitle: 'Guruhlaringiz', groupOne: 'Guruh',
   why_media: 'Film, musiqa va yangiliklar',
@@ -42,6 +44,7 @@ const UZ = {
   installBanner: 'Eng yaxshi tajriba uchun o‘rnating', startsAt: 'Boshlanadi', hello2: 'Salom',
 };
 const RU = {
+  adminPanel: 'Панель администратора', teacherPanel: 'Панель учителя', studentApp: 'Приложение студента', staffHint: 'Выберите, куда перейти',
   bestWord: 'Лучший', avgWord: 'Среднее',
   groupSwitch: 'Сменить группу', groupsTitle: 'Ваши группы', groupOne: 'Группа',
   why_media: 'Фильмы, музыка и новости',
@@ -63,6 +66,7 @@ const RU = {
   installBanner: 'Установите для лучшего опыта', startsAt: 'Начало', hello2: 'Привет',
 };
 const AR = {
+  adminPanel: 'لوحة المشرف', teacherPanel: 'لوحة المعلّم', studentApp: 'تطبيق الطالب', staffHint: 'اختر وجهتك',
   bestWord: 'الأفضل', avgWord: 'المتوسط',
   groupSwitch: 'تبديل المجموعة', groupsTitle: 'مجموعاتك', groupOne: 'المجموعة',
   why_media: 'الأفلام والموسيقى والأخبار',
