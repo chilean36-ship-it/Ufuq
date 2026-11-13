@@ -44,6 +44,11 @@ Disallow: /
 User-agent: *
 Allow: /index
 Allow: /about-author
+Allow: /programs
+Allow: /pricing
+Allow: /stories
+Allow: /faq
+Allow: /contacts
 Allow: /terms
 Allow: /privacy
 Allow: /cookies
