@@ -49,6 +49,12 @@
 @media (max-width:900px){
   .sc-stage{padding:0 8px;}
 }
+/* Phones: let the video use the full screen width (cancel the page gutter, no fake browser bar, no side borders). */
+@media (max-width:640px){
+  .sc-stage{margin-inline:-20px; padding:0; max-width:none;}
+  .sc-frame{border-radius:0; border-inline:0;}
+  .sc-bar{display:none;}
+}
 @media (max-width:560px){
   .showcase{padding:80px 0 100px;}
   .sc-cta{padding:16px; gap:12px;} .sc-play{width:56px; height:56px;} .sc-play svg{width:24px; height:24px;}
