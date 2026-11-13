@@ -31,7 +31,8 @@ import { getMyAccess } from '../../lib/payments';
 import useTableRefresh from '../../hooks/useLiveRefresh';
 import paymentsDict from '../../i18n/admin-payments';
 import { canOpenPage } from '../../lib/adminTiers';
-import { PANEL_ROUTES, fetchPanelProfile, verifySuperAdmin } from '../../lib/panelAccess';
+import { fetchPanelProfile, inApp, outRoute, panelRoute, verifySuperAdmin } from '../../lib/panelAccess';
+import PanelTabBar from '../../components/panel/PanelTabBar';
 import panelSwitchDict from '../../i18n/panel-switch';
 import examLevelsDict from '../../i18n/exam-levels';
 import adminFill from '../../i18n/admin-fill';
@@ -173,7 +174,7 @@ function AdminInner() {
       let session = null;
       try { session = await ufuqGetSession(); } catch (e) { session = null; }
       if (cancelled) return;
-      if (!session) { clearCachedRole(); navigate('/index', { replace: true }); return; }
+      if (!session) { clearCachedRole(); navigate(outRoute('/index'), { replace: true }); return; }
       setUser(session.user);
       setGuard({ ok: false, msgKey: 'Checking permissions…' });
       // Right after a Google sign-in the first read can fail for a moment: fetchPanelProfile retries before giving up.
@@ -181,12 +182,12 @@ function AdminInner() {
       if (cancelled) return;
       if (error || !data) { // unreadable profile: never guess "student", go to sign-in
         setGuard({ ok: false, msgKey: 'Checking permissions…' });
-        redirectTimer = setTimeout(() => navigate('/index', { replace: true }), 800);
+        redirectTimer = setTimeout(() => navigate(outRoute('/index'), { replace: true }), 800);
         return;
       }
       if (data.role !== 'admin') {
         setGuard({ ok: false, msgKey: "You don't have access to the admin panel. Redirecting to your dashboard…" });
-        redirectTimer = setTimeout(() => navigate(homeRoute(data.role, data.admin_tier), { replace: true }), 1400);
+        redirectTimer = setTimeout(() => navigate(outRoute(homeRoute(data.role, data.admin_tier)), { replace: true }), 1400);
         return;
       }
       setAdminTier(data.admin_tier === 'standard' ? 'standard' : 'super');
@@ -250,7 +251,7 @@ function AdminInner() {
   const canSwitchToTeacher = guard.ok && isSuper;
 
   const switchToTeacher = useCallback(async () => {
-    if (await verifySuperAdmin()) { navigate(PANEL_ROUTES.teacher); return; }
+    if (await verifySuperAdmin()) { navigate(panelRoute('teacher')); return; }
     setAdminTier('standard'); // rights changed since load: the entry disappears, no navigation
     toast(t('You do not have access to the teacher panel.'), 'err');
   }, [navigate, toast, t]);
@@ -318,11 +319,12 @@ function AdminInner() {
 
         <div className="content">
           {guard.ok && groupsLoaded && !payPending && (payBlocked
-            ? <PaywallGate onNavigate={() => navigate('/dashboard#billing')} />
+            ? <PaywallGate onNavigate={() => navigate(outRoute('/dashboard#billing'))} />
             : <Page key={page + ':' + nonce} />)}
         </div>
       </div>
 
+      {inApp() && isMobile && guard.ok && <PanelTabBar items={isSuper ? ['overview', 'groups', 'students', 'announcements'] : ['overview', 'materials', 'announcements']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setSidebarOpen((o) => !o)} moreOpen={sidebarOpen} />}
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} placeholder={t('Search pages…')} emptyText={t('No pages match.')}
                       items={[...flatNav, { page: 'profile', label: 'Profile', icon: <ProfileNavIcon /> }].map((n) => ({ page: n.page, icon: n.icon, label: t(n.label) }))}
                       onPick={showPage} />

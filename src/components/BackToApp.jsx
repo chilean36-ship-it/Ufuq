@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { inApp } from '../lib/panelAccess';
 
 const KEY = 'ufuq-from-app';
 /** Remember that the panel was opened from the Ufuq app (call right before leaving /app). */
@@ -10,7 +11,7 @@ function lang() { try { const l = localStorage.getItem('ufuq-language'); return 
 /** A small floating pill on the admin / teacher panels (opened from the app) that leads back to the app. */
 export default function BackToApp() {
   const [on] = useState(() => { try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; } });
-  if (!on) return null;
+  if (!on || inApp()) return null;   // inside the app the panel has its own menu entry back
   const go = () => { window.location.assign('/app'); };
   return (
     <button type="button" onClick={go} aria-label={LABEL[lang()]}

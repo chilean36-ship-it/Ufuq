@@ -1,0 +1,48 @@
+/* Bottom tab bar of the panels inside the Ufuq app (same look as the student app's bar) */
+.ptb{ position:fixed; left:12px; right:12px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:60; height:66px; display:flex; align-items:stretch; gap:2px; padding:6px; border-radius:26px; border:1px solid var(--line, rgba(255,255,255,.12)); background:color-mix(in srgb, var(--bg-2, #1c1a17) 92%, transparent); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); box-shadow:0 12px 34px -10px rgba(0,0,0,.6); transition:transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s; animation:ptbIn .4s cubic-bezier(.2,.8,.2,1) backwards; }
+.ptb.hide{ transform:translateY(140%); opacity:0; pointer-events:none; }
+@keyframes ptbIn{ from{ transform:translateY(40px); opacity:0; } }
+.ptb-i{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:20px; background:transparent; color:var(--text-muted, #a39d92); font:600 10.5px/1.1 Inter, system-ui, sans-serif; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .2s, color .2s, transform .15s; }
+.ptb-i:active{ transform:scale(.94); }
+.ptb-i.on{ background:var(--gold-dim, rgba(201,162,75,.16)); color:var(--gold-bright, #E5C878); }
+.ptb-ic{ position:relative; display:grid; place-items:center; }
+.ptb-ic svg{ width:23px; height:23px; display:block; }
+.ptb-ic i{ position:absolute; top:-5px; right:-9px; min-width:16px; height:16px; padding:0 4px; border-radius:99px; background:#E4544C; color:#fff; font:700 10px/16px Inter, sans-serif; text-align:center; font-style:normal; }
+.ptb-l{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 2px; }
+@media (prefers-reduced-motion:reduce){ .ptb{ animation:none; transition:none; } }
+
+/* panel pages inside the app: room for the bar, tidier top bar, safe areas, no accidental horizontal scroll */
+body.ua-panel .main .content{ padding-bottom:calc(98px + env(safe-area-inset-bottom)); }
+body.ua-panel .topbar{ padding-top:calc(8px + env(safe-area-inset-top)); }
+@media (max-width:860px){
+  body.ua-panel .top-search, body.ua-panel .crumb-sub{ display:none; }
+  body.ua-panel .topbar .crumb-title{ font:700 19px/1.2 'Fraunces', serif; }
+  body.ua-panel{ overflow-x:hidden; overscroll-behavior-y:none; -webkit-tap-highlight-color:transparent; }
+  body.ua-panel .sidebar.open{ z-index:80; padding-top:env(safe-area-inset-top); padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+}
+
+/* inside the app: the AI launcher becomes a round button above the tab bar; the website's search chip is not needed on a phone */
+@media (max-width:860px){
+  body.ua-panel .topbar .top-search{ display:none !important; }
+  body.ua-panel .uai-fab{ right:14px; bottom:calc(88px + env(safe-area-inset-bottom)); width:54px; height:54px; padding:0; justify-content:center; gap:0; border-radius:50%; z-index:55; }
+  body.ua-panel .uai-fab > :not(.uai-fab-icon){ display:none; }
+  body.ua-panel .uai-fab .uai-fab-icon{ width:44px; height:44px; }
+}
+@media (max-width:860px){
+  body.ua-panel .topbar{ gap:6px; padding-inline:10px; }
+  body.ua-panel .topbar .top-right{ gap:6px; min-width:0; }
+  body.ua-panel .topbar .crumb{ flex:1 1 auto; min-width:84px; }
+  body.ua-panel .topbar .crumb-title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  body.ua-panel .topbar .pill-sel{ max-width:118px; min-width:0; }
+  body.ua-panel .topbar .pill-sel-btn{ padding:0 10px; gap:6px; min-width:0; }
+  body.ua-panel .topbar .pill-sel.hide-cur-mobile .pill-sel-btn{ width:42px; padding:0; justify-content:center; }
+  body.ua-panel .topbar .pill-sel.hide-cur-mobile .pill-cur, body.ua-panel .topbar .pill-sel.hide-cur-mobile .pill-chev{ display:none; }
+  body.ua-panel .topbar .pill-sel .pill-cur{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+}
+@media (max-width:860px){
+  /* three KPI tiles stay in one row instead of three full-width cards */
+  body.ua-panel .kpi-row-3{ grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px; }
+  body.ua-panel .kpi-row-3 .kpi{ flex-direction:column; align-items:flex-start; gap:8px; padding:12px; min-width:0; }
+  body.ua-panel .kpi-row-3 .kpi .kpi-ico{ width:30px; height:30px; }
+  body.ua-panel .kpi-row-3 .kpi .kpi-lbl{ font-size:11.5px; overflow-wrap:anywhere; }
+}

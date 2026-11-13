@@ -3,6 +3,13 @@ import { supabase } from './supabaseClient';
 /** Panel -> route. Used by the "Switch panel" menu in the Admin and Teacher top bars. */
 export const PANEL_ROUTES = { admin: '/admin', teacher: '/teacher' };
 
+/** True when a panel runs inside the Ufuq app (/app/admin, /app/teacher): it then stays under /app (the installed app's scope). */
+export const inApp = () => typeof window !== 'undefined' && window.location.pathname.startsWith('/app');
+/** Route of a panel, app-aware. */
+export const panelRoute = (kind) => (inApp() ? '/app/' + kind : PANEL_ROUTES[kind]);
+/** Where a panel sends the user when it cannot stay (no session, wrong role, sign-out): the app's own start, or the site page. */
+export const outRoute = (fallback) => (inApp() ? '/app' : fallback);
+
 /**
  * Super Admin = profiles.role 'admin' AND admin_tier 'super' (a missing/NULL tier counts as 'super', the same
  * rule the database uses in public.is_super_admin()). A standard admin and a teacher are NOT super admins.

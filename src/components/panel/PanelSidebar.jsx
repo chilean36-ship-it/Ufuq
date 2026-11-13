@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
 import { ufuqSignOut } from '../../lib/auth';
+import { inApp, outRoute } from '../../lib/panelAccess';
 import '../../styles/sidebar-active.css';
 
 const ic = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' };
@@ -32,7 +33,7 @@ export default function PanelSidebar({ variant = 'admin', brandSuffix, tag, nav,
   const go = (target) => (e) => { e.preventDefault(); onNavigate(target); };
   const keyGo = (fn) => (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(e); } };
   const toggle = (id) => setOpenIds((cur) => ({ ...cur, [id]: !cur[id] }));
-  const signOut = async () => { await ufuqSignOut(); navigate('/index', { replace: true }); };
+  const signOut = async () => { await ufuqSignOut(); navigate(outRoute('/index'), { replace: true }); };
 
   return (
     <aside className={'sidebar psb psb-' + variant + ' usb' + (open ? ' open' : '') + (iconOnly ? ' collapsed' : '')} id="sidebar">
@@ -88,9 +89,14 @@ export default function PanelSidebar({ variant = 'admin', brandSuffix, tag, nav,
 
       <div className="sb-foot">
         {showStudentLink && (
-          <a href="/dashboard" className="sb-link" title={iconOnly ? t(studentLabel) : undefined}
-             onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
+          <a href={outRoute('/dashboard')} className="sb-link" title={iconOnly ? t(studentLabel) : undefined}
+             onClick={(e) => { e.preventDefault(); navigate(outRoute('/dashboard')); }}>
             <span className="sb-icon"><BackIcon /></span><span className="sb-label">{t(studentLabel)}</span>
+          </a>
+        )}
+        {inApp() && (
+          <a href="/app" className="sb-link" title={iconOnly ? t('Ufuq app') : undefined} onClick={(e) => { e.preventDefault(); window.location.assign('/app'); }}>
+            <span className="sb-icon"><BackIcon /></span><span className="sb-label">{t('Ufuq app')}</span>
           </a>
         )}
         <a href="#" className={'sb-link' + (page === 'profile' ? ' active' : '')} title={iconOnly ? t('Profile') : undefined} onClick={go('profile')}>
