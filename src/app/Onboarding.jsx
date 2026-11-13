@@ -4,7 +4,7 @@ import { useApp, readPrefs, writePrefs, setOnboarded } from './AppContext';
 import { APP_LANGS } from './strings';
 import { Ico, Logo } from './ui';
 
-const WHY = ['quran', 'pray', 'study', 'travel', 'family', 'fun'];
+const WHY = ['study', 'travel', 'family', 'media', 'fun'];
 const LEVELS = ['zero', 'letters', 'read', 'speak'];
 const GOALS = [5, 10, 20, 30];
 const STEPS = 5; // language, why, level, goal, plan

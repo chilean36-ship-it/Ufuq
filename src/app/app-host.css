@@ -1,0 +1,68 @@
+/* =====================================================================================================
+   Inner screens inside the app (Group, Tasks, Exams, Library, Progress, Attendance, Certificates,
+   Billing, Profile, Settings). They keep their logic and data; this sheet gives them the app's own
+   design language: big rounded cards, soft borders, gradient primary buttons, pill tabs, roomy inputs,
+   one title (the app header) and a staggered entrance. Scoped to .ua-host so the website is untouched.
+   ===================================================================================================== */
+.ua-host .content{ padding:10px 16px 28px; }
+.ua-host .content > *{ animation:uaRise .5s cubic-bezier(.2,.8,.2,1) both; }
+.ua-host .content > * > *:nth-child(1){ animation:uaRise .5s cubic-bezier(.2,.8,.2,1) both; }
+.ua-host .content > * > *:nth-child(2){ animation:uaRise .5s .06s cubic-bezier(.2,.8,.2,1) both; }
+.ua-host .content > * > *:nth-child(3){ animation:uaRise .5s .12s cubic-bezier(.2,.8,.2,1) both; }
+.ua-host .content > * > *:nth-child(4){ animation:uaRise .5s .18s cubic-bezier(.2,.8,.2,1) both; }
+.ua-host .content > * > *:nth-child(n+5){ animation:uaRise .5s .24s cubic-bezier(.2,.8,.2,1) both; }
+
+/* one title: the app header already shows it */
+.ua-host .content h1:not(#profileNameDisplay), .ua-host .welcome .eyebrow{ display:none; }
+.ua-host .welcome, .ua-host .inner-page-head, .ua-host .group-page-head{ margin:0 0 14px; padding:0; }
+.ua-host .welcome p, .ua-host .inner-page-head p, .ua-host .group-page-head p{ margin:0; font-size:14px; line-height:1.5; color:var(--text-muted); }
+
+/* cards */
+.ua-host .panel, .ua-host .tk2-card, .ua-host .st-card, .ua-host .pv-panel, .ua-host .bl-card, .ua-host .pgx-panel,
+.ua-host .ex2-lvlcard, .ua-host .we-panel, .ua-host .am-hero, .ua-host .group-main-card, .ua-host .group-members-card, .ua-host .lib-panel .audio-card, .ua-host .audio-card{
+  border-radius:24px; border:1px solid var(--line); background:var(--bg-2); box-shadow:none;
+}
+.ua-host .panel{ padding:16px; }
+.ua-host .panel-head h3, .ua-host .st-card-head h2, .ua-host .st-card-head h3, .ua-host .pv-panel-head h2, .ua-host .pv-panel-head h3{ font-family:'Fraunces',serif; font-weight:700; }
+.ua-host .tk2-card, .ua-host .audio-card{ transition:transform .16s cubic-bezier(.3,1.6,.5,1), border-color .2s; } .ua-host .tk2-card:active, .ua-host .audio-card:active{ transform:scale(.985); }
+
+/* primary buttons */
+.ua-host .tk2-primary, .ua-host .st-btn.st-primary, .ua-host .bl-upgrade, .ua-host .group-page-chat-btn, .ua-host .btn-join-group,
+.ua-host .btn-edit-profile, .ua-host .group-join-btn, .ua-host .task-submit-btn, .ua-host .group-page-join{
+  min-height:48px; padding:0 20px; border-radius:16px; border:0; font-weight:700; font-size:15px; letter-spacing:.2px;
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold)); color:#161411; box-shadow:0 4px 0 rgba(0,0,0,.25), 0 10px 22px -10px rgba(201,162,75,.7); transition:transform .12s, box-shadow .12s;
+}
+html[data-theme="light"] .ua-host .tk2-primary, html[data-theme="light"] .ua-host .st-btn.st-primary, html[data-theme="light"] .ua-host .bl-upgrade, html[data-theme="light"] .ua-host .group-page-chat-btn,
+html[data-theme="light"] .ua-host .btn-join-group, html[data-theme="light"] .ua-host .btn-edit-profile, html[data-theme="light"] .ua-host .group-join-btn, html[data-theme="light"] .ua-host .task-submit-btn, html[data-theme="light"] .ua-host .group-page-join{ color:#fff; }
+.ua-host .tk2-primary:active, .ua-host .st-btn.st-primary:active, .ua-host .bl-upgrade:active, .ua-host .group-page-chat-btn:active, .ua-host .btn-join-group:active, .ua-host .btn-edit-profile:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.25); }
+/* secondary buttons */
+.ua-host .st-btn:not(.st-primary), .ua-host .gm-action, .ua-host .btn-logout{ min-height:46px; border-radius:16px; border:1.5px solid var(--line); background:transparent; font-weight:600; }
+
+/* pill tabs / segmented controls */
+.ua-host .tk2-tab, .ua-host .lib-tab, .ua-host .list-seg-btn, .ua-host .st-lang, .ua-host .st-theme, .ua-host .am-nav{ border-radius:99px; }
+.ua-host .tk2-tab, .ua-host .lib-tab{ min-height:40px; padding:0 16px; border:1px solid var(--line); background:var(--bg-2); font-weight:600; transition:transform .12s, background .2s, border-color .2s; }
+.ua-host .tk2-tab.on, .ua-host .lib-tab.active{ background:var(--gold-dim); border-color:var(--gold); color:var(--gold-bright); }
+.ua-host .group-week-day{ border-radius:16px; }
+
+/* inputs */
+.ua-host input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=search]):not([class*=search]), .ua-host select, .ua-host textarea{
+  min-height:50px; padding:0 16px; border-radius:14px; border:2px solid var(--line); background:var(--bg-2); color:var(--text); font:500 16px 'Inter',sans-serif; outline:none; transition:border-color .2s, box-shadow .2s;
+}
+.ua-host textarea{ padding:12px 16px; }
+.ua-host input:focus, .ua-host select:focus, .ua-host textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 4px var(--gold-dim); }
+
+/* lists, rows, badges */
+.ua-host .st-nav-item, .ua-host .gm-stat{ border-radius:16px; }
+.ua-host .panel-head-note, .ua-host .pv-chip{ border-radius:99px; }
+.ua-host table{ border-radius:16px; overflow:hidden; }
+
+/* overlays opened from inside a view sit above the tab bar */
+.ua-app .exam-fs{ z-index:520; }
+.ua-app .edit-modal, .ua-app .group-welcome-modal, .ua-app .intro-welcome-modal, .ua-app .delete-modal{ border-radius:26px; }
+
+@media (prefers-reduced-motion:reduce){ .ua-host .content > *, .ua-host .content > * > *{ animation:none !important; } }
+
+/* layouts that were built for a wide screen: single column, nothing wider than the phone */
+.ua-host .st-layout{ display:block; } .ua-host .st-layout > *{ min-width:0; max-width:100%; } .ua-host .st-nav{ overflow-x:auto; scrollbar-width:none; } .ua-host .st-nav::-webkit-scrollbar{ display:none; }
+.ua-host .content, .ua-host .main{ overflow-x:clip; }
+.ua-host .empty-state{ padding:34px 16px; border:1px dashed var(--line); border-radius:20px; text-align:center; color:var(--text-muted); font-size:14px; line-height:1.5; }

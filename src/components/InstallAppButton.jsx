@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { LANG_KEY } from '../i18n';
+import { SHOW_INSTALL_ON_SITE } from '../lib/siteFlags';
 import { canPromptInstall, isIOS, isStandalone, promptInstall, onInstallChange } from '../lib/pwaInstall';
 
 /* "Install the Ufuq app" button for the website (landing, cabinet). Self-contained: own texts, own dialog. */
@@ -47,11 +48,11 @@ const CSS = `
  * variant: 'nav' (compact, landing header) | 'hero' (outlined, next to the main buttons) | 'link' (plain text, footer) | 'side' (cabinet sidebar row).
  * Hidden when the page already runs as the installed app.
  */
-export default function InstallAppButton({ variant = 'hero', className = '' }) {
-  const [, force] = useState(0);
+export default function InstallAppButton({ variant = 'hero', className = '', force = false }) {
+  const [, bump] = useState(0);
   const [open, setOpen] = useState(false);
-  useEffect(() => onInstallChange(() => force((n) => n + 1)), []);
-  if (isStandalone()) return null;
+  useEffect(() => onInstallChange(() => bump((n) => n + 1)), []);
+  if (isStandalone() || (!SHOW_INSTALL_ON_SITE && !force)) return null; // hidden on the website for now; the app itself passes force
   const L = TXT[lang()];
 
   async function click(e) {

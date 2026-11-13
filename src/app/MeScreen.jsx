@@ -97,7 +97,7 @@ export default function MeScreen({ onNavigate, role, activity }) {
       </div>
 
       <div className="ua-rows2" style={{ '--i': 5 }}>
-        {!isStandalone() && <div className="ua-row ua-install"><InstallAppButton variant="side" /></div>}
+        {!isStandalone() && <div className="ua-row ua-install"><InstallAppButton variant="side" force /></div>}
         <Row icon="help" tone="sky" label={t('helpChat')} href="https://t.me/ufuq_support" />
         <Row icon="out" danger label={t('signOut')} onClick={() => setSheet('out')} />
       </div>
