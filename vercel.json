@@ -82,6 +82,13 @@
       ]
     },
     {
+      "source": "/app/:path*",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" }
+      ]
+    },
+    {
       "source": "/dashboard",
       "headers": [
         {
@@ -149,7 +156,7 @@
       ]
     },
     {
-      "source": "/(dashboard|teacher|admin|profile|checkout|invoice)(.*)",
+      "source": "/(dashboard|teacher|admin|profile|checkout|invoice|app)(.*)",
       "headers": [
         {
           "key": "X-Robots-Tag",

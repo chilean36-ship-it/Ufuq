@@ -9,12 +9,7 @@ import { CabinetI18nProvider, useCabinetI18n } from '../../context/CabinetI18nCo
 import { DashboardDataProvider, useDashboardData } from '../../context/DashboardDataContext';
 import { useTheme } from '../../hooks/useTheme';
 import useSidebarCollapsed from '../../hooks/useSidebarCollapsed';
-import dashboardDict from '../../i18n/cabinet-dashboard';
-import examLevelsDict from '../../i18n/exam-levels';
-import dashboardExtra from '../../i18n/dashboard-extra';
-import examModeDict from '../../i18n/exam-mode';
-import profileDict from '../../i18n/cabinet-profile';
-import fillMissing from '../../i18n/fill-missing';
+import cabinetDict from './cabinetDict';
 import Sidebar from './Sidebar';
 import Topbar from '../Profile/Topbar';
 import ProfileView from '../Profile/ProfileView';
@@ -32,8 +27,6 @@ import BillingView, { BILLING_CSS } from './BillingView';
 import PaywallGate from './PaywallGate';
 import UpgradeModal from './UpgradeModal';
 import PaymentBanner from './PaymentBanner';
-import billingDict from '../../i18n/billing-cabinet';
-import myGroupDict from '../../i18n/my-group';
 const ExamView = lazy(() => import('./Exam/ExamView'));
 import NotificationsPanel from './Notifications/NotificationsPanel';
 import LevelResultModal from './LevelResult/LevelResultModal';
@@ -62,10 +55,6 @@ const RESTORABLE_VIEWS = ['home', 'myGroup', 'hifzLive', 'tasks', 'attendance', 
 const NO_AI_VIEWS = ['myGroup', 'billing', 'settings']; // Ufuq AI is not offered on these sections
 const PAID_VIEWS = ['tasks', 'hifzLive', 'attendance', 'progress', 'library', 'exam', 'certificates'];
 
-// The Profile view reuses the profile dictionary; the dashboard's own strings win on any overlap.
-const cabinetDict = Object.fromEntries(
-  Object.keys(dashboardDict).map((lang) => [lang, { ...(examLevelsDict[lang] || {}), ...(fillMissing[lang] || {}), ...(profileDict[lang] || {}), ...dashboardDict[lang], ...(dashboardExtra[lang] || {}), ...(examModeDict[lang] || {}), ...(billingDict[lang] || {}), ...(myGroupDict[lang] || {}) }])
-);
 
 function DashboardInner({ initialView = 'home' }) {
   const { t } = useCabinetI18n();
