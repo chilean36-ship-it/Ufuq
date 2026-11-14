@@ -9,7 +9,6 @@ export default function ExamsPage() {
     <section className="page active" id="page-exams">
       <div className="page-head">
         <h2>{t('Exams')}</h2>
-        <p>{t("Create exams, write their questions and follow your students' results.")}</p>
       </div>
       <WrittenExamsPanel />
     </section>

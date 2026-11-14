@@ -105,7 +105,6 @@ export default function MediaPage() {
     <section className="page active" id="page-media">
       <div className="page-head">
         <h2>{t('Media')}</h2>
-        <p>{t('Videos and audio for your groups — separate from lesson audio. Publish to every group or only the ones you pick.')}</p>
       </div>
 
       <div className="mx-tabs" role="tablist">

@@ -191,7 +191,6 @@ export default function WrittenExams({ levelData }) {
   };
 
   const kindIcon = (ex) => (ex.exam_kind === 'final' ? ICON.final : ex.exam_kind === 'midterm' ? ICON.midterm : ICON.custom);
-  const kindName = (ex) => (ex.exam_kind === 'midterm' ? t('Midterm') : ex.exam_kind === 'final' ? t('Final exam') : t('Exam'));
 
   const renderRow = ({ ex, d }) => {
     const sb = d.sb;
@@ -205,7 +204,6 @@ export default function WrittenExams({ levelData }) {
         <div className="ex2-main">
           <div className="ex2-tags">
             <span className={'ex2-badge ' + d.state}>{d.badge}</span>
-            <span className="ex2-tag">{kindName(ex)}{ex.level ? ' · ' + t('Level') + ' ' + ex.level : ''}</span>
           </div>
           <h3 className="ex2-title" dir="auto">{examTitleFor(ex, lang)}</h3>
           {metaOf(ex, d, true)}

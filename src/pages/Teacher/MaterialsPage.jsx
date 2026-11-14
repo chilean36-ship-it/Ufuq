@@ -43,7 +43,6 @@ export function AudioLessonsPage() {
     <section className="page active" id="page-materials">
       <div className="page-head">
         <h2>{t('Audio lessons')}</h2>
-        <p>{t('Audio lessons for your own group. Only the students of that group see them.')}</p>
       </div>
       <AudioLessons restricted onCount={noopCount} />
     </section>
@@ -60,7 +59,6 @@ export default function MaterialsPage() {
     <section className="page active" id="page-materials">
       <div className="page-head">
         <h2>{t('Materials')}</h2>
-        <p>{t('Audio lessons and board photos published to the selected group.')}</p>
       </div>
       <div className="mt-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'audio'} className={'mt-tab' + (tab === 'audio' ? ' on' : '')} onClick={() => setTab('audio')}>

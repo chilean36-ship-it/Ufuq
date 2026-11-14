@@ -113,7 +113,7 @@ export default function MyGroupPage() {
   if (myGroups.length === 0) {
     return (
       <section className="page active" id="page-groups">
-        <div className="page-head"><h2>{t('My Group')}</h2><p>{t('Schedule, students and group chat.')}</p></div>
+        <div className="page-head"><h2>{t('My Group')}</h2></div>
         <div className="empty-block">{t('No group assigned')}</div>
       </section>
     );
@@ -183,15 +183,17 @@ export default function MyGroupPage() {
 
   // Stored in Tashkent time; the week strip is the viewer's own calendar, so convert (day AND clock) to the viewer's zone.
   const scheduleByDay = {};
-  scheduleDaysToWeekArray(scheduleDays, currentWeek, examDays).forEach((e) => { if (e.time) scheduleByDay[e.day] = e.time; });
+  const examByDay = {};   // days whose lesson is replaced by an exam
+  scheduleDaysToWeekArray(scheduleDays, currentWeek, examDays).forEach((e) => { if (e.time) scheduleByDay[e.day] = e.time; if (e.exam) examByDay[e.day] = true; });
   const activeWeek = currentWeek[dayIndex];
   const activeTime = activeWeek ? scheduleByDay[activeWeek.day] : null;
+  const activeExam = !!(activeWeek && examByDay[activeWeek.day] && !activeTime);
   const q = memberQuery.trim().toLowerCase();
   const visible = members && q ? members.filter((m) => (m.name || '').toLowerCase().includes(q)) : members;
 
   const stripDays = currentWeek.map((w, i) => (
     <button type="button" key={w.day} role="tab" aria-selected={i === dayIndex}
-            className={['group-week-day', scheduleByDay[w.day] && 'has-class', w.isToday && 'is-today', i === dayIndex && 'active'].filter(Boolean).join(' ')}
+            className={['group-week-day', (scheduleByDay[w.day] || examByDay[w.day]) && 'has-class', w.isToday && 'is-today', i === dayIndex && 'active'].filter(Boolean).join(' ')}
             onClick={() => setDayIndex(i)}>
       <span className="gwd-name">{t(w.day.slice(0, 3))}</span>
       <span className="gwd-num">{w.dateNum}</span>
@@ -254,10 +256,10 @@ export default function MyGroupPage() {
                   <div className="group-schedule-day">
                     {activeWeek && `${t(activeWeek.day)}, ${t(activeWeek.dateLabel.split(' ')[0])} ${activeWeek.dateLabel.split(' ')[1]}`}
                   </div>
-                  <div className="group-schedule-time">{activeTime || t('No class')}</div>
-                  <div className="group-schedule-label">{activeTime ? (viewerIsOnTashkentTime() ? t('Class time · Tashkent time') : t('Class time · your local time') + ' (' + viewerGmtLabel() + ')') : t('No lesson scheduled')}</div>
+                  <div className="group-schedule-time">{activeTime || (activeExam ? t('Exam') : t('No class'))}</div>
+                  <div className="group-schedule-label">{activeTime ? (viewerIsOnTashkentTime() ? t('Class time · Tashkent time') : t('Class time · your local time') + ' (' + viewerGmtLabel() + ')') : (activeExam ? t('Exam day: no lesson') : t('No lesson scheduled'))}</div>
                 </div>
-                <span className="group-schedule-dot" aria-hidden="true" style={activeTime ? undefined : { background: 'var(--text-muted)', boxShadow: 'none' }}></span>
+                <span className="group-schedule-dot" aria-hidden="true" style={activeTime || activeExam ? undefined : { background: 'var(--text-muted)', boxShadow: 'none' }}></span>
               </div>
               {g.zoom_link ? (
                 <button type="button" className={'group-join-btn' + (heroKind === 'live' ? ' is-live' : ' is-locked')} aria-disabled={heroKind !== 'live'} onClick={handleStartClass}>

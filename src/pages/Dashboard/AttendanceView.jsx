@@ -91,7 +91,6 @@ export default function AttendanceView() {
       <div className="inner-page-head">
         <div>
           <h1>{t('Attendance')}</h1>
-          <p>{t("Your class attendance, synced with My Group's lesson schedule.")}</p>
         </div>
       </div>
 

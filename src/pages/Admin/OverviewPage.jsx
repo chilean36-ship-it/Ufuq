@@ -106,7 +106,6 @@ export default function OverviewPage() {
       <div className="a-hero">
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h1>{hello}{first ? ', ' + first : ''} 👋</h1>
-          <p>{t('A quick overview of your groups and overall status.')}</p>
         </div>
         <div className="a-hero-meta">
           <span className="a-pill"><i className="a-live" />{t('Live')}</span>

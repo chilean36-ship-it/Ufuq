@@ -44,6 +44,7 @@ const uz = {
   'Level passed. Well done!': 'Daraja topshirildi. Barakalla!',
   'Pass mark reached': 'O\'tish bali to\'plandi',
   'Close': 'Yopish',
+  'Exam day today: {groups}': 'Bugun imtihon kuni: {groups}',
 };
 
 const ru = {
@@ -90,6 +91,7 @@ const ru = {
   'Level passed. Well done!': 'Уровень сдан. Молодец!',
   'Pass mark reached': 'Проходной балл набран',
   'Close': 'Закрыть',
+  'Exam day today: {groups}': 'Сегодня день экзамена: {groups}',
 };
 
 const ar = {
@@ -136,6 +138,7 @@ const ar = {
   'Level passed. Well done!': 'تم اجتياز المستوى. أحسنت!',
   'Pass mark reached': 'تم بلوغ درجة النجاح',
   'Close': 'إغلاق',
+  'Exam day today: {groups}': 'اليوم يوم اختبار: {groups}',
 };
 
 export default { UZ: uz, RU: ru, EN: {}, AR: ar };

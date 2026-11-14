@@ -146,6 +146,7 @@ export default function HomeView({ onNavigate }) {
     if (!joined || !groupData) return items;
     const now = new Date();
     scheduleDaysToWeekArray(groupData.scheduleDays, currentWeek, groupData.examDays).forEach((entry) => {
+      if (entry.exam && !entry.time) { items[entry.day] = [{ exam: true, time: t('Exam'), title: groupData.name + ' — ' + t('Exam day: no lesson') }]; return; }   // the exam takes the lesson's place
       if (!entry.time || !entry.instant) return;
       const start = entry.instant;
       const end = new Date(start.getTime() + 120 * 60000);
@@ -194,7 +195,6 @@ export default function HomeView({ onNavigate }) {
       <div className="welcome">
         <div className="eyebrow">{t('Your cabinet')}</div>
         <h1>{t('Welcome back,')} <span id="userName" style={{ color: 'var(--gold-bright)' }}>{name || t('Student')}</span></h1>
-        <p>{t("Here's what's happening with your Arabic learning journey.")}</p>
       </div>
 
       <div className="three-col-grid">
@@ -250,9 +250,9 @@ export default function HomeView({ onNavigate }) {
                   <div className="group-schedule-event" key={i}>
                     <div>
                       <div className="group-schedule-time">{it.time}</div>
-                      <div className="group-schedule-label">{it.title} · {statusText[it.status]}</div>
+                      <div className="group-schedule-label">{it.title}{it.exam ? '' : ' · ' + statusText[it.status]}</div>
                     </div>
-                    <span className="group-schedule-dot" style={{ background: statusDot[it.status] }} aria-hidden="true"></span>
+                    <span className="group-schedule-dot" style={{ background: it.exam ? 'var(--gold)' : statusDot[it.status] }} aria-hidden="true"></span>
                   </div>
                 ))}
               </div>

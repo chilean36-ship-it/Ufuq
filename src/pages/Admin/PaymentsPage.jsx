@@ -20,7 +20,7 @@ export default function PaymentsPage() {
       <PageStyle css={PAY_CSS} />
       <div className="pay-head">
         <span className="pay-head-icon">{IC_WALLET}</span>
-        <div className="pay-head-text"><h2>{t('Payments')}</h2><p>{t('Orders, bank-transfer review, access and payment settings.')}</p></div>
+        <div className="pay-head-text"><h2>{t('Payments')}</h2></div>
       </div>
       <div className="pay-tabs" role="tablist">
         {[['orders', 'Orders'], ['access', 'Access'], ['deadlines', 'Deadlines'], ...(isSuper ? [['settings', 'Settings']] : [])].map(([k, l]) => (

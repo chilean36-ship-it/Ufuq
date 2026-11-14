@@ -281,7 +281,6 @@ export default function TasksView({ native = false }) {
         <div className="inner-page-head">
           <div>
             <h1>{t('Tasks')}</h1>
-            <p>{t('Homework and assignments from your teacher. Upload your work before the deadline.')}</p>
           </div>
         </div>
       )}
@@ -326,7 +325,6 @@ export default function TasksView({ native = false }) {
             {view.shown.length === 0 ? <div className="tk2-empty small"><p>{t('Nothing here.')}</p></div>
               : view.shown.map(({ task, sub }) => <TaskCard key={task.id} task={task} submission={sub} onSubmitted={reload} t={t} toast={setNote} max={maxPhotos} />)}
           </div>
-          <p className="tk2-keep">{t('Uploaded files are kept for 2 months, then deleted automatically. Your grades stay.')}</p>
         </>
       )}
       {note ? <div className="tk2-toast" role="status">{IC.check}{note}</div> : null}

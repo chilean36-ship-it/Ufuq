@@ -494,7 +494,6 @@ export default function LibraryView() {
       <div className="inner-page-head">
         <div>
           <h1>{t('Library')}</h1>
-          <p>{t("Recordings of your lessons and the items you've saved for later.")}</p>
         </div>
       </div>
       <div className="lib-tabs">

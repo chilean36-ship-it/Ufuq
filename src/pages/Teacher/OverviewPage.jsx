@@ -5,7 +5,7 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { usePanel } from '../../components/panel/PanelContext';
 import { Modal } from '../../components/panel/ui';
 import { lessonsOnLocalDate, fmtHHMM } from '../../lib/tzTime';
-import { useExamDays } from '../../lib/examDays';
+import { useExamDays, isExamDay, tashkentDateKey } from '../../lib/examDays';
 
 const DEFAULT_LESSON_MINUTES = 120;
 
@@ -85,6 +85,9 @@ export default function OverviewPage() {
     return () => clearInterval(timer);
   }, []);
 
+  const todayKey = tashkentDateKey(new Date());
+  const examToday = myGroups.filter((g) => g.is_active && isExamDay(examDaysBy[g.code], todayKey));   // exam day = no lesson, the exam takes its place
+  const examTodayText = examToday.length ? t('Exam day today: {groups}').replace('{groups}', examToday.map((g) => g.name).join(', ')) : '';
   const todayLessons = useMemo(() => (data ? buildTodayLessons(myGroups, data.counts, examDaysBy) : []), [data, myGroups, examDaysBy]);
 
   function attemptJoinLesson(lesson) {
@@ -138,7 +141,6 @@ export default function OverviewPage() {
       <div className="greet">
         <div>
           <h1>{hello}{first ? ', ' + first : ''}</h1>
-          <p>{todayLessons.length > 0 ? t('You have {n} class(es) today.').replace('{n}', todayLessons.length) : t('No classes today — a good day to prepare materials.')}</p>
         </div>
       </div>
       <div className="kpi-row">
@@ -184,7 +186,7 @@ export default function OverviewPage() {
           <span className="ready-blob b1" /><span className="ready-blob b2" />
           <div className="ready-main">
             <div className="ready-eyebrow"><span className="ready-dot" />{t('Ready to teach')}{nextLesson && <span className="ready-live-tag soft">{t('Next class')}</span>}</div>
-            <div className="ready-title">{nextLesson ? nextLesson.group.name : t('No class to join right now')}</div>
+            <div className="ready-title">{nextLesson ? nextLesson.group.name : (examTodayText || t('No class to join right now'))}</div>
             {nextLesson && lessonChips(nextLesson)}
           </div>
           {nextLesson && (
@@ -204,7 +206,7 @@ export default function OverviewPage() {
       <div className="lesson-grid" id="todayClassesGrid">
         {data === null ? <div className="empty-block">{t('Loading…')}</div>
           : data.empty ? <div className="empty-block">{t('No group has been assigned to you yet.')}</div>
-          : todayLessons.length === 0 ? <div className="empty-block">{t('No classes scheduled for today.')}</div>
+          : todayLessons.length === 0 ? <div className="empty-block">{examTodayText || t('No classes scheduled for today.')}</div>
           : listLessons.length === 0 ? <div className="empty-block">{t('No more classes today.')}</div>
           : listLessons.map((lesson, i) => {
             const status = lessonStatus(lesson, now);

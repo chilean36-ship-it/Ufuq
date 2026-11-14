@@ -253,7 +253,8 @@ tr:hover td .btn-danger.btn-sm{ opacity:1; }
 .cal-cell:not(.is-blank):hover{ border-color:rgba(201,162,75,.4); background:var(--card-hover); }
 .cal-cell.is-today{ background:var(--gold-dim); border-color:var(--gold); }
 .cal-daynum{ font-weight:700; }
-.cal-cell.is-today .cal-daynum{ display:inline-grid; place-items:center; min-width:22px; height:22px; border-radius:50%; background:var(--gold); color:#1A1406; }
+.cal-cell.is-today{ box-shadow:0 0 0 1px var(--gold), 0 10px 26px -16px rgba(201,162,75,.8); }
+.cal-cell.is-today .cal-daynum{ display:inline-grid; place-items:center; width:26px; height:26px; min-width:26px; padding:0; border-radius:50%; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); color:#1A1406; font-size:12.5px; box-shadow:0 4px 12px -4px rgba(201,162,75,.9); justify-self:start; }
 .cal-ev{ border-radius:6px; background:var(--bg-3); border-left:2px solid var(--gold); }
 .cal-legend{ padding-top:var(--sp-3); border-top:1px solid var(--line); margin-top:var(--sp-4); }
 @media (max-width:860px){
@@ -464,3 +465,4 @@ a:focus-visible, .scope-btn:focus-visible, .tpl-chip:focus-visible, .mx-fchip:fo
   .tpl-row{ gap:5px; }
 }
 @media print{ .tk-card, .xl-card, .mx-card{ break-inside:avoid; } }
+.cal-ev.is-exam{ border-left-color:var(--ex-warn, #E0A53A); background:rgba(224,165,58,.14); }

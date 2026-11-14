@@ -18,7 +18,6 @@ export const FLOATING_LETTERS = [
 export const ABOUT_CREDS = [
   { num: '10+', key: 'about.cred1' },
   { num: '1000+', key: 'about.cred2' },
-  { num: '2', key: 'about.cred3' },
 ];
 
 const EX_ICON = {

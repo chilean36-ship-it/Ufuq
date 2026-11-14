@@ -262,7 +262,6 @@ function Discover({ onOpenLightbox }) {
 
         {DISCOVER_TABS.map((d) => (
           <div key={d.id} className={'discover-panel' + (tab === d.id ? ' active' : '')} data-panel={d.id}>
-            {!d.noText && <p className="discover-text">{t(d.textKey)}</p>}
             <div className="discover-grid">
               {d.cards.map((cRaw, ci) => {
                 const c = { ...cRaw, img: media.img(d.id + '_' + (ci + 1), cRaw.img), video: cRaw.fixed ? cRaw.video : media.video(d.id + '_' + (ci + 1), cRaw.video) };
@@ -467,7 +466,6 @@ function Pricing({ onOpenAuth }) {
             <span className="pay-chip">{PAY_BANK}{t('payEntry.bank')}</span>
             <span className="pay-chip">{PAY_LOCK}{t('payEntry.secure')}</span>
           </div>
-          <div className="pay-note">{t('payEntry.note')}</div>
           </div>
         </Reveal>
       </div>

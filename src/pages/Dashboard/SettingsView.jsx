@@ -23,7 +23,7 @@ const I = {
   shield: ico(<><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z" /><path d="M9 12l2 2 4-4" /></>),
   device: ico(<><rect x="2.5" y="4" width="14" height="11" rx="2" /><path d="M6 19h7M9.5 15v4" /><rect x="18" y="8" width="3.5" height="9" rx="1" /></>),
   lock: ico(<><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V8a4 4 0 018 0v2.5" /></>),
-  bellOff: ico(<><path d="M6 9a6 6 0 0110-4.2M18 9c0 6 2.5 7.5 2.5 7.5H8" /><path d="M10 20a2 2 0 004 0M3 3l18 18" /></>),
+  bellOff: ico(<><path d="M8.7 3A6 6 0 0118 8c0 2.4.2 3.9.6 5" /><path d="M17 17H3s3-2 3-9a4.7 4.7 0 01.3-1.7" /><path d="M10.3 21a1.94 1.94 0 003.4 0" /><path d="M2 2l20 20" /></>),
   data: ico(<><ellipse cx="12" cy="5.5" rx="8" ry="3" /><path d="M4 5.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6M4 11.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" /></>),
   info: ico(<><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8v.1" /></>),
   warn: ico(<><path d="M12 3l10 18H2L12 3z" /><path d="M12 10v5M12 18.5v.1" /></>),
@@ -324,7 +324,6 @@ export default function SettingsView({ theme, onToggleTheme, themeMode, onSetThe
       <div className="inner-page-head st-head">
         <div>
           <h1>{t('Settings')}</h1>
-          <p>{t('Manage your appearance, notifications, and account.')}</p>
         </div>
         <label className="st-search">
           {I.search}

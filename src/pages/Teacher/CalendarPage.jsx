@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { usePanel } from '../../components/panel/PanelContext';
 import { DOW_ORDER, MONTH_KEYS, fmtDateStr } from '../../lib/panelUtils';
 import { useExamDays } from '../../lib/examDays';
-import { lessonsOnLocalDate, viewerIsOnTashkentTime, viewerGmtLabel } from '../../lib/tzTime';
+import { lessonsOnLocalDate } from '../../lib/tzTime';
 
 /** Every lesson on one calendar date (viewer's own zone, converted from Tashkent time for that exact date, so DST
  *  changes are handled per date) across ALL of the teacher's groups. */
@@ -12,7 +12,11 @@ function lessonsOnDate(myGroups, y, m, day, examDaysBy) {
     if (!g.is_active || !Array.isArray(g.schedule_days)) return;
     lessonsOnLocalDate(g.schedule_days, y, m, day, examDaysBy[g.code]).forEach((l) => out.push({ group: g, time: l.time, instant: l.instant }));
   });
-  return out.sort((a, b) => a.instant - b.instant);
+  out.sort((a, b) => a.instant - b.instant);
+  // exam days: the exam stands where the lesson was
+  const dateStr = fmtDateStr(new Date(y, m, day));
+  myGroups.forEach((g) => { if (g.is_active && (examDaysBy[g.code] || []).indexOf(dateStr) >= 0) out.push({ group: g, time: null, exam: true }); });
+  return out;
 }
 
 export default function CalendarPage() {
@@ -39,7 +43,6 @@ export default function CalendarPage() {
     <section className="page active" id="page-calendar">
       <div className="page-head">
         <h2>{t('Calendar')}</h2>
-        <p>{t('The full month of lessons for all of your groups.')}{viewerIsOnTashkentTime() ? '' : ' \u00b7 ' + t('Shown in your local time') + ' (' + viewerGmtLabel() + ')'}</p>
       </div>
       <div className="panel">
         <div className="cal-head">
@@ -57,17 +60,12 @@ export default function CalendarPage() {
               <div className={'cal-cell' + (c.dateStr === today ? ' is-today' : '')} key={c.dateStr}>
                 <div className="cal-daynum">{c.day}</div>
                 {c.events.map((e, j) => (
-                  <div className="cal-ev" title={e.group.name + ' \u00b7 ' + e.time} key={j}>
-                    <b>{e.time || '\u2014'}</b>{e.group.name}
+                  <div className={'cal-ev' + (e.exam ? ' is-exam' : '')} title={e.group.name + ' \u00b7 ' + (e.exam ? t('Exam') : e.time)} key={j}>
+                    <b>{e.exam ? t('Exam') : (e.time || '\u2014')}</b>{e.group.name}
                   </div>
                 ))}
               </div>
             )
-          ))}
-        </div>
-        <div className="cal-legend">
-          {myGroups.length === 0 ? t('No group has been assigned to you yet.') : myGroups.map((g) => (
-            <span key={g.code}>{g.name} {'\u2014'} {g.schedule || '\u2014'}</span>
           ))}
         </div>
       </div>

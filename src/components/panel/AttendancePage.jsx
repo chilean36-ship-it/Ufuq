@@ -141,7 +141,6 @@ export default function AttendancePage() {
       <PageStyle css={historyCss} />
       <div className="page-head">
         <h2>{t('Attendance')}</h2>
-        <p>{t("Pick a date and mark attendance for the group's students.")}</p>
       </div>
       <div className="att-grid">
       <div className="att-col">

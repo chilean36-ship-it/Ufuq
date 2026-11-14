@@ -106,7 +106,6 @@ export default function AnnouncementsPage() {
     <section className="page active" id="page-announcements">
       <div className="page-head">
         <h2>{t('Messages to students')}</h2>
-        <p>{t('Send a notification to the whole group or to a single student. They see it in their notification bell.')}</p>
       </div>
       <div className="two-col">
         <div className="panel">

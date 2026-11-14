@@ -300,7 +300,7 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
       <PageStyle css={myGroupCss} />
       <PageStyle css={chatBaseCss} />
       <div className="group-page-head" id="groupPageHead">
-        <div><h1>{t('My Group')}</h1><p>{t('Your schedule, classmates and group chat.')}</p></div>
+        <div><h1>{t('My Group')}</h1></div>
         {joined && (
           <div className="group-page-head-actions">
             <button type="button" className="group-page-chat-btn" id="groupChatToggleBtn" onPointerDown={ripple} onClick={showChat}>

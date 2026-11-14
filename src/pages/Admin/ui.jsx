@@ -12,7 +12,7 @@ export const InboxIcon = () => <Ico><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d
 export function PageHeader({ title, sub, children }) {
   return (
     <div className="a-head">
-      <div><h1>{title}</h1>{sub ? <p>{sub}</p> : null}</div>
+      <div><h1>{title}</h1></div>
       {children ? <div className="a-head-actions">{children}</div> : null}
     </div>
   );

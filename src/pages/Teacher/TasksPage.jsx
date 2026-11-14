@@ -85,7 +85,6 @@ export default function TasksPage() {
       <div className="page-head pg-head-row">
         <div>
           <h2>{t('Tasks')}</h2>
-          <p>{t('Homework tasks and submissions for the selected group.')}</p>
         </div>
         <button className="btn btn-gold" id="newTaskBtn" onClick={openNew}>{t('+ New task')}</button>
       </div>

@@ -297,7 +297,6 @@ function AdminInner() {
                   onClick={() => setSidebarOpen((o) => !o)}><MenuIcon /></button>
           <div className="crumb">
             <span className="crumb-title" id="crumbLabel">{t(navLabel)}</span>
-            <span className="crumb-sub">{t(SUB[page] || 'Admin panel')}{currentGroup ? ' \u00b7 ' + currentGroup.name : ''}</span>
           </div>
           <div className="top-right">
             <button type="button" className="top-search" onClick={() => setCmdOpen(true)} aria-label={t('Search pages…')}>

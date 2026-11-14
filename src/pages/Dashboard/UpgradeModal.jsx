@@ -115,7 +115,6 @@ export default function UpgradeModal({ open, onClose }) {
             </ul>
           </div>
         </div>
-        <div className="um-foot">{t('Secure payment · Card or bank transfer · No automatic renewals')}</div>
       </div>
     </div>
   );

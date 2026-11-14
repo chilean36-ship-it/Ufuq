@@ -258,7 +258,6 @@ function TeacherInner() {
           <button className="icon-btn menu-toggle-btn" aria-label={t('Menu')} style={{ display: isMobile ? 'inline-flex' : 'none' }} onClick={() => setSidebarOpen((o) => !o)}><MenuIcon /></button>
           <div className="crumb">
             <span className="crumb-title">{t(navLabel)}</span>
-            <span className="crumb-sub">{t(SUB[activePage] || 'Teacher dashboard')}{currentGroup ? ' \u00b7 ' + currentGroup.name : ''}</span>
           </div>
           <div className="top-right">
             <button type="button" className="top-search" onClick={() => setCmdOpen(true)} aria-label={t('Search pages…')}>

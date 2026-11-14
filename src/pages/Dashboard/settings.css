@@ -226,3 +226,4 @@ a.st-btn{display:inline-block; text-decoration:none;}
 .st-chip.ok{background:rgba(79,180,119,.16); color:#4FB477;}
 .st-chip.warn{background:rgba(224,165,58,.16); color:#E0A53A;}
 html[data-theme="light"] .st-chip.ok{color:#2C8F55;} html[data-theme="light"] .st-chip.warn{color:#B9791A;}
+.st-row:has(.st-inline){flex-wrap:wrap;} .st-row:has(.st-inline) .st-row-text{flex:1 1 200px;} .st-row:has(.st-inline) .st-row-ctl{flex:0 1 auto;}
