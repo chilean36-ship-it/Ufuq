@@ -31,6 +31,14 @@ const uz = {
   'This group is not running any more:': 'Bu guruh endi ishlamayapti:',
   'Your teacher will move you to a running group. If this takes long, please write to your teacher.': 'Ustozingiz sizni ishlayotgan guruhga ko\'chiradi. Agar bu cho\'zilib ketsa, ustozingizga yozing.',
   'Links to switched-off groups': 'O\'chirilgan guruhlarga bog\'lanishlar',
+  'Opens at': 'Ochilish vaqti',
+  'Open when published': 'E\'lon qilinishi bilan ochilsin',
+  'The opening time must be before the deadline.': 'Ochilish vaqti muddatdan oldin bo\'lishi kerak.',
+  'Students see the published exam before this time and can start it from this time on. On the exam day the group has no lesson: the exam takes its place.': 'Talabalar e\'lon qilingan imtihonni bu vaqtdan oldin ham ko\'radi, boshlashni esa shu vaqtdan boshlab mumkin. Imtihon kuni guruhda dars bo\'lmaydi: imtihon dars o\'rnini egallaydi.',
+  'Opens soon': 'Tez orada ochiladi',
+  'You can start this exam from the opening time.': 'Imtihonni ochilish vaqtidan boshlab boshlash mumkin.',
+  'This exam is not open yet. You can start it at the opening time.': 'Imtihon hali ochilmagan. Ochilish vaqtida boshlashingiz mumkin.',
+  'Exam day: no lesson': 'Imtihon kuni: dars yo\'q',
 };
 
 const ru = {
@@ -64,6 +72,14 @@ const ru = {
   'This group is not running any more:': 'Эта группа больше не работает:',
   'Your teacher will move you to a running group. If this takes long, please write to your teacher.': 'Преподаватель переведёт вас в работающую группу. Если это затянется, напишите преподавателю.',
   'Links to switched-off groups': 'Привязки к выключенным группам',
+  'Opens at': 'Время открытия',
+  'Open when published': 'Открыть сразу после публикации',
+  'The opening time must be before the deadline.': 'Время открытия должно быть раньше срока.',
+  'Students see the published exam before this time and can start it from this time on. On the exam day the group has no lesson: the exam takes its place.': 'Студенты видят опубликованный экзамен и до этого времени, а начать могут с этого времени. В день экзамена урока у группы нет: экзамен занимает его место.',
+  'Opens soon': 'Скоро откроется',
+  'You can start this exam from the opening time.': 'Начать экзамен можно со времени открытия.',
+  'This exam is not open yet. You can start it at the opening time.': 'Экзамен ещё не открыт. Начать можно со времени открытия.',
+  'Exam day: no lesson': 'День экзамена: урока нет',
 };
 
 const ar = {
@@ -97,6 +113,14 @@ const ar = {
   'This group is not running any more:': 'هذا الفوج لم يعد يعمل:',
   'Your teacher will move you to a running group. If this takes long, please write to your teacher.': 'سينقلك معلّمك إلى فوج يعمل. إذا تأخر ذلك فراسل معلّمك.',
   'Links to switched-off groups': 'ارتباطات بأفواج متوقفة',
+  'Opens at': 'وقت الفتح',
+  'Open when published': 'يُفتح عند النشر',
+  'The opening time must be before the deadline.': 'يجب أن يسبق وقت الفتح الموعد النهائي.',
+  'Students see the published exam before this time and can start it from this time on. On the exam day the group has no lesson: the exam takes its place.': 'يرى الطلاب الاختبار المنشور قبل هذا الوقت ويمكنهم بدؤه منذ هذا الوقت. في يوم الاختبار لا يوجد درس للمجموعة: يحلّ الاختبار محلّه.',
+  'Opens soon': 'يُفتح قريبًا',
+  'You can start this exam from the opening time.': 'يمكنك بدء الاختبار من وقت الفتح.',
+  'This exam is not open yet. You can start it at the opening time.': 'الاختبار لم يُفتح بعد. يمكنك البدء عند وقت الفتح.',
+  'Exam day: no lesson': 'يوم الاختبار: لا يوجد درس',
 };
 
 export default { UZ: uz, RU: ru, EN: {}, AR: ar };

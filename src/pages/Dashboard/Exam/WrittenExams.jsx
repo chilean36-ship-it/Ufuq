@@ -46,6 +46,8 @@ export default function WrittenExams() {
   const [toastMsg, setToastMsg] = useState(null);
   useScrollTop(runExam ? runExam.id : 'list');
   const toastTimer = useRef(null);
+  const [, setTick] = useState(0);            // re-render every 30 s: an exam flips from "Opens soon" to "Start" by itself
+  useEffect(() => { const id = setInterval(() => setTick((n) => n + 1), 30000); return () => clearInterval(id); }, []);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   // The dashboard has one save-chip and no general toast, so reuse the same markup (original weToast()).
@@ -133,6 +135,7 @@ export default function WrittenExams() {
       return { state: timeUp ? 'timeup' : 'draft', bucket: 'todo', badge: timeUp ? t('Time is up') : t('In progress'), sb, extUntil, timeUp };
     }
     if (ex.is_published === false) return { state: 'locked', bucket: 'todo', badge: t('Not open yet'), sb, extUntil };
+    if (ex.open_at && new Date(ex.open_at).getTime() > nowMs) return { state: 'soon', bucket: 'todo', badge: t('Opens soon'), sb, extUntil };
     if (ex.deadline_at && new Date(ex.deadline_at).getTime() < nowMs && !extUntil) return { state: 'closed', bucket: 'todo', badge: t('Deadline passed'), sb, extUntil };
     return { state: 'new', bucket: 'todo', badge: t('To do'), sb, extUntil };
   };
@@ -155,7 +158,7 @@ export default function WrittenExams() {
   const todoList = all.filter((r) => r.d.bucket === 'todo');
   const doneList = all.filter((r) => r.d.bucket === 'done');
   // open / running exams first, then the ones that are locked or closed; nearest deadline first inside each group
-  const rank = (r) => (r.d.state === 'draft' || r.d.state === 'timeup' ? 0 : r.d.state === 'new' ? 1 : r.d.state === 'locked' ? 2 : 3);
+  const rank = (r) => (r.d.state === 'draft' || r.d.state === 'timeup' ? 0 : r.d.state === 'new' ? 1 : r.d.state === 'soon' ? 2 : r.d.state === 'locked' ? 3 : 4);
   const byDeadline = (a, b) => rank(a) - rank(b) || String(a.ex.deadline_at || '9999').localeCompare(String(b.ex.deadline_at || '9999')) || (a.ex.level || 0) - (b.ex.level || 0);
   todoList.sort(byDeadline);
   doneList.sort((a, b) => String((b.d.sb && b.d.sb.submitted_at) || '').localeCompare(String((a.d.sb && a.d.sb.submitted_at) || '')));
@@ -169,6 +172,7 @@ export default function WrittenExams() {
     if (d.state === 'timeup') return <button type="button" className={cls} onClick={() => openExam(ex)}>{t('Finish and see result')}{ICON.arrow}</button>;
     if (d.state === 'draft') return <button type="button" className={cls} onClick={() => openExam(ex)}>{t('Continue')}{ICON.arrow}</button>;
     if (d.state === 'locked') return <button type="button" className="ex2-btn" disabled title={t('Your teacher will open this exam soon.')}>{ICON.lock}{t('Locked')}</button>;
+    if (d.state === 'soon') return <button type="button" className="ex2-btn" disabled title={t('You can start this exam from the opening time.')}>{ICON.lock}{t('Opens soon')}</button>;
     if (d.state === 'closed') return <button type="button" className="ex2-btn" disabled>{t('Closed')}</button>;
     return <button type="button" className={cls} onClick={() => openExam(ex)}>{t('Start')}{ICON.arrow}</button>;
   };
@@ -179,6 +183,7 @@ export default function WrittenExams() {
       <div className="ex2-meta">
         <span>{ICON.list}{total != null ? total : '…'} {t('questions')}</span>
         <span>{ICON.clock}{ex.duration_minutes ? ex.duration_minutes + ' ' + t('min') : t('No time limit')}</span>
+        {ex.open_at && !d.sb && d.state === 'soon' && <span className="dl soon">{ICON.cal}{t('Opens at')}: {fmtDt(ex.open_at)}<em>{relTime(ex.open_at)}</em></span>}
         {withDeadline && ex.deadline_at && !d.sb && <span className={'dl' + (new Date(ex.deadline_at).getTime() - nowMs < 86400000 * 2 ? ' soon' : '')}>{ICON.cal}{t('Deadline')}: {fmtDt(ex.deadline_at)}<em>{relTime(ex.deadline_at)}</em></span>}
         {d.extUntil && !d.sb && <span className="dl ext">{ICON.cal}{t('Extended until')}: {fmtDt(d.extUntil)}</span>}
       </div>

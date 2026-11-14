@@ -4,6 +4,7 @@ import useLiveRefresh from '../lib/liveRefresh';
 import useLiveProfileRow from '../hooks/useLiveRefresh';
 import { getMyAccess } from '../lib/payments';
 import { supabase } from '../lib/supabaseClient';
+import { fetchExamDays } from '../lib/examDays';
 import { imageMime } from '../lib/imageCompress';
 import { useLiveAvatar } from '../lib/avatarSync';
 import { useAuth } from './AuthContext';
@@ -68,11 +69,12 @@ export function DashboardDataProvider({ children }) {
         if (groupError) throw groupError;
         rows = groupRows || [];
       }
+      const examDaysByGroup = codes.length ? await fetchExamDays(codes) : {};   // exam days replace that day's lesson
       if (isCancelled()) return;
       const byCode = {};
       rows.forEach((r) => {
         byCode[r.code] = {
-          name: r.name, schedule: r.schedule, scheduleDays: r.schedule_days || [],
+          name: r.name, schedule: r.schedule, scheduleDays: r.schedule_days || [], examDays: examDaysByGroup[r.code] || [],
           zoomLink: r.zoom_link, type: r.type || 'class',
           slotMinutes: r.slot_minutes || 10, bufferMinutes: r.buffer_minutes || 2,
           noShowMinutes: r.no_show_minutes || 3,

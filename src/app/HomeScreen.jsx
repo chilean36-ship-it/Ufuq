@@ -70,13 +70,13 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
 
   const { pull, busy } = usePullRefresh(async () => { await Promise.all([refreshGroup(true), load()]); toast(t('refreshed')); });
 
-  const live = joined && groupData ? getLiveClassNow(groupData.scheduleDays) : null;
-  const next = useMemo(() => (joined && groupData ? findNextClass(groupData.scheduleDays) : null), [joined, groupData, Math.floor(now / 60000)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const live = joined && groupData ? getLiveClassNow(groupData.scheduleDays, groupData.examDays) : null;
+  const next = useMemo(() => (joined && groupData ? findNextClass(groupData.scheduleDays, groupData.examDays) : null), [joined, groupData, Math.floor(now / 60000)]); // eslint-disable-line react-hooks/exhaustive-deps
   const weekClasses = useMemo(() => {
     if (!joined || !groupData) return {};
     const wk = getCurrentWeekDates();
     const out = {};
-    scheduleDaysToWeekArray(groupData.scheduleDays, wk).forEach((e) => { if (e.time) out[e.day] = e.time; });
+    scheduleDaysToWeekArray(groupData.scheduleDays, wk, groupData.examDays).forEach((e) => { if (e.time) out[e.day] = e.time; });
     return out;
   }, [joined, groupData]);
 

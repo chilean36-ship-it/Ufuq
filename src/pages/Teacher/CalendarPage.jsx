@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import { usePanel } from '../../components/panel/PanelContext';
 import { DOW_ORDER, MONTH_KEYS, fmtDateStr } from '../../lib/panelUtils';
+import { useExamDays } from '../../lib/examDays';
 import { lessonsOnLocalDate, viewerIsOnTashkentTime, viewerGmtLabel } from '../../lib/tzTime';
 
 /** Every lesson on one calendar date (viewer's own zone, converted from Tashkent time for that exact date, so DST
  *  changes are handled per date) across ALL of the teacher's groups. */
-function lessonsOnDate(myGroups, y, m, day) {
+function lessonsOnDate(myGroups, y, m, day, examDaysBy) {
   const out = [];
   myGroups.forEach((g) => {
     if (!g.is_active || !Array.isArray(g.schedule_days)) return;
-    lessonsOnLocalDate(g.schedule_days, y, m, day).forEach((l) => out.push({ group: g, time: l.time, instant: l.instant }));
+    lessonsOnLocalDate(g.schedule_days, y, m, day, examDaysBy[g.code]).forEach((l) => out.push({ group: g, time: l.time, instant: l.instant }));
   });
   return out.sort((a, b) => a.instant - b.instant);
 }
@@ -17,6 +18,7 @@ function lessonsOnDate(myGroups, y, m, day) {
 export default function CalendarPage() {
   const { t, myGroups } = usePanel();
   const [cursor, setCursor] = useState(() => new Date());
+  const examDaysBy = useExamDays();   // an exam day replaces that group's lesson
 
   const { label, cells, today } = useMemo(() => {
     const y = cursor.getFullYear(), m = cursor.getMonth();
@@ -28,10 +30,10 @@ export default function CalendarPage() {
     for (let i = 0; i < lead; i++) arr.push(null);
     for (let day = 1; day <= daysInMonth; day++) {
       const d = new Date(y, m, day);
-      arr.push({ day, dateStr: fmtDateStr(d), events: lessonsOnDate(myGroups, y, m, day) });
+      arr.push({ day, dateStr: fmtDateStr(d), events: lessonsOnDate(myGroups, y, m, day, examDaysBy) });
     }
     return { label: t(MONTH_KEYS[m]) + ' ' + y, cells: arr, today };
-  }, [cursor, myGroups, t]);
+  }, [cursor, myGroups, t, examDaysBy]);
 
   return (
     <section className="page active" id="page-calendar">

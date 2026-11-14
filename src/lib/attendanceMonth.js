@@ -12,6 +12,9 @@
  * the teacher's present / absent toggle writes it, and everything here is computed from it, so nothing can drift.
  */
 
+/** Exam day (array / Set of 'YYYY-MM-DD') = no lesson. Same rule as tzTime.isExamDay, kept local so this file stays plain-Node importable. */
+const isExamDay = (examDays, key) => !!examDays && (examDays instanceof Set ? examDays.has(key) : examDays.indexOf(key) >= 0);
+
 export const MIN_RATE = 80;
 /** Oyiga ruxsat etilgan qoldirishlar soni (qat'iy 3 ta). */
 export const MAX_ABSENCES = 3;
@@ -22,7 +25,7 @@ const pad = (n) => String(n).padStart(2, '0');
 export const monthPrefix = (year, month) => `${year}-${pad(month + 1)}-`;
 
 /** 'YYYY-MM-DD' for every day in (year, month) that falls on one of the group's weekly class days. */
-export function plannedDatesInMonth(scheduleDays, year, month) {
+export function plannedDatesInMonth(scheduleDays, year, month, examDays) {
   const weekdays = new Set();
   (Array.isArray(scheduleDays) ? scheduleDays : []).forEach((d) => {
     if (d && Object.prototype.hasOwnProperty.call(DAY_NUM, d.day)) weekdays.add(DAY_NUM[d.day]);
@@ -31,7 +34,8 @@ export function plannedDatesInMonth(scheduleDays, year, month) {
   const out = [];
   const last = new Date(year, month + 1, 0).getDate();
   for (let day = 1; day <= last; day++) {
-    if (weekdays.has(new Date(year, month, day).getDay())) out.push(`${year}-${pad(month + 1)}-${pad(day)}`);
+    const key = `${year}-${pad(month + 1)}-${pad(day)}`;
+    if (weekdays.has(new Date(year, month, day).getDay()) && !isExamDay(examDays, key)) out.push(key);   // an exam day has no lesson
   }
   return out;
 }
@@ -46,9 +50,9 @@ export function fmtPct(n) {
  * @param scheduleDays  group's schedule_days ([{day:'Monday', time:'18:00'}, …])
  * @param records       [{ date:'YYYY-MM-DD', present:boolean }] — only lessons the teacher has marked
  */
-export function computeMonthAttendance({ scheduleDays, records, year, month, minRate = MIN_RATE }) {
+export function computeMonthAttendance({ scheduleDays, records, year, month, minRate = MIN_RATE, examDays }) {
   const prefix = monthPrefix(year, month);
-  const planned = plannedDatesInMonth(scheduleDays, year, month);
+  const planned = plannedDatesInMonth(scheduleDays, year, month, examDays);
   const inMonth = (records || []).filter((r) => r && r.date && r.date.startsWith(prefix));
   const byDate = {};
   inMonth.forEach((r) => { byDate[r.date] = !!r.present; });
@@ -88,8 +92,8 @@ export function computeMonthAttendance({ scheduleDays, records, year, month, min
 }
 
 /** Same maths for one student out of many records: [{ user_id, date, present }]. */
-export function computeForMembers({ members, records, scheduleDays, year, month }) {
+export function computeForMembers({ members, records, scheduleDays, year, month, examDays }) {
   const byUser = {};
   (records || []).forEach((r) => { (byUser[r.user_id] = byUser[r.user_id] || []).push(r); });
-  return (members || []).map((m) => ({ member: m, stats: computeMonthAttendance({ scheduleDays, records: byUser[m.user_id] || [], year, month }) }));
+  return (members || []).map((m) => ({ member: m, stats: computeMonthAttendance({ scheduleDays, records: byUser[m.user_id] || [], year, month, examDays }) }));
 }

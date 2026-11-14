@@ -145,7 +145,7 @@ export default function HomeView({ onNavigate }) {
     const items = { Sunday: [], Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [] };
     if (!joined || !groupData) return items;
     const now = new Date();
-    scheduleDaysToWeekArray(groupData.scheduleDays, currentWeek).forEach((entry) => {
+    scheduleDaysToWeekArray(groupData.scheduleDays, currentWeek, groupData.examDays).forEach((entry) => {
       if (!entry.time || !entry.instant) return;
       const start = entry.instant;
       const end = new Date(start.getTime() + 120 * 60000);
@@ -164,7 +164,7 @@ export default function HomeView({ onNavigate }) {
   // Attendance: this month's lessons = 100 %, each missed lesson takes an equal share off (see lib/attendanceMonth.js).
   const today = new Date();
   const monthStats = useMemo(
-    () => (att === null ? null : computeMonthAttendance({ scheduleDays: groupData && groupData.scheduleDays, records: att, year: today.getFullYear(), month: today.getMonth() })),
+    () => (att === null ? null : computeMonthAttendance({ scheduleDays: groupData && groupData.scheduleDays, examDays: groupData && groupData.examDays, records: att, year: today.getFullYear(), month: today.getMonth() })),
     [att, groupData, dayKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const recentAtt = att ? att.slice().reverse().slice(0, 3) : [];

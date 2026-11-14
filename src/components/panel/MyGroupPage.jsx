@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import useLiveRefresh from '../../lib/liveRefresh';
 import { openSafe } from '../../lib/safeUrl';
 import { viewerIsOnTashkentTime, viewerGmtLabel } from '../../lib/tzTime';
+import { useExamDays } from '../../lib/examDays';
+import { isExamDay, tashkentDateKey } from '../../lib/tzTime';
 import { getCurrentWeekDates, scheduleDaysToWeekArray, nowInTashkent, tashkentInstant, formatLocalTime, DAY_NAME_BY_JS, MONTH_NAMES } from '../../pages/Dashboard/weekUtils';
 import LessonHorizon from '../../pages/Dashboard/LessonHorizon';
 import NoClassModal from '../../pages/Dashboard/NoClassModal';
@@ -87,6 +89,8 @@ export default function MyGroupPage() {
   });
 
   // What the hero shows: a lesson that is on right now, the next one, or nothing scheduled (Tashkent wall-clock times).
+  const examDaysBy = useExamDays();
+  const examDays = g ? examDaysBy[g.code] : undefined;   // an exam day replaces the lesson
   const resolveHero = useCallback(() => {
     const list = g && Array.isArray(g.schedule_days) ? g.schedule_days : [];
     if (!list.length) return { kind: 'none' };
@@ -98,12 +102,13 @@ export default function MyGroupPage() {
       if (!entry) continue;
       const [hh, mm] = entry.time.split(':').map(Number);
       const start = tashkentInstant(offset, hh, mm);
+      if (isExamDay(examDays, tashkentDateKey(start))) continue;
       const end = new Date(start.getTime() + durMs);
       if (offset === 0 && nowMs >= start.getTime() && nowMs <= end.getTime()) return { kind: 'live', start, end };
       if (start.getTime() > nowMs) return { kind: 'next', start, end };
     }
     return { kind: 'none' };
-  }, [g]);
+  }, [g, examDays]);
 
   if (myGroups.length === 0) {
     return (
@@ -178,7 +183,7 @@ export default function MyGroupPage() {
 
   // Stored in Tashkent time; the week strip is the viewer's own calendar, so convert (day AND clock) to the viewer's zone.
   const scheduleByDay = {};
-  scheduleDaysToWeekArray(scheduleDays, currentWeek).forEach((e) => { if (e.time) scheduleByDay[e.day] = e.time; });
+  scheduleDaysToWeekArray(scheduleDays, currentWeek, examDays).forEach((e) => { if (e.time) scheduleByDay[e.day] = e.time; });
   const activeWeek = currentWeek[dayIndex];
   const activeTime = activeWeek ? scheduleByDay[activeWeek.day] : null;
   const q = memberQuery.trim().toLowerCase();

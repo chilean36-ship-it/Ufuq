@@ -120,7 +120,7 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
   useEffect(() => { if (groupReady && !groupCode) setJoinOpen(true); }, [groupReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const weekSchedule = useMemo(
-    () => (joined && groupData && !isIndividual ? scheduleDaysToWeekArray(groupData.scheduleDays, currentWeek) : []),
+    () => (joined && groupData && !isIndividual ? scheduleDaysToWeekArray(groupData.scheduleDays, currentWeek, groupData.examDays) : []),
     [joined, groupData, isIndividual, currentWeek]
   );
 
@@ -162,9 +162,9 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
       return nxt ? { kind: 'next', start: new Date(nxt.start_at), end: new Date(nxt.end_at) } : { kind: 'none' };
     }
     const days = groupData && groupData.scheduleDays;
-    const live = getLiveClassNow(days);
+    const live = getLiveClassNow(days, groupData && groupData.examDays);
     if (live) return { kind: 'live', start: live.start, end: live.end };
-    const next = findNextClass(days);
+    const next = findNextClass(days, groupData && groupData.examDays);
     return next ? { kind: 'next', start: next.start } : { kind: 'none' };
   }, [isIndividual, mySlots, groupData]);
 
@@ -208,13 +208,13 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
       openNoClass(t('No session right now'), info);
       return;
     }
-    const live = groupData && getLiveClassNow(groupData.scheduleDays);
+    const live = groupData && getLiveClassNow(groupData.scheduleDays, groupData.examDays);
     if (live) {
       enterLesson();
       return;
     }
     // Plain English in the original (never run through TT()) — kept as-is.
-    const next = groupData && findNextClass(groupData.scheduleDays);
+    const next = groupData && findNextClass(groupData.scheduleDays, groupData.examDays);
     openNoClass('', next
       ? `Your next class is ${next.day}, ${next.dateLabel} at ${next.time} (your local time).`
       : "There's no upcoming class scheduled for this group yet.");
@@ -287,8 +287,8 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
     }
     if (nextWaiting && userId && nextWaiting.user_id === userId) hint = t('You are next, be ready');
   } else {
-    timeText = (activeDay && activeDay.time) || t('No class');
-    labelText = t(activeDay && activeDay.time ? 'Class time · your local time' : 'No lesson scheduled');
+    timeText = (activeDay && activeDay.time) || (activeDay && activeDay.exam ? t('Exam') : t('No class'));
+    labelText = activeDay && activeDay.exam && !activeDay.time ? t('Exam day: no lesson') : t(activeDay && activeDay.time ? 'Class time · your local time' : 'No lesson scheduled');
     dotStyle = undefined;
   }
 

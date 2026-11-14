@@ -93,6 +93,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
   const [level, setLevel] = useState('');       // exam level 1..MAX_LEVEL ('' = not chosen yet)
   const [kind, setKind] = useState('');         // '' = other exam (100 points) | 'midterm' (50) | 'final' (100)
   const [deadline, setDeadline] = useState('');   // 'YYYY-MM-DDTHH:mm' in the teacher's local time ('' = no deadline)
+  const [openAt, setOpenAt] = useState('');       // when students may START ('' = as soon as it is published); also the exam DAY: that day's lesson is replaced by the exam
   const [dur, setDur] = useState('');           // time limit in minutes ('' = no limit)
   const [targets, setTargets] = useState([]);   // group codes a NEW exam is sent to (default: the group selected at the top)
   const [secs, setSecs] = useState([]);
@@ -117,6 +118,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     setTitle(state.exam ? state.exam.title : '');
     setDur(state.exam && state.exam.duration_minutes ? String(state.exam.duration_minutes) : '');
     setDeadline(state.exam && state.exam.deadline_at ? toLocalInput(state.exam.deadline_at) : '');
+    setOpenAt(state.exam && state.exam.open_at ? toLocalInput(state.exam.open_at) : '');
     setLevel(state.exam ? (state.exam.level ? String(state.exam.level) : '') : (state.level ? String(state.level) : ''));
     setKind(state.exam && state.exam.exam_kind ? state.exam.exam_kind : '');
     setTargets(g ? [g.code] : []);
@@ -146,7 +148,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
   useEffect(() => { if (!open) return undefined; lockScroll(); return () => unlockScroll(); }, [open]);
 
   // ---- unsaved-changes tracking ----
-  const sig = useMemo(() => JSON.stringify([title, level, dur, targets, secs.map((s) => [s.part, s.title, s.type, s.items.map((i) => [i.id, i.type, i.text, i.criteria, i.audio, i.optsText])])]), [title, level, dur, targets, secs]);
+  const sig = useMemo(() => JSON.stringify([title, level, dur, deadline, openAt, targets, secs.map((s) => [s.part, s.title, s.type, s.items.map((i) => [i.id, i.type, i.text, i.criteria, i.audio, i.optsText])])]), [title, level, dur, deadline, openAt, targets, secs]);
   useEffect(() => { if (ready) setBaseSig(sig); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ready]);
   const dirty = ready && baseSig !== null && sig !== baseSig;
 
@@ -239,6 +241,8 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     if (dur !== '' && !(Number(dur) >= 1 && Number(dur) <= 600 && Number.isInteger(Number(dur)))) out.push(t('Exam duration (minutes)') + ': 1–600');
     if (deadline && !(new Date(deadline).getTime() > 0)) out.push(t('Deadline'));
     else if (deadline && new Date(deadline).getTime() <= Date.now() && deadline !== (state.exam && state.exam.deadline_at ? toLocalInput(state.exam.deadline_at) : '')) out.push(t('The deadline must be in the future.'));   // an unchanged, already-passed deadline may stay
+    if (openAt && !(new Date(openAt).getTime() > 0)) out.push(t('Opens at'));
+    else if (openAt && deadline && new Date(openAt).getTime() >= new Date(deadline).getTime()) out.push(t('The opening time must be before the deadline.'));
     if (!state.exam && targets.length === 0) out.push(t('Choose at least one group.'));
     const filled = secs.filter((s) => s.items.some((it) => it.text.trim()));
     if (filled.length === 0) out.push(t('Add at least one question.'));
@@ -271,6 +275,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     const trimmedTitle = title.trim();
     const durValue = dur === '' ? null : Math.round(Number(dur));
     const deadlineValue = deadline ? new Date(deadline).toISOString() : null;
+    const openValue = openAt ? new Date(openAt).toISOString() : null;
     const levelValue = Math.round(Number(level));
     const filled = secs.map((s) => ({ ...s, items: s.items.filter((it) => it.text.trim()) })).filter((s) => s.items.length);
 
@@ -315,7 +320,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
         }
       };
       if (state.exam) {
-        const { error: err } = await supabase.from('written_exams').update({ title: trimmedTitle, duration_minutes: durValue, deadline_at: deadlineValue, level: levelValue, exam_kind: kind || null }).eq('id', state.exam.id);
+        const { error: err } = await supabase.from('written_exams').update({ title: trimmedTitle, duration_minutes: durValue, deadline_at: deadlineValue, open_at: openValue, level: levelValue, exam_kind: kind || null }).eq('id', state.exam.id);
         if (err) throw err;
         await writeQuestions(state.exam.id, true);
         // a level exam has ONE content: copy it to the same level exam of every other group (copies with submissions are skipped)
@@ -329,7 +334,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
         const created = [];
         try {
           for (const gc of sendTo) {
-            const { data, error: err } = await supabase.from('written_exams').insert({ group_code: gc, title: trimmedTitle, duration_minutes: durValue, deadline_at: deadlineValue, level: levelValue, exam_kind: kind || null, created_by: user.id }).select('id').single();
+            const { data, error: err } = await supabase.from('written_exams').insert({ group_code: gc, title: trimmedTitle, duration_minutes: durValue, deadline_at: deadlineValue, open_at: openValue, level: levelValue, exam_kind: kind || null, created_by: user.id }).select('id').single();
             if (err) throw err;
             created.push(data.id);
             await writeQuestions(data.id, false);
@@ -433,6 +438,15 @@ export default function ExamEditor({ state, onClose, onSaved }) {
               ))}
             </div>
             <p className="pbx-note">{t('Level total')}: {MIDTERM_MAX} + {FINAL_MAX} = {LEVEL_MAX} · {t('Pass mark')}: {PASS_MARK}</p>
+          </section>
+
+          <section className="pbx-box">
+            <h4>{t('Opens at')}</h4>
+            <div className="pbx-dur">
+              <input type="datetime-local" className="pbx-select" value={openAt} aria-label={t('Opens at')} onChange={(e) => setOpenAt(e.target.value)} />
+              {openAt && <button type="button" className="pbx-chip" onClick={() => setOpenAt('')}><span>{t('Open when published')}</span></button>}
+            </div>
+            <p className="pbx-note">{t('Students see the published exam before this time and can start it from this time on. On the exam day the group has no lesson: the exam takes its place.')}</p>
           </section>
 
           <section className="pbx-box">

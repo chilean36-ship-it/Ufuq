@@ -163,3 +163,8 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 - Test: `npm run test:sql` (throw-away local Postgres; fixture `test/sql/level_system_baseline.sql`).
 - After applying: open Admin > Groups and place the students listed under "Students in switched-off groups" (4 on 2026-11-10: Group A7 x2, A6, E4).
 - APPLIED (2026-11-13): listening migrations `20261126_level9_final_listening.sql`, `20261127_level2_midterm_listening.sql`, `20261127b_level2_final_listening.sql`: data only. Five listening questions (Gemini fusha audio in `public/listening/levelN/g/`) appended to every paper of Level 9 final, Level 2 midterm and Level 2 final (all papers unpublished). Done so far: Level 1 (both), Level 2 (both), Level 9 final. Pending audio: the other levels (text in `Ufuq web/listening-all-levels`, generator `tools/gen-gemini.mjs`, SQL generator `tools/make-sql.mjs`).
+
+## Exam opening time + exam day replaces the lesson — NOT APPLIED YET
+- `supabase/migrations/20261203_exam_open_at.sql` (safe to run twice): `written_exams.open_at`; `start_written_exam` refuses students before it (`EXAM_NOT_OPEN_YET`); `my_level_exams()` returns `open_at`; new `exam_days(p_groups)` (Tashkent dates of published exams that have `open_at`).
+- Run the SQL BEFORE the site goes to `main`: the teacher editor saves `open_at`. (The student list works without the column.)
+- A published exam with `open_at` takes that Tashkent day's lesson: it is hidden from the student week / next lesson / Live, the monthly attendance (the day is not counted) and the teacher calendar / overview / My group. Existing exams have no `open_at`, so nothing changes for them.

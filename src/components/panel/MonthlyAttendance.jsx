@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from './PanelContext';
 import PageStyle from '../PageStyle';
 import { MONTH_KEYS } from '../../lib/panelUtils';
+import { useExamDays } from '../../lib/examDays';
 import { computeForMembers, fmtPct, LEVEL_COLORS, MAX_ABSENCES, monthPrefix, plannedDatesInMonth } from '../../lib/attendanceMonth';
 import Loader from '../../components/Loader';
 
@@ -95,14 +96,15 @@ export default function MonthlyAttendance({ group, refreshKey }) {
   }, [code, cursor, refreshKey]);
 
   const scheduleDays = group && group.schedule_days;
+  const examDays = useExamDays()[code];   // exam days have no lesson, so they are not counted
   const rows = useMemo(() => {
     if (!data || data.error) return [];
     const order = { danger: 0, warn: 1, good: 2 };
-    return computeForMembers({ members: data.members, records: data.records, scheduleDays, year: cursor.y, month: cursor.m })
+    return computeForMembers({ members: data.members, records: data.records, scheduleDays, examDays, year: cursor.y, month: cursor.m })
       .sort((a, b) => order[a.stats.level] - order[b.stats.level] || (a.member.name || '').localeCompare(b.member.name || ''));
-  }, [data, scheduleDays, cursor]);
+  }, [data, scheduleDays, examDays, cursor]);
 
-  const total = rows.length ? rows[0].stats.total : plannedDatesInMonth(scheduleDays, cursor.y, cursor.m).length;
+  const total = rows.length ? rows[0].stats.total : plannedDatesInMonth(scheduleDays, cursor.y, cursor.m, examDays).length;
   const perLesson = total ? 100 / total : 0;
   const isCurrent = cursor.y === now.getFullYear() && cursor.m === now.getMonth();
   const step = (d) => setCursor((c) => { const dt = new Date(c.y, c.m + d, 1); return { y: dt.getFullYear(), m: dt.getMonth() }; });

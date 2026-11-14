@@ -5,6 +5,7 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { usePanel } from '../../components/panel/PanelContext';
 import { Modal } from '../../components/panel/ui';
 import { lessonsOnLocalDate, fmtHHMM } from '../../lib/tzTime';
+import { useExamDays } from '../../lib/examDays';
 
 const DEFAULT_LESSON_MINUTES = 120;
 
@@ -23,12 +24,12 @@ function lessonStatus(lesson, now) {
 
 /** Every lesson that falls on the viewer's own calendar day today (schedules are stored in Tashkent time and converted
  *  to the viewer's zone, so a late Tashkent class can legitimately land on the neighbouring local day). */
-function buildTodayLessons(myGroups, counts) {
+function buildTodayLessons(myGroups, counts, examDaysBy) {
   const n = new Date();
   const lessons = [];
   myGroups.forEach((g) => {
     if (!g.is_active || !Array.isArray(g.schedule_days)) return;
-    lessonsOnLocalDate(g.schedule_days, n.getFullYear(), n.getMonth(), n.getDate()).forEach(({ instant }) => {
+    lessonsOnLocalDate(g.schedule_days, n.getFullYear(), n.getMonth(), n.getDate(), examDaysBy[g.code]).forEach(({ instant }) => {
       const minutes = g.duration_minutes || DEFAULT_LESSON_MINUTES;
       lessons.push({ group: g, start: instant, end: new Date(instant.getTime() + minutes * 60000), students: counts[g.code] || 0 });
     });
@@ -40,6 +41,7 @@ function buildTodayLessons(myGroups, counts) {
 export default function OverviewPage() {
   const { t, myGroups, myName, showPage, pending, currentGroup, setCurrentGroupCode } = usePanel();
   const [data, setData] = useState(null);   // null = loading
+  const examDaysBy = useExamDays();          // an exam day replaces that group's lesson
   const [now, setNow] = useState(() => new Date());
   const [earlyJoin, setEarlyJoin] = useState({ open: false, msg: '' });
 
@@ -83,7 +85,7 @@ export default function OverviewPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const todayLessons = useMemo(() => (data ? buildTodayLessons(myGroups, data.counts) : []), [data, myGroups]);
+  const todayLessons = useMemo(() => (data ? buildTodayLessons(myGroups, data.counts, examDaysBy) : []), [data, myGroups, examDaysBy]);
 
   function attemptJoinLesson(lesson) {
     if (!lesson || !lesson.group.zoom_link) return;

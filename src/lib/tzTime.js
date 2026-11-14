@@ -24,6 +24,17 @@ export function tashkentInstant(daysFromToday, hh, mm) {
   return tashkentInstantOnDate(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() + daysFromToday, hh, mm);
 }
 
+/** 'YYYY-MM-DD' of an instant on the Tashkent calendar. */
+export function tashkentDateKey(instant) {
+  return new Date(instant.getTime() + TASHKENT_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/** True when `dateKey` ('YYYY-MM-DD', Tashkent) is an exam day (array / Set / nothing): the exam takes that day's lesson. */
+export function isExamDay(examDays, dateKey) {
+  if (!examDays || !dateKey) return false;
+  return examDays instanceof Set ? examDays.has(dateKey) : examDays.indexOf(dateKey) >= 0;
+}
+
 export function formatLocalTime(date) {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
@@ -56,7 +67,7 @@ const TIME_RE = /^(\d{1,2}):(\d{2})$/;
  * Looks at the Tashkent dates around it, because a lesson can land on the neighbouring local day.
  * Returns [{ entry, instant, time }] sorted by time.
  */
-export function lessonsOnLocalDate(scheduleDays, year, month, day) {
+export function lessonsOnLocalDate(scheduleDays, year, month, day, examDays) {
   const out = [];
   (Array.isArray(scheduleDays) ? scheduleDays : []).forEach((entry) => {
     const m = entry && TIME_RE.exec(entry.time || '');
@@ -65,6 +76,7 @@ export function lessonsOnLocalDate(scheduleDays, year, month, day) {
     for (let k = -1; k <= 1; k++) {
       const td = new Date(Date.UTC(year, month, day + k)); // a Tashkent calendar date near the local one
       if (td.getUTCDay() !== dayIdx) continue;
+      if (isExamDay(examDays, td.toISOString().slice(0, 10))) continue;   // exam day: no lesson
       const instant = tashkentInstantOnDate(td.getUTCFullYear(), td.getUTCMonth(), td.getUTCDate(), +m[1], +m[2]);
       if (instant.getFullYear() === year && instant.getMonth() === month && instant.getDate() === day) {
         out.push({ entry, instant, time: fmtHHMM(instant) });

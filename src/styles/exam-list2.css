@@ -57,7 +57,7 @@ html[data-theme="light"] .ex2{ --ex-ok:#2C8F55; --ex-warn:#B9791A; --ex-bad:#C24
 .ex2-row.new, .ex2-row.draft{ border-inline-start-color:var(--gold); }
 .ex2-row.timeup, .ex2-row.closed{ border-inline-start-color:var(--ex-bad); }
 .ex2-row.graded{ border-inline-start-color:var(--ex-ok); }
-.ex2-row.locked, .ex2-row.wait{ border-inline-start-color:var(--line); opacity:.92; }
+.ex2-row.locked, .ex2-row.soon, .ex2-row.wait{ border-inline-start-color:var(--line); opacity:.92; }
 .ex2-ico{ width:46px; height:46px; display:grid; place-items:center; border-radius:13px; background:var(--bg-3); color:var(--gold); }
 .ex2-ico svg{ width:22px; height:22px; }
 .ex2-ico.final{ background:var(--gold-dim); color:var(--gold-bright); }

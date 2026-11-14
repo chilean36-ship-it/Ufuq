@@ -1,5 +1,5 @@
 import { fmtDate, currentLang } from '../../lib/dateLocale';
-import { nowInTashkent, tashkentInstant, formatLocalTime } from '../../lib/tzTime';
+import { nowInTashkent, tashkentInstant, formatLocalTime, tashkentDateKey, isExamDay } from '../../lib/tzTime';
 // Timezone-aware week/schedule helpers — port of the date logic in dashboard.html's inline script.
 // Every group's schedule_days is stored in Tashkent wall-clock time (UTC+5, no DST); these turn
 // each entry into a real UTC instant so "is class live right now" and the on-screen time are both
@@ -40,10 +40,11 @@ function localDayKey(d) { return d.getFullYear() + '-' + d.getMonth() + '-' + d.
  * on the viewer's local day at the viewer's local hour — so when Egypt (or anywhere) switches DST, or a late
  * Tashkent evening class falls on a different local weekday, the student still sees the correct day and time.
  */
-export function scheduleDaysToWeekArray(scheduleDays, currentWeek) {
+export function scheduleDaysToWeekArray(scheduleDays, currentWeek, examDays) {
   const list = (scheduleDays || []).filter((e) => e && e.day && /^\d{1,2}:\d{2}$/.test(e.time || ''));
   const tashkentTodayIdx = nowInTashkent().getUTCDay();
   const byLocalDay = {};
+  const examLocalDay = {};   // local days whose lesson is replaced by an exam
   list.forEach((entry) => {
     const [hh, mm] = entry.time.split(':').map(Number);
     const dayIdx = DAY_NAME_BY_JS.indexOf(entry.day);
@@ -52,23 +53,25 @@ export function scheduleDaysToWeekArray(scheduleDays, currentWeek) {
     for (let k = -7; k <= 7; k += 7) {
       const instant = tashkentInstant(dayIdx - tashkentTodayIdx + k, hh, mm);
       const key = localDayKey(instant);
+      if (isExamDay(examDays, tashkentDateKey(instant))) { examLocalDay[key] = true; continue; }   // exam day: no lesson
       if (!byLocalDay[key]) byLocalDay[key] = instant;
     }
   });
   return currentWeek.map((w) => {
     const instant = byLocalDay[localDayKey(w.date)];
-    if (!instant) return { day: w.day, time: null };
+    if (!instant) return examLocalDay[localDayKey(w.date)] ? { day: w.day, time: null, exam: true } : { day: w.day, time: null };
     return { day: w.day, time: formatLocalTime(instant), instant };
   });
 }
 
-export function getLiveClassNow(scheduleDays) {
+export function getLiveClassNow(scheduleDays, examDays) {
   if (!scheduleDays || !scheduleDays.length) return null;
   const todayName = DAY_NAME_BY_JS[nowInTashkent().getUTCDay()];
   const entry = scheduleDays.find((e) => e && e.day === todayName);
   if (!entry || !entry.time) return null;
   const [hh, mm] = entry.time.split(':').map(Number);
   const start = tashkentInstant(0, hh, mm);
+  if (isExamDay(examDays, tashkentDateKey(start))) return null;
   const end = new Date(start.getTime() + 120 * 60000);
   const now = new Date();
   return now >= start && now <= end ? { start, end } : null;
@@ -82,7 +85,7 @@ function resolveScheduleForDay(scheduleDays, dayName) {
 }
 
 /** First upcoming class instant (today included) across the next 7 days, in the viewer's local time. */
-export function findNextClass(scheduleDays) {
+export function findNextClass(scheduleDays, examDays) {
   if (!scheduleDays || !scheduleDays.length) return null;
   const now = new Date();
   const tashkentTodayIdx = nowInTashkent().getUTCDay();
@@ -92,7 +95,7 @@ export function findNextClass(scheduleDays) {
     if (entry && entry.time) {
       const [hh, mm] = entry.time.split(':').map(Number);
       const start = tashkentInstant(offset, hh, mm);
-      if (start > now) {
+      if (start > now && !isExamDay(examDays, tashkentDateKey(start))) {
         return {
           day: DAY_NAME_BY_JS[start.getDay()], time: formatLocalTime(start), start,
           dateLabel: MONTH_NAMES[start.getMonth()] + ' ' + start.getDate(),

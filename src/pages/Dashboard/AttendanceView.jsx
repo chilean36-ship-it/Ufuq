@@ -67,7 +67,7 @@ export default function AttendanceView() {
   ], { enabled: joined && !!userId });
 
   const stats = useMemo(
-    () => (records === null ? null : computeMonthAttendance({ scheduleDays: groupData && groupData.scheduleDays, records, year: cursor.y, month: cursor.m })),
+    () => (records === null ? null : computeMonthAttendance({ scheduleDays: groupData && groupData.scheduleDays, examDays: groupData && groupData.examDays, records, year: cursor.y, month: cursor.m })),
     [records, groupData, cursor]
   );
   // Darslar tarixi: faqat tanlangan bitta oy, eng yangisi birinchi (sana, so'ng vaqt bo'yicha).

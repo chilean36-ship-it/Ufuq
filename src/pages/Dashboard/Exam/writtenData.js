@@ -8,6 +8,7 @@ const MESSAGES = {
   LEVEL_MISMATCH: "This exam is for a different level. You can take the exams of your current level only.",
   NOT_IN_GROUP: "This exam is not for your group. Check the group code or ask your teacher.",
   EXAM_NOT_PUBLISHED: "This exam is closed for now. Try again once your teacher opens it.",
+  EXAM_NOT_OPEN_YET: "This exam is not open yet. You can start it at the opening time.",
   EXAM_DEADLINE_PASSED: "The deadline for this exam has passed. Ask your teacher.",
   EXAM_NOT_FOUND: "Exam not found — it may have been deleted.",
   NOT_AUTHENTICATED: "Your session has expired. Please sign in again.",
@@ -26,9 +27,14 @@ export function friendlyExamError(err) {
 
 /** Published exams of ONE group (the one the student has selected). Throws on error. */
 export async function fetchPublishedWrittenExams(groupCode) {
-  let q = supabase.from('written_exams').select('id, title, created_at, group_code, duration_minutes, deadline_at, level, exam_kind').eq('is_published', true);
-  if (groupCode) q = q.eq('group_code', groupCode);
-  const { data, error } = await q.order('level', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+  // open_at comes with migration 20261203_exam_open_at.sql; until it is applied the list works without it
+  const run = (cols) => {
+    let q = supabase.from('written_exams').select(cols).eq('is_published', true);
+    if (groupCode) q = q.eq('group_code', groupCode);
+    return q.order('level', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+  };
+  let { data, error } = await run('id, title, created_at, group_code, duration_minutes, deadline_at, open_at, level, exam_kind');
+  if (error && /open_at/.test(String(error.message || ''))) ({ data, error } = await run('id, title, created_at, group_code, duration_minutes, deadline_at, level, exam_kind'));
   if (error) throw error;
   return data || [];
 }
