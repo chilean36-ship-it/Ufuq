@@ -466,3 +466,51 @@ a:focus-visible, .scope-btn:focus-visible, .tpl-chip:focus-visible, .mx-fchip:fo
 }
 @media print{ .tk-card, .xl-card, .mx-card{ break-inside:avoid; } }
 .cal-ev.is-exam{ border-left-color:var(--ex-warn, #E0A53A); background:rgba(224,165,58,.14); }
+
+/* ---------- Dashboard: compact, medium-sized blocks (overrides earlier rules) ---------- */
+#page-overview .greet{ margin-bottom:10px; }
+#page-overview .greet h1{ font-size:22px; }
+#page-overview .kpi-row{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+#page-overview .kpi{ padding:10px 12px; gap:10px; border-radius:12px; transition:transform .15s ease, border-color .15s ease, background .15s ease; }
+#page-overview .kpi:hover{ transform:translateY(-2px); border-color:rgba(201,162,75,.5); background:var(--card-hover, var(--bg-3)); }
+#page-overview .kpi:active{ transform:scale(.98); }
+#page-overview .kpi-ico{ width:32px; height:32px; border-radius:10px; }
+#page-overview .kpi-ico svg{ width:16px; height:16px; }
+#page-overview .kpi-num{ font-size:21px; }
+#page-overview .kpi-lbl{ margin-top:3px; font-size:11.5px; }
+#page-overview .ov-top{ grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:10px; margin-bottom:12px; }
+#page-overview .ov-top .ready-hero{ padding:12px 14px; border-radius:12px; gap:12px; align-items:center; }
+#page-overview .ov-top .ready-eyebrow{ margin-bottom:4px; font-size:10.5px; }
+#page-overview .ov-top .ready-title{ font-size:clamp(17px,1.6vw,20px); line-height:1.2; }
+#page-overview .ov-top .ready-sub{ font-size:12px; margin-top:2px; }
+#page-overview .ov-top .ready-chips{ margin-top:8px; gap:5px; }
+#page-overview .ov-top .ready-chip{ padding:3px 8px; font-size:11.5px; border-radius:8px; }
+#page-overview .ov-top .ready-progress{ margin-top:8px; height:5px; }
+#page-overview .ov-top .ready-progress-lbl{ font-size:11px; margin-top:4px; }
+#page-overview .ov-top .ready-side{ gap:8px; }
+#page-overview .ov-top .ready-countdown{ padding:5px 12px; border-radius:10px; }
+#page-overview .ov-top .ready-countdown-lbl{ font-size:10px; }
+#page-overview .ov-top .ready-countdown-num{ font-size:19px; }
+#page-overview .ov-top .btn-join{ padding:5px 14px 5px 5px; gap:8px; font-size:12.5px; border-radius:999px; }
+#page-overview .ov-top .btn-join-ico{ width:26px; height:26px; }
+#page-overview .ov-top .btn-join-ico svg{ width:14px; height:14px; }
+#page-overview .panel, #page-overview .panel-fancy{ padding:12px 14px; border-radius:12px; }
+#page-overview .panel-head{ margin-bottom:8px; }
+#page-overview .panel-head h3{ font-size:13px; }
+#page-overview .ov-top .ov-today .lesson-grid{ grid-template-columns:repeat(auto-fill, minmax(min(100%,170px),1fr)); gap:8px; max-height:170px; }
+#page-overview .lesson-card{ padding:9px 11px; border-radius:10px; gap:2px; }
+#page-overview .lesson-card-name{ font-size:13px; }
+#page-overview .lesson-card-time{ font-size:16px; }
+#page-overview .lesson-card-meta{ font-size:11.5px; gap:8px; }
+#page-overview .lesson-status{ font-size:10px; padding:2px 7px; }
+#page-overview .lesson-code{ font-size:11px; padding:2px 7px; }
+#page-overview .lesson-card-foot{ margin-top:4px; }
+#page-overview .qa-grid{ grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); gap:8px; }
+#page-overview .qa{ padding:8px 10px; gap:9px; border-radius:10px; }
+#page-overview .qa-ico{ width:28px; height:28px; border-radius:9px; }
+#page-overview .qa-ico svg{ width:15px; height:15px; }
+#page-overview .qa small{ font-size:11px; }
+#page-overview .attn{ padding:8px 11px; border-radius:10px; gap:9px; font-size:13px; }
+#page-overview .empty-block{ padding:14px 10px; font-size:13px; }
+@media (max-width:1000px){ #page-overview .ov-top{ grid-template-columns:1fr; } #page-overview .kpi-row{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:420px){ #page-overview .kpi{ padding:9px 10px; } #page-overview .kpi-num{ font-size:19px; } }
