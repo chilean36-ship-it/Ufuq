@@ -26,7 +26,9 @@ export default function WrittenExamsPanel() {
   const { t, lang, toast, askConfirm, currentGroup: g } = usePanel();
   const code = g ? g.code : null;
   const [exams, setExams] = useState(null);
-  const [meta, setMeta] = useState({ qCount: {}, subCount: {} });
+  const [meta, setMeta] = useState({ qCount: {}, subCount: {}, pendCount: {} });
+  const [st, setSt] = useState('all');             // status filter: 'all' | 'pub' | 'draft'
+  const [search, setSearch] = useState('');
 
   const [builder, setBuilder] = useState({ open: false, exam: null, level: null });
   const [lvl, setLvl] = useState('all');           // level filter: 'all' | 1..MAX_LEVEL | 0 (exams without a level)
@@ -60,9 +62,9 @@ export default function WrittenExamsPanel() {
         supabase.from('written_exam_questions').select('exam_id').in('exam_id', ids),
         supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', ids),
       ]);
-      const qc = {}, sc = {}, anyN = {};
+      const qc = {}, sc = {}, pc = {}, anyN = {};
       (qs.data || []).forEach((q) => { qc[q.exam_id] = (qc[q.exam_id] || 0) + 1; });
-      (subs.data || []).forEach((s) => { anyN[s.exam_id] = (anyN[s.exam_id] || 0) + 1; if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; });
+      (subs.data || []).forEach((s) => { anyN[s.exam_id] = (anyN[s.exam_id] || 0) + 1; if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; if (s.status === 'submitted') pc[s.exam_id] = (pc[s.exam_id] || 0) + 1; });
       // one copy per (level, kind) for this group's level; everything else of the group stays as it is
       const best = new Map();
       const rank = (e) => (anyN[e.id] ? 4 : 0) + (e.is_published ? 2 : 0) + (e.group_code === code ? 1 : 0);
@@ -73,7 +75,7 @@ export default function WrittenExamsPanel() {
       });
       const picked = new Set([...best.values()].map((e) => e.id));
       const list = cand.filter((e) => (e.group_code === code && !(e.exam_kind && g && e.level === g.level)) || picked.has(e.id));
-      setMeta({ qCount: qc, subCount: sc });
+      setMeta({ qCount: qc, subCount: sc, pendCount: pc });
       setExams(list);
     } catch (e) { if (!silent) setExams({ error: e.message || String(e) }); }
   }, [code, g && g.level, g && g.type]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -113,63 +115,128 @@ export default function WrittenExamsPanel() {
   }
 
   const openNew = () => { if (!code) { toast(t('Select a group first.'), 'err'); return; } setBuilder({ open: true, exam: null, level: typeof lvl === 'number' && lvl > 0 ? lvl : null }); };
-  const count = Array.isArray(exams) ? exams.length : 0;
+  const all = Array.isArray(exams) ? exams : [];
+  const count = all.length;
+
+  // header numbers + filters (status + search)
+  const pubCount = all.filter((e) => e.is_published).length;
+  const toGrade = all.reduce((n, e) => n + (meta.pendCount[e.id] || 0), 0);
+  const needle = search.trim().toLowerCase();
+  const shown = all.filter((e) => (st === 'all' || (st === 'pub' ? e.is_published : !e.is_published))
+    && (!needle || (String(e.title || '') + ' ' + examTitleFor(e, lang)).toLowerCase().includes(needle)));
 
   // Exams grouped by level (0 = no level yet), in level order.
   const byLevel = {};
-  (Array.isArray(exams) ? exams : []).forEach((e) => { const k = e.level >= 1 && e.level <= MAX_LEVEL ? e.level : 0; (byLevel[k] = byLevel[k] || []).push(e); });
+  shown.forEach((e) => { const k = e.level >= 1 && e.level <= MAX_LEVEL ? e.level : 0; (byLevel[k] = byLevel[k] || []).push(e); });
   const hasNone = (byLevel[0] || []).length > 0;
   const LEVEL_NUMS = LEVEL_LIST;
   const sections = lvl === 'all' ? [...LEVEL_NUMS, ...(hasNone ? [0] : [])].filter((k) => (byLevel[k] || []).length) : [lvl];
   const levelName = (k) => (k === 0 ? t('No level') : t('Level') + ' ' + k);
-  const card = (e) => (
-    <article className="xl-card" key={e.id}>
-      <div>
-        <div className="xl-title" dir="auto">{examTitleFor(e, lang)}</div>
-        <div className="xl-meta">
-          <span className="xl-lvl-tag">{levelName(e.level >= 1 && e.level <= MAX_LEVEL ? e.level : 0)}</span>
-          <span><b>{meta.qCount[e.id] || 0}</b> {t('questions')}</span>
-          <span><b>{meta.subCount[e.id] || 0}</b> {t('submitted')}</span>
+  const nowMs = Date.now();
+  const kindOf = (e) => (e.exam_kind === 'midterm' ? 'midterm' : e.exam_kind === 'final' ? 'final' : 'other');
+  const kindText = (e) => (e.exam_kind === 'midterm' ? t('Midterm') : e.exam_kind === 'final' ? t('Final exam') : t('Exam'));
+  const KIND_ICO = {
+    midterm: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6M8 13h8M8 17h5" /></svg>,
+    final: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6" /><path d="M8.5 14L7 22l5-3 5 3-1.5-8" /></svg>,
+    other: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>,
+  };
+  const card = (e) => {
+    const k = kindOf(e);
+    const q = meta.qCount[e.id] || 0;
+    const s = meta.subCount[e.id] || 0;
+    const pend = meta.pendCount[e.id] || 0;
+    const opensAt = e.open_at ? new Date(e.open_at).getTime() : 0;
+    const dlAt = e.deadline_at ? new Date(e.deadline_at).getTime() : 0;
+    const waiting = !!(opensAt && opensAt > nowMs);
+    const closed = !!(dlAt && dlAt < nowMs);
+    return (
+      <article className={'xc ' + k + (e.is_published ? ' pub' : ' draft')} key={e.id}>
+        <div className="xc-top">
+          <span className={'xc-kind ' + k}>{KIND_ICO[k]}{kindText(e)}</span>
+          <span className="xc-lvl">{levelName(e.level >= 1 && e.level <= MAX_LEVEL ? e.level : 0)}</span>
+          <label className="xl-switch xc-sw" title={t(e.is_published ? 'Unpublish' : 'Publish')}>
+            <input type="checkbox" role="switch" checked={!!e.is_published} onChange={() => togglePublish(e)} />
+            <i aria-hidden="true" />
+            <span className={e.is_published ? 'on' : 'off'}>{t(e.is_published ? 'Published' : 'Draft')}</span>
+          </label>
         </div>
-      </div>
-      <label className="xl-switch" title={t(e.is_published ? 'Unpublish' : 'Publish')}>
-        <input type="checkbox" role="switch" checked={!!e.is_published} onChange={() => togglePublish(e)} />
-        <i aria-hidden="true" />
-        <span className={e.is_published ? 'on' : 'off'}>{t(e.is_published ? 'Published' : 'Draft')}</span>
-      </label>
-      <div className="xl-actions">
-        <button className="btn btn-gold btn-sm" onClick={() => setResults({ open: true, exam: e })}>{t('Results')}</button>
-        {((e.deadline_at && new Date(e.deadline_at).getTime() < Date.now()) || e.exam_kind) && (
-          <button className="btn btn-ghost btn-sm" title={t('Students who missed the deadline')} onClick={() => setMissed({ open: true, exam: e })}>{t('Missed the deadline')}</button>
+        <button type="button" className="xc-title" dir="auto" onClick={() => setBuilder({ open: true, exam: e, level: null })} title={t('Edit')}>{examTitleFor(e, lang)}</button>
+        <div className="xc-stats">
+          <span><b>{q}</b> {t('questions')}</span>
+          <span><b>{s}</b> {t('submitted')}</span>
+          {e.duration_minutes ? <span><b>{e.duration_minutes}</b> {t('min')}</span> : null}
+          {pend > 0 && <span className="xc-pend">{pend} {t('To grade')}</span>}
+        </div>
+        {(e.open_at || e.deadline_at) && (
+          <div className="xc-when">
+            {e.open_at && <span className={'xc-chip ' + (waiting ? 'wait' : 'ok')} title={t('Opens at')}><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 3l14 9-14 9z" /></svg>{fmtDateTimeL(e.open_at, lang)}</span>}
+            {e.deadline_at && <span className={'xc-chip ' + (closed ? 'bad' : '')} title={t('Deadline')}><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6" /></svg>{fmtDateTimeL(e.deadline_at, lang)}</span>}
+          </div>
         )}
-        <button className="btn btn-ghost btn-sm" onClick={() => setBuilder({ open: true, exam: e, level: null })}>{t('Edit')}</button>
-        <button className="btn btn-danger btn-sm" onClick={() => del(e)}>{t('Delete')}</button>
-      </div>
-    </article>
-  );
+        <div className="xc-actions">
+          <button type="button" className="xc-btn pri" onClick={() => setResults({ open: true, exam: e })}>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>{t('Results')}
+          </button>
+          <button type="button" className="xc-btn" onClick={() => setBuilder({ open: true, exam: e, level: null })}>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>{t('Edit')}
+          </button>
+          {(closed || e.exam_kind) && (
+            <button type="button" className="xc-btn icon" title={t('Students who missed the deadline')} aria-label={t('Missed the deadline')} onClick={() => setMissed({ open: true, exam: e })}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M18 8l5 5M23 8l-5 5" /></svg>
+            </button>
+          )}
+          <button type="button" className="xc-btn icon danger" title={t('Delete')} aria-label={t('Delete')} onClick={() => del(e)}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" /></svg>
+          </button>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <div className="we-panel active" id="examsWrittenPanel">
       <PageStyle css={listCss} />
-      <div className="panel">
-        <div className="xl-head">
-          <div>
+      <div className="panel xh-panel">
+        <div className="xh">
+          <div className="xh-main">
             <h3>{t('Written exams')}{g ? <span className="we-group-pill">{g.name}</span> : null}</h3>
-            {code && Array.isArray(exams) ? <div className="xl-count">{count} {t('exams')}</div> : null}
+            {code && Array.isArray(exams) && (
+              <div className="xh-stats">
+                <span className="xh-stat"><b>{count}</b>{t('exams')}</span>
+                <span className="xh-stat ok"><b>{pubCount}</b>{t('Published')}</span>
+                <span className="xh-stat"><b>{count - pubCount}</b>{t('Draft')}</span>
+                {toGrade > 0 && <span className="xh-stat warn"><b>{toGrade}</b>{t('To grade')}</span>}
+              </div>
+            )}
           </div>
-          <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
+          <button type="button" className="xh-new" onClick={openNew}>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{t('New exam')}
+          </button>
         </div>
         {code && Array.isArray(exams) && exams.length > 0 && (
-          <div className="xl-levels" role="tablist" aria-label={t('Level')}>
-            <button type="button" role="tab" aria-selected={lvl === 'all'} className={'xl-lvl' + (lvl === 'all' ? ' on' : '')} onClick={() => setLvl('all')}>{t('All')}<em>{exams.length}</em></button>
-            {LEVEL_NUMS.map((n) => {
-              const c = (byLevel[n] || []).length;
-              return (
-                <button type="button" role="tab" aria-selected={lvl === n} key={n} className={'xl-lvl' + (lvl === n ? ' on' : '') + (c === 0 && lvl !== n ? ' zero' : '')} onClick={() => setLvl(n)}>{t('Level')} {n}<em>{c}</em></button>
-              );
-            })}
-            {hasNone && <button type="button" role="tab" aria-selected={lvl === 0} className={'xl-lvl' + (lvl === 0 ? ' on' : '')} onClick={() => setLvl(0)}>{t('No level')}<em>{byLevel[0].length}</em></button>}
-          </div>
+          <>
+            <div className="xh-tools">
+              <label className="xh-search">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('Search exams…')} aria-label={t('Search exams…')} />
+              </label>
+              <div className="xh-seg" role="group" aria-label={t('Status')}>
+                {[['all', t('All')], ['pub', t('Published')], ['draft', t('Draft')]].map(([k, label]) => (
+                  <button type="button" key={k} aria-pressed={st === k} className={st === k ? 'on' : ''} onClick={() => setSt(k)}>{label}</button>
+                ))}
+              </div>
+            </div>
+            <div className="xl-levels" role="tablist" aria-label={t('Level')}>
+              <button type="button" role="tab" aria-selected={lvl === 'all'} className={'xl-lvl' + (lvl === 'all' ? ' on' : '')} onClick={() => setLvl('all')}>{t('All')}<em>{shown.length}</em></button>
+              {LEVEL_NUMS.map((n) => {
+                const c = (byLevel[n] || []).length;
+                return (
+                  <button type="button" role="tab" aria-selected={lvl === n} key={n} className={'xl-lvl' + (lvl === n ? ' on' : '') + (c === 0 && lvl !== n ? ' zero' : '')} onClick={() => setLvl(n)}>{t('Level')} {n}<em>{c}</em></button>
+                );
+              })}
+              {hasNone && <button type="button" role="tab" aria-selected={lvl === 0} className={'xl-lvl' + (lvl === 0 ? ' on' : '')} onClick={() => setLvl(0)}>{t('No level')}<em>{byLevel[0].length}</em></button>}
+            </div>
+          </>
         )}
         {!code ? <div className="xl-empty"><p>{t('Select a group')}</p></div>
           : exams === null ? <div className="xl-empty"><p>{t('Loading…')}</p></div>
@@ -177,12 +244,12 @@ export default function WrittenExamsPanel() {
           : exams.length === 0 ? (
             <div className="xl-empty">
               <p>{t('No written exams yet.')}</p>
-              <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
+              <button type="button" className="xh-new" onClick={openNew}>{t('New exam')}</button>
             </div>
           ) : sections.length === 0 || (lvl !== 'all' && !(byLevel[lvl] || []).length) ? (
             <div className="xl-empty">
-              <p>{t('No exams for this level yet.')}</p>
-              <button className="btn btn-gold" onClick={openNew}>{t('+ New exam')}</button>
+              <p>{needle || st !== 'all' ? t('Nothing matches your filters.') : t('No exams for this level yet.')}</p>
+              {(needle || st !== 'all') && <button type="button" className="xc-btn" onClick={() => { setSearch(''); setSt('all'); setLvl('all'); }}>{t('Clear filters')}</button>}
             </div>
           ) : (
             <div>

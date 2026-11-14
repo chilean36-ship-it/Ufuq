@@ -139,13 +139,7 @@ export default function ResourcesPage() {
               : <Notice icon={IC_CLOUD} title={t('Cloudflare R2 (audio, media)')}>{(cf && cf.error) || '—'}</Notice>}
 
           {vc && vc.traffic ? <Gauge t={t} icon={IC_SITE} title={t('Website traffic (Vercel), this month')} used={vc.traffic.used} limit={vc.traffic.limit} />
-            : <Notice icon={IC_SITE} title={t('Website traffic (Vercel)')}>
-              {vc && vc.configured === false ? <>{t('Not connected yet. Add these secrets to the Edge Function:')} {need(vc.need)}</>
-                : vc && vc.error && /plan not found/i.test(vc.error) ? t('Vercel gives traffic numbers through its API only to paid plans. This site is on the free plan (limit 100 GB per month), so open the usage page:')
-                : vc && vc.error ? vc.error
-                : <>{t('No traffic line found in the Vercel feed.')} {(vc && vc.services || []).map((s) => s.name + ' ' + s.qty + ' ' + s.unit).join(', ')}</>}{' '}
-              <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer">{t('Open Vercel usage')}</a>
-            </Notice>}
+            : null}
         </div>
         <p className="hint">{t('Updated')}: {new Date(d.at).toLocaleString()}</p>
       </>)}

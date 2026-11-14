@@ -122,13 +122,7 @@ export default function MonthlyAttendance({ group, refreshKey }) {
           <button type="button" className="ma-nav" aria-label={t('Next month')} disabled={isCurrent} onClick={() => step(1)}>›</button>
         </div>
       </div>
-      <p className="ma-info">
-        {total > 0
-          ? t('Lessons this month') + ': ' + total + ' = 100% · ' + t('Each missed lesson') + ': −' + fmtPct(perLesson) + '% · ' + t('Allowed absences') + ': ' + MAX_ABSENCES
-          : t('No lessons scheduled this month.')}
-      </p>
       {accErr && <p className="ma-info" style={{ color: LEVEL_COLORS.danger }}>{accErr}</p>}
-      {showAcc && <p className="ma-info">{t('A student with 3 missed lessons in a month is locked out of the lesson sections until you allow access.')}</p>}
       <div className="ma-scroll">
         <div className={'ma-row head' + (showAcc ? ' acc' : '')}><span>{t('Student')}</span><span>{t('Absent')}</span><span>{t('Allowed')}</span><span>{t('Attendance rate')}</span>{showAcc && <span>{t('Access')}</span>}</div>
         {!group ? <div className="empty-block">{t('Select a group')}</div>

@@ -514,3 +514,47 @@ a:focus-visible, .scope-btn:focus-visible, .tpl-chip:focus-visible, .mx-fchip:fo
 #page-overview .empty-block{ padding:14px 10px; font-size:13px; }
 @media (max-width:1000px){ #page-overview .ov-top{ grid-template-columns:1fr; } #page-overview .kpi-row{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:420px){ #page-overview .kpi{ padding:9px 10px; } #page-overview .kpi-num{ font-size:19px; } }
+
+/* ---------- Dashboard layout v2: hero banner on top, lessons timeline on the left, actions on the right ---------- */
+#page-overview .ov-top{ grid-template-columns:1fr; margin-bottom:14px; }
+#page-overview .ov-top .ready-hero{ padding:16px 20px; border-radius:16px; gap:18px; background:linear-gradient(120deg, var(--gold-dim), transparent 60%), var(--bg-2); border:1px solid rgba(201,162,75,.28); }
+#page-overview .ov-top .ready-title{ font-size:clamp(20px,2.2vw,26px); }
+#page-overview .ov-top .ready-chip{ padding:4px 10px; font-size:12px; }
+#page-overview .ov-top .ready-countdown-num{ font-size:24px; }
+#page-overview .ov-top .btn-join{ padding:6px 18px 6px 6px; font-size:13.5px; }
+#page-overview .ov-top .btn-join-ico{ width:30px; height:30px; }
+#page-overview .ov-layout{ display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:14px; align-items:start; }
+#page-overview .ov-main, #page-overview .ov-side{ display:grid; gap:14px; min-width:0; }
+#page-overview .ov-side .two-col, #page-overview .ov-side > .panel{ margin:0; }
+#page-overview .ov-layout .panel, #page-overview .ov-layout .panel-fancy{ padding:16px 18px; border-radius:16px; margin:0; }
+#page-overview .ov-layout .panel-head{ margin-bottom:12px; }
+#page-overview .ov-layout .panel-head h3{ font-size:14px; }
+
+/* lessons timeline (whole list visible, no inner scroll box) */
+.tl-list{ display:grid; }
+.tl-row{ display:grid; grid-template-columns:62px 14px minmax(0,1fr) auto auto; align-items:center; gap:12px; padding:12px 6px; border-radius:12px; transition:background .15s ease; }
+.tl-row:hover{ background:var(--soft, rgba(255,255,255,.04)); }
+.tl-time{ display:grid; text-align:right; line-height:1.15; }
+.tl-time b{ font-family:'Fraunces',serif; font-size:17px; font-weight:500; color:var(--text); }
+.tl-time span{ font-size:11.5px; color:var(--text-muted); }
+.tl-dot{ position:relative; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--gold); justify-self:center; }
+.tl-row + .tl-row .tl-dot::before{ content:''; position:absolute; left:50%; bottom:100%; width:2px; height:34px; margin-left:-1px; background:linear-gradient(var(--line), rgba(201,162,75,.4)); }
+.tl-row.is-ongoing .tl-dot{ background:#7FBF8F; border-color:#7FBF8F; box-shadow:0 0 0 4px rgba(127,191,143,.2); }
+.tl-row.is-finished .tl-dot{ border-color:var(--line); }
+.tl-row.is-finished .tl-name, .tl-row.is-finished .tl-time b{ color:var(--text-muted); }
+.tl-row.is-exam .tl-dot{ border-color:#E0A53A; background:#E0A53A; }
+.tl-row.is-exam .tl-time b{ color:#E0A53A; font-size:14px; }
+.tl-name{ font-weight:600; font-size:15px; color:var(--text); }
+.tl-meta{ margin-top:2px; font-size:12.5px; color:var(--text-muted); }
+.tl-row .lesson-status{ font-size:11px; padding:3px 10px; border-radius:99px; }
+.tl-row .lesson-code{ font-size:11.5px; padding:3px 9px; border-radius:8px; }
+
+/* quick actions: friendly 2-column tiles */
+#page-overview .ov-side .qa-grid{ grid-template-columns:1fr 1fr; gap:10px; }
+#page-overview .ov-side .qa{ flex-direction:column; align-items:flex-start; gap:8px; padding:12px; border-radius:14px; text-align:left; }
+#page-overview .ov-side .qa-ico{ width:34px; height:34px; border-radius:11px; }
+#page-overview .ov-side .qa small{ display:block; margin-top:2px; font-size:11.5px; }
+#page-overview .ov-side .attn{ padding:10px 12px; }
+#page-overview .ov-main .group-list-grid{ grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr)); gap:10px; }
+@media (max-width:1100px){ #page-overview .ov-layout{ grid-template-columns:1fr; } }
+@media (max-width:520px){ .tl-row{ grid-template-columns:52px 12px minmax(0,1fr); } .tl-row .lesson-status, .tl-row .lesson-code{ grid-column:3; justify-self:start; } #page-overview .ov-side .qa-grid{ grid-template-columns:1fr 1fr; } }

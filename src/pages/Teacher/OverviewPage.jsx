@@ -200,80 +200,88 @@ export default function OverviewPage() {
         </div>
       )}
       </div>
-
-    <div className="panel panel-fancy ov-today">
-      <div className="panel-head"><h3><span className="panel-head-bar" />{t("Today's classes")}</h3></div>
-      <div className="lesson-grid" id="todayClassesGrid">
-        {data === null ? <div className="empty-block">{t('Loading…')}</div>
-          : data.empty ? <div className="empty-block">{t('No group has been assigned to you yet.')}</div>
-          : todayLessons.length === 0 ? <div className="empty-block">{examTodayText || t('No classes scheduled for today.')}</div>
-          : listLessons.length === 0 ? <div className="empty-block">{t('No more classes today.')}</div>
-          : listLessons.map((lesson, i) => {
-            const status = lessonStatus(lesson, now);
-            const g = lesson.group;
-            const roomLabel = g.room || (g.zoom_link ? t('Online') : t('In-person'));
-            return (
-              <div className={'lesson-card is-' + status} key={g.code + ':' + i}>
-                <div className="lesson-card-top">
-                  <div className="lesson-card-name">{g.name}</div>
-                  <span className={'lesson-status ' + status}>{statusLabel[status]}</span>
-                </div>
-                <div className="lesson-card-time">{fmtHHMM(lesson.start)} {'\u2013'} {fmtHHMM(lesson.end)}</div>
-                <div className="lesson-card-meta">
-                  <span>{roomLabel}</span>
-                  <span>{lesson.students} {t('students')}</span>
-                </div>
-                <div className="lesson-card-foot"><div className="lesson-code" title={t('Join code')}>{(data.joinCodes && data.joinCodes[g.code]) || '—'}</div></div>
-              </div>
-            );
-          })}
-      </div>
-    </div>
       </div>
 
-      <div className="two-col">
+      <div className="ov-layout">
+        <div className="ov-main">
+        <div className="panel panel-fancy ov-today">
+          <div className="panel-head"><h3><span className="panel-head-bar" />{t("Today's classes")}</h3></div>
+          <div className="tl-list" id="todayClassesGrid">
+            {data === null ? <div className="empty-block">{t('Loading…')}</div>
+              : data.empty ? <div className="empty-block">{t('No group has been assigned to you yet.')}</div>
+              : (todayLessons.length === 0 && examToday.length === 0) ? <div className="empty-block">{t('No classes scheduled for today.')}</div>
+              : (listLessons.length === 0 && examToday.length === 0) ? <div className="empty-block">{t('No more classes today.')}</div>
+              : <>
+                {examToday.map((g) => (
+                  <div className="tl-row is-exam" key={'exam:' + g.code}>
+                    <div className="tl-time"><b>{t('Exam')}</b></div>
+                    <span className="tl-dot" />
+                    <div className="tl-body"><div className="tl-name">{g.name}</div><div className="tl-meta">{t('Exam day: no lesson')}</div></div>
+                  </div>
+                ))}
+                {listLessons.map((lesson, i) => {
+                  const status = lessonStatus(lesson, now);
+                  const g = lesson.group;
+                  const roomLabel = g.room || (g.zoom_link ? t('Online') : t('In-person'));
+                  return (
+                    <div className={'tl-row is-' + status} key={g.code + ':' + i}>
+                      <div className="tl-time"><b>{fmtHHMM(lesson.start)}</b><span>{fmtHHMM(lesson.end)}</span></div>
+                      <span className="tl-dot" />
+                      <div className="tl-body"><div className="tl-name">{g.name}</div><div className="tl-meta">{roomLabel} · {lesson.students} {t('students')}</div></div>
+                      <span className={'lesson-status ' + status}>{statusLabel[status]}</span>
+                      <div className="lesson-code" title={t('Join code')}>{(data.joinCodes && data.joinCodes[g.code]) || '—'}</div>
+                    </div>
+                  );
+                })}
+              </>}
+          </div>
+        </div>
         <div className="panel panel-fancy">
-          <div className="panel-head"><h3><span className="panel-head-bar" />{t('Quick actions')}</h3></div>
-          <div className="qa-grid">
-            {QUICK.map((q) => (
-              <button type="button" className="qa" key={q.page} onClick={() => showPage(q.page)}>
-                <span className="qa-ico">{q.icon}</span>
-                <span>{t(q.label)}<small>{t(q.sub)}</small></span>
-              </button>
+          <div className="panel-head"><h3><span className="panel-head-bar" />{t('My groups')}<span className="mg-count" title={t('Groups')}>{myGroups.length}</span></h3></div>
+          <div className="group-list-grid" id="scheduleStrip">
+            {myGroups.map((g) => (
+              <div className={'group-list-card' + (g.is_active ? ' is-active' : '')} key={g.code} role="button" tabIndex={0}
+                   title={t('Open this group')}
+                   onClick={() => { setCurrentGroupCode(g.code); showPage('groups'); }}
+                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCurrentGroupCode(g.code); showPage('groups'); } }}>
+                <div className="group-list-top">
+                  <div className="group-list-name">{g.name}</div>
+                  {g.is_active ? <span className="chip chip-active">{t('Active')}</span> : <span className="chip chip-inactive">{t('Inactive')}</span>}
+                </div>
+                <div className="group-list-sched">{g.schedule || '\u2014'}</div>
+              </div>
             ))}
           </div>
         </div>
-        <div className="panel panel-fancy">
-          <div className="panel-head"><h3><span className="panel-head-bar" />{t('Needs your attention')}</h3></div>
-          <div className="attn-list">
-            {!pending.loaded ? <div className="empty-block">{t('Loading…')}</div> : (
-              <>
-                {pending.tasks > 0 && <button type="button" className="attn" onClick={() => showPage('tasks')}><b>{pending.tasks}</b><span>{t('Task submissions waiting for a grade')}</span><svg {...ic}><path d="m9 18 6-6-6-6" /></svg></button>}
-                {needsReview === 0 && <div className="attn ok" style={{ cursor: 'default' }}><b>{'\u2713'}</b><span>{t('All caught up — nothing is waiting for review.')}</span></div>}
-                {currentGroup && !currentGroup.zoom_link && <button type="button" className="attn" onClick={() => showPage('groups')}><b>!</b><span>{t('The selected group has no Zoom link yet.')}</span><svg {...ic}><path d="m9 18 6-6-6-6" /></svg></button>}
-              </>
-            )}
+  
+          </div>
+        <div className="ov-side">
+          <div className="panel panel-fancy">
+            <div className="panel-head"><h3><span className="panel-head-bar" />{t('Quick actions')}</h3></div>
+            <div className="qa-grid">
+              {QUICK.map((q) => (
+                <button type="button" className="qa" key={q.page} onClick={() => showPage(q.page)}>
+                  <span className="qa-ico">{q.icon}</span>
+                  <span>{t(q.label)}<small>{t(q.sub)}</small></span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="panel panel-fancy">
+            <div className="panel-head"><h3><span className="panel-head-bar" />{t('Needs your attention')}</h3></div>
+            <div className="attn-list">
+              {!pending.loaded ? <div className="empty-block">{t('Loading…')}</div> : (
+                <>
+                  {pending.tasks > 0 && <button type="button" className="attn" onClick={() => showPage('tasks')}><b>{pending.tasks}</b><span>{t('Task submissions waiting for a grade')}</span><svg {...ic}><path d="m9 18 6-6-6-6" /></svg></button>}
+                  {needsReview === 0 && <div className="attn ok" style={{ cursor: 'default' }}><b>{'\u2713'}</b><span>{t('All caught up — nothing is waiting for review.')}</span></div>}
+                  {currentGroup && !currentGroup.zoom_link && <button type="button" className="attn" onClick={() => showPage('groups')}><b>!</b><span>{t('The selected group has no Zoom link yet.')}</span><svg {...ic}><path d="m9 18 6-6-6-6" /></svg></button>}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="panel panel-fancy">
-        <div className="panel-head"><h3><span className="panel-head-bar" />{t('My groups')}<span className="mg-count" title={t('Groups')}>{myGroups.length}</span></h3></div>
-        <div className="group-list-grid" id="scheduleStrip">
-          {myGroups.map((g) => (
-            <div className={'group-list-card' + (g.is_active ? ' is-active' : '')} key={g.code} role="button" tabIndex={0}
-                 title={t('Open this group')}
-                 onClick={() => { setCurrentGroupCode(g.code); showPage('groups'); }}
-                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCurrentGroupCode(g.code); showPage('groups'); } }}>
-              <div className="group-list-top">
-                <div className="group-list-name">{g.name}</div>
-                {g.is_active ? <span className="chip chip-active">{t('Active')}</span> : <span className="chip chip-inactive">{t('Inactive')}</span>}
-              </div>
-              <div className="group-list-sched">{g.schedule || '\u2014'}</div>
-            </div>
-          ))}
+  
         </div>
-      </div>
 
       <Modal open={earlyJoin.open} onClose={() => setEarlyJoin((s) => ({ ...s, open: false }))} id="earlyJoinOverlay" style={{ maxWidth: 420 }}>
         <div className="early-join">

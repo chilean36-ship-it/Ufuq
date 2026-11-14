@@ -172,9 +172,7 @@ export default function LandingMediaPage() {
     <section className="page active" id="page-landing">
       <style>{CSS}</style>
       <input ref={fileRef} type="file" hidden onChange={onFile} />
-      <PageHeader title={t('Landing page')} sub={t('Change the photos and videos on the public home page. Images up to {a} MB, videos up to {b} MB (or paste a direct link). Videos: MP4 (H.264), vertical 4:5 such as 1080×1350 fits the cards best.').replace('{a}', IMAGE_MAX_MB).replace('{b}', VIDEO_MAX_MB)}>
-        <a className="btn btn-ghost" href="/index" target="_blank" rel="noreferrer">{t('Open landing page')} {'\u2197'}</a>
-      </PageHeader>
+      <PageHeader title={t('Landing page')} sub={t('Change the photos and videos on the public home page. Images up to {a} MB, videos up to {b} MB (or paste a direct link). Videos: MP4 (H.264), vertical 4:5 such as 1080×1350 fits the cards best.').replace('{a}', IMAGE_MAX_MB).replace('{b}', VIDEO_MAX_MB)} />
       <div className="a-stats a-stats-sm">
         <StatCard loading={rows === null} tone="var(--gold)" label={t('Image slots')} value={LANDING_SLOTS.length} icon={<Ico><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></Ico>} />
         <StatCard loading={rows === null} tone="var(--a-teal)" label={t('Customised')} value={rows ? LANDING_SLOTS.filter((s) => rows[s.slot] && (rows[s.slot].image_url || rows[s.slot].video_url)).length : 0} icon={<Ico><path d="M20 6 9 17l-5-5" /></Ico>} />
@@ -182,7 +180,6 @@ export default function LandingMediaPage() {
       </div>
       <div className="panel" style={{ marginBottom: 22 }}>
         <div className="panel-head"><h3>{t('Footer links')}</h3></div>
-        <p className="hint" style={{ marginTop: 0 }}>{t('Shown in the footer of the landing page. Leave empty to hide the link.')}</p>
         <div className="field-row-3">
           {LANDING_LINKS.map((l) => (
             <div className="field" key={l.slot}>

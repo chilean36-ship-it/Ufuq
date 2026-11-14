@@ -167,7 +167,6 @@ export default function AdminsPage() {
                 </label>
               ))}
             </div>
-            <p className="hint" style={{ margin: '8px 0 0' }}>{t('The person stays linked to the group even when its level changes. You can change this later with "Groups" in the list below.')}</p>
           </div>
         )}
         <p className="hint" role="alert" style={{ display: error ? 'block' : 'none', color: 'var(--danger-bright)', margin: '6px 0 0' }}>{error}</p>

@@ -155,7 +155,6 @@ export default function AttendancePage() {
             <button className="btn btn-gold btn-sm" id="saveAttendanceBtn" onClick={save} disabled={saving}>{t('Save')}</button>
           </div>
         </div>
-        <p className="hint" id="attDaysHint" style={{ marginBottom: 12 }}>{label ? (t('Class days for this group:') + ' ' + label + '.') : ''}</p>
         <div className="att-list" id="attList">
           {!g ? <div className="empty-block">{t('Select a group')}</div>
             : members === null ? <Loader inline label={t('Loading…')} />
