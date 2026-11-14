@@ -27,6 +27,12 @@ export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ct
                 {item.bank.map((w) => <span className="xq-chip" key={w}>{w}</span>)}
               </div>
             )}
+            {item.passage && (
+              <aside className="xq-passage" dir="auto" aria-label={t('Reading passage')}>
+                <span className="xq-passage-l">{t('Reading passage')}</span>
+                <p className="xq-passage-t"><RichQ text={item.passage} /></p>
+              </aside>
+            )}
             <p className={'xq-text' + (item.audio ? ' xq-text-ar' : '')} dir="auto"><RichQ text={item.body} /></p>
             {field}
           </article>

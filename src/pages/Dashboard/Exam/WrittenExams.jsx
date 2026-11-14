@@ -11,7 +11,7 @@ import css from '../../../styles/exam-list.css?inline';
 import css2 from '../../../styles/exam-list2.css?inline';
 import Loader from '../../../components/Loader';
 import { examMax, examPoints, fmtPts } from '../../../lib/scoring';
-import LevelResults from './LevelResults';
+import { LevelCard } from './LevelResults';
 
 const CHECK_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
@@ -29,7 +29,7 @@ const ICON = {
 };
 
 /** Student's Exams page. One clear next step on top, your level progress, then a short list of exams (To do / Done / All). */
-export default function WrittenExams() {
+export default function WrittenExams({ levelData }) {
   const { t, lang } = useCabinetI18n();
   const { user, role, level: myLevel, levelFree, groupCode, groupData } = useDashboardData();
   const userId = user && user.id;
@@ -242,19 +242,7 @@ export default function WrittenExams() {
             <Loader inline label={t('Loading…')} />
           ) : (
             <>
-              {next && (
-                <section className="ex2-hero" aria-label={t('Your next exam')}>
-                  <div className="ex2-hero-top">
-                    <span className="ex2-hero-lbl">{next.d.state === 'draft' || next.d.state === 'timeup' ? t('Continue your exam') : t('Your next exam')}</span>
-                    <span className="ex2-tag">{kindName(next.ex)}{next.ex.level ? ' · ' + t('Level') + ' ' + next.ex.level : ''}</span>
-                  </div>
-                  <h2 dir="auto">{examTitleFor(next.ex, lang)}</h2>
-                  {metaOf(next.ex, next.d, true)}
-                  <div className="ex2-hero-act">{actionOf(next.ex, next.d, true)}</div>
-                </section>
-              )}
-
-              {!isStaff && <LevelResults userId={userId} level={myLevel} />}
+              {!isStaff && <LevelCard data={levelData} />}
 
               {exams.length === 0 ? (
                 <p className="exam-empty">{t('No written exams for you yet.')}</p>

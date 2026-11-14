@@ -39,6 +39,11 @@ const uz = {
   'You can start this exam from the opening time.': 'Imtihonni ochilish vaqtidan boshlab boshlash mumkin.',
   'This exam is not open yet. You can start it at the opening time.': 'Imtihon hali ochilmagan. Ochilish vaqtida boshlashingiz mumkin.',
   'Exam day: no lesson': 'Imtihon kuni: dars yo\'q',
+  'Reading passage': 'Matn',
+  '{n} more points to pass': 'O\'tish uchun yana {n} ball kerak',
+  'Level passed. Well done!': 'Daraja topshirildi. Barakalla!',
+  'Pass mark reached': 'O\'tish bali to\'plandi',
+  'Close': 'Yopish',
 };
 
 const ru = {
@@ -80,6 +85,11 @@ const ru = {
   'You can start this exam from the opening time.': 'Начать экзамен можно со времени открытия.',
   'This exam is not open yet. You can start it at the opening time.': 'Экзамен ещё не открыт. Начать можно со времени открытия.',
   'Exam day: no lesson': 'День экзамена: урока нет',
+  'Reading passage': 'Текст',
+  '{n} more points to pass': 'Для сдачи нужно ещё {n} балл.',
+  'Level passed. Well done!': 'Уровень сдан. Молодец!',
+  'Pass mark reached': 'Проходной балл набран',
+  'Close': 'Закрыть',
 };
 
 const ar = {
@@ -121,6 +131,11 @@ const ar = {
   'You can start this exam from the opening time.': 'يمكنك بدء الاختبار من وقت الفتح.',
   'This exam is not open yet. You can start it at the opening time.': 'الاختبار لم يُفتح بعد. يمكنك البدء عند وقت الفتح.',
   'Exam day: no lesson': 'يوم الاختبار: لا يوجد درس',
+  'Reading passage': 'النص',
+  '{n} more points to pass': 'تحتاج إلى {n} درجة أخرى للنجاح',
+  'Level passed. Well done!': 'تم اجتياز المستوى. أحسنت!',
+  'Pass mark reached': 'تم بلوغ درجة النجاح',
+  'Close': 'إغلاق',
 };
 
 export default { UZ: uz, RU: ru, EN: {}, AR: ar };

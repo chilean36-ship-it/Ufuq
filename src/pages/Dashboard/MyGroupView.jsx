@@ -55,7 +55,8 @@ function ripple(e) {
  * only for now (see MIGRATION.md — individual 1:1 groups and the group chat panel are next).
  */
 export default function MyGroupView({ onNavigate, onChatOpenChange }) {
-  const { t } = useCabinetI18n();
+  const { t, lang } = useCabinetI18n();
+  const loc = lang === 'UZ' ? 'uz' : lang === 'RU' ? 'ru' : lang === 'AR' ? 'ar' : 'en';   // day / month names in the page language
   const { user, avatarUrl, groupCode, groupData, groupReady, groups, switchGroup, refreshGroup } = useDashboardData();
   const [joinOpen, setJoinOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
@@ -213,11 +214,13 @@ export default function MyGroupView({ onNavigate, onChatOpenChange }) {
       enterLesson();
       return;
     }
-    // Plain English in the original (never run through TT()) — kept as-is.
     const next = groupData && findNextClass(groupData.scheduleDays, groupData.examDays);
     openNoClass('', next
-      ? `Your next class is ${next.day}, ${next.dateLabel} at ${next.time} (your local time).`
-      : "There's no upcoming class scheduled for this group yet.");
+      ? t('Your next class is {day}, {date} at {time} (your local time).')
+          .replace('{day}', next.start.toLocaleDateString(loc, { weekday: 'long' }))
+          .replace('{date}', next.start.toLocaleDateString(loc, { month: 'long', day: 'numeric' }))
+          .replace('{time}', next.time)
+      : t("There's no upcoming class scheduled for this group yet."));
   }
 
   async function handleJoined(code, data) {

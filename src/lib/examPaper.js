@@ -82,11 +82,44 @@ export function joinAnswer(word, sentence) {
   return (word || '') + '\n' + (sentence || '');
 }
 
-/** Student-side: walk the questions once and attach section info + a per-section item number. */
+/* ----------------------------------------------------------------- reading passages */
+/* A reading question ("اقرأ الفقرة ثم أجب: <text> … 1. question") carries the passage inside its own text. The questions that
+   follow it ("2. …", "ب) من الفقرة: …") are shown one at a time, so the student had to go back to re-read the passage.
+   layoutQuestions() therefore hands every such follower the passage (item.passage), and the card prints it above the question.
+   Rules are deliberately strict: an anchor starts with "اقرأ الفقرة|النص|القطعة …:"; a follower is a question of the same section
+   that is either the next number of the anchor's own list (2., 3. …) or says "من الفقرة / في النص …"; the first question that is
+   neither ends the run. */
+const PASSAGE_HEAD = /^\s*اقرأ\s+(?:الفقرة|النص|القطعة)(?:\s+التالي(?:ة|ا)?)?[^:：\n]*[:：]/;
+const PASSAGE_STOP = /^\s*\.?\s*(?:\d+|[ء-ي])\s*[.)]/;       // "1." / "2)" / "أ)" / ".ب)" starts the questions
+const PASSAGE_REF = /(?:من|في|عن|حسب)\s+(?:الفقرة|النص|القطعة)/;
+const LIST_NO = /^\s*(\d+)\s*[.)]/;
+
+/** question body → { text, lastNo } when it is a reading question, else null. */
+export function extractPassage(body) {
+  const m = PASSAGE_HEAD.exec(String(body || ''));
+  if (!m) return null;
+  const lines = String(body).slice(m[0].length).split('\n');
+  const out = [];
+  let lastNo = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const ln = lines[i];
+    if (out.length === 0) { if (ln.trim() === '') continue; out.push(ln.trim()); continue; }   // the first text line is always passage
+    if (ln.trim() === '' || PASSAGE_STOP.test(ln)) {
+      // the passage is over; remember the last list number of this question ("1. …") for the numbering check
+      for (let j = i; j < lines.length; j++) { const n = LIST_NO.exec(lines[j]); if (n) lastNo = Number(n[1]); }
+      break;
+    }
+    out.push(ln.trim());
+  }
+  const text = out.join('\n').trim();
+  return text.length >= 40 ? { text, lastNo } : null;
+}
+
+/** Student-side: walk the questions once and attach section info + a per-section item number (+ the passage a question refers to). */
 export function layoutQuestions(questions) {
   let part = '', sec = '', bank = null, n = 0;
   const hasSections = questions.some((q) => /^@@sec:/m.test(q.question_text || ''));
-  return questions.map((q, idx) => {
+  const laid = questions.map((q, idx) => {
     const p = parseQ(q.question_text);
     const newPart = p.part && p.part !== part;
     const newSec = !!p.sec;
@@ -101,8 +134,24 @@ export function layoutQuestions(questions) {
       showBank: newSec && !!(p.bank && p.bank.length),
       audio: p.audio, opts: p.opts,
       number: hasSections ? n : idx + 1,
+      passage: null,
     };
   });
+  // reading passages: followers of a reading question get its text
+  let active = null;
+  laid.forEach((l) => {
+    const own = l.audio ? null : extractPassage(l.body);
+    if (own) { active = { text: own.text, last: own.lastNo }; return; }
+    if (!active) return;
+    const startsNew = !!(l.partHead || l.secHead);
+    const no = LIST_NO.exec(l.body);
+    const follows = !startsNew && !l.audio && (
+      (no && active.last > 0 && Number(no[1]) === active.last + 1) || PASSAGE_REF.test(l.body));
+    if (!follows) { active = null; return; }
+    if (no) active.last = Number(no[1]);
+    l.passage = active.text;
+  });
+  return laid;
 }
 
 /* ----------------------------------------------------------------- templates */
