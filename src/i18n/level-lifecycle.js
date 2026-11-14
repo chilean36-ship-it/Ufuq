@@ -63,6 +63,7 @@ const uz = {
   'points': 'ball',
   'Title': 'Sarlavha',
   'Questions': 'Savollar',
+  'Clear': 'Tozalash',
 };
 
 const ru = {
@@ -128,6 +129,7 @@ const ru = {
   'points': 'баллов',
   'Title': 'Название',
   'Questions': 'Вопросы',
+  'Clear': 'Очистить',
 };
 
 const ar = {
@@ -193,6 +195,7 @@ const ar = {
   'points': 'درجة',
   'Title': 'العنوان',
   'Questions': 'الأسئلة',
+  'Clear': 'مسح',
 };
 
 export default { UZ: uz, RU: ru, EN: {}, AR: ar };

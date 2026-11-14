@@ -1,5 +1,5 @@
 // ============================================================
-// Ufuq — grade-exam  (v7: Claude-first grading, empty answer keys handled, safer key handling; built for a whole group finishing at the same time)
+// Ufuq — grade-exam  (v8: v7 + an automatic night-shift: the DB cron may call it with x-cron-secret to grade overdue papers)
 //
 // What changed against v4 (the grading rules / prompt are unchanged):
 //  1. ONE AI call per paper (up to 30 items) instead of 4 parallel calls of 6 → 20 students = 20 calls, not 80.
@@ -16,6 +16,9 @@
 //     (jsonb; ai_feedback keeps the Uzbek text for older screens). The student sees the language chosen in the cabinet.
 //     Older results that only have the Uzbek comment are translated on demand with { submission_id, translate_only: true }
 //     (no re-grading, scores are never touched). If the ai_feedback_i18n column is missing the function still grades as before.
+//
+// v8: a request that carries the header x-cron-secret (checked by the database function ufuq_cron_secret_ok, secret kept in Vault)
+//     is treated as staff: this is how ufuq_grade_overdue_papers() grades papers left unchecked after an exam deadline.
 //
 // Call: supabase.functions.invoke('grade-exam', { body: { submission_id } })
 // Secrets: ANTHROPIC_API_KEY (Claude Haiku 5.5, primary) and GEMINI_API_KEY (Gemini 3.1 Flash-Lite, backup) — see _shared/llm.ts
@@ -185,12 +188,22 @@ Deno.serve(withCors(async (req: Request) => {
   try { const body = await req.json(); submissionId = String(body?.submission_id || ""); translateOnly = body?.translate_only === true; } catch { return json({ error: "Invalid JSON body" }, 400); }
   if (!submissionId) return json({ error: "submission_id required" }, 400);
 
-  const asUser = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: req.headers.get("Authorization") || "" } } });
-  const { data: userData } = await asUser.auth.getUser();
-  const caller = userData?.user;
-  if (!caller) return json({ error: "Unauthorized" }, 401);
-
   const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+
+  // The database's own cron (ufuq_grade_overdue_papers) proves itself with a secret kept in Vault; it is treated as staff.
+  let cronOk = false;
+  {
+    const hdr = req.headers.get("x-cron-secret") || "";
+    if (hdr) {
+      const { data: ok } = await db.rpc("ufuq_cron_secret_ok", { p: hdr });
+      cronOk = ok === true;
+    }
+  }
+
+  const asUser = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: req.headers.get("Authorization") || "" } } });
+  const { data: userData } = cronOk ? { data: { user: null } } : await asUser.auth.getUser();
+  const caller = userData?.user;
+  if (!caller && !cronOk) return json({ error: "Unauthorized" }, 401);
 
   const { data: submission, error: subErr } = await db.from("written_exam_submissions")
     .select("id, exam_id, user_id, status").eq("id", submissionId).maybeSingle();
@@ -201,9 +214,9 @@ Deno.serve(withCors(async (req: Request) => {
   const { data: exam } = await db.from("written_exams").select("id, title, group_code").eq("id", submission.exam_id).maybeSingle();
   if (!exam) return json({ error: "Exam not found" }, 404);
 
-  const isOwner = submission.user_id === caller.id;
-  let isStaff = false;
-  {
+  const isOwner = !!caller && submission.user_id === caller.id;
+  let isStaff = cronOk;
+  if (!isStaff && caller) {
     const { data: tg } = await db.from("teacher_groups").select("group_code").eq("teacher_id", caller.id).eq("group_code", exam.group_code).maybeSingle();
     isStaff = !!tg;
     if (!isStaff) {
@@ -316,6 +329,12 @@ Deno.serve(withCors(async (req: Request) => {
   try {
     // The paper may have been graded between our first read and the claim: do not grade a student's paper twice.
     if (!isStaff && lockHeld) {
+      const { data: fresh } = await db.from("written_exam_submissions").select("status").eq("id", submissionId).maybeSingle();
+      if (fresh && fresh.status !== "submitted") return json({ ok: true, graded: fresh.status === "graded", already: true, status: fresh.status });
+    }
+
+    // The cron must never overwrite a paper a teacher approved in the meantime.
+    if (cronOk && lockHeld) {
       const { data: fresh } = await db.from("written_exam_submissions").select("status").eq("id", submissionId).maybeSingle();
       if (fresh && fresh.status !== "submitted") return json({ ok: true, graded: fresh.status === "graded", already: true, status: fresh.status });
     }

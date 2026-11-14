@@ -86,21 +86,12 @@ function toLocalInput(iso) {
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
-/** Short "12 Nov, 18:00" for the schedule summary. */
-function fmtShort(local) {
-  const d = new Date(local);
-  if (Number.isNaN(d.getTime())) return '';
-  const p = (n) => String(n).padStart(2, '0');
-  return d.getDate() + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-}
-/** 'YYYY-MM-DDTHH:mm' for "now + hours" (rounded to the minute) */
-const fromNow = (hours) => toLocalInput(new Date(Date.now() + hours * 3600000).toISOString());
 
 /** A sidebar card that folds away; the summary shows the current value so nothing has to be opened to check it. */
-function Acc({ title, summary, defaultOpen = true, bad = false, children }) {
+function Acc({ title, defaultOpen = true, bad = false, children }) {
   return (
     <details className={'pbx-acc' + (bad ? ' bad' : '')} open={defaultOpen}>
-      <summary><span className="pbx-acc-t">{title}</span><span className="pbx-acc-s" dir="auto">{summary}</span><Chevron /></summary>
+      <summary><span className="pbx-acc-t">{title}</span><Chevron /></summary>
       <div className="pbx-acc-b">{children}</div>
     </details>
   );
@@ -404,7 +395,6 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     [t('Questions'), totalQ > 0],
   ];
   const problemsAll = checks.filter(([, ok]) => !ok);
-  const fromBase = (days) => toLocalInput(new Date((openAt ? new Date(openAt).getTime() : Date.now()) + days * 86400000).toISOString());
   const dupSec = (si) => setSecs((cur) => {
     const src = cur[si];
     const copy = newSection({ part: '', title: src.title, type: src.type, items: src.items.map((it) => ({ type: it.type, text: it.text, criteria: it.criteria, audio: it.audio, optsText: it.optsText })) });
@@ -439,7 +429,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             {checks.map(([label, ok]) => <span key={label} className={ok ? 'ok' : ''}><i aria-hidden="true">{ok ? '✓' : ''}</i>{label}</span>)}
           </div>
 
-          <Acc title={t(state.exam ? 'Group' : 'Send to group')} summary={state.exam ? groupName : (targets.length === 1 ? ((myGroups.find((x) => x.code === targets[0]) || {}).name || '') : targets.length + ' ' + t('Groups'))}>
+          <Acc title={t(state.exam ? 'Group' : 'Send to group')}>
             {state.exam ? (
               <div className="pbx-fixed">{groupName}</div>
             ) : (
@@ -458,7 +448,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             {!state.exam && <p className="pbx-note">{targets.length > 1 ? t('A separate copy of this exam is created for each selected group.') : t('Only the selected group will see this exam.')}</p>}
           </Acc>
 
-          <Acc title={t('Level') + ' & ' + t('Exam type')} summary={(level ? t('Level') + ' ' + level : '—') + ' · ' + (kind === 'midterm' ? t('Midterm') : kind === 'final' ? t('Final exam') : t('Other exam'))} bad={attempted && !level}>
+          <Acc title={t('Level') + ' & ' + t('Exam type')} bad={attempted && !level}>
             <div className="pbx-levels" role="group" aria-label={t('Level')}>
               {LEVEL_LIST.map(String).map((n) => (
                 <button key={n} type="button" aria-pressed={level === n} className={'pbx-lvl' + (level === n ? ' on' : '') + (attempted && !level ? ' bad' : '')} onClick={() => setLevel(n)}>{n}</button>
@@ -471,35 +461,26 @@ export default function ExamEditor({ state, onClose, onSaved }) {
                 </button>
               ))}
             </div>
-            <p className="pbx-note">{t('Level total')}: {MIDTERM_MAX} + {FINAL_MAX} = {LEVEL_MAX} · {t('Pass mark')}: {PASS_MARK}</p>
           </Acc>
 
-          <Acc title={t('Schedule')} summary={(openAt ? fmtShort(openAt) : t('Open when published')) + ' → ' + (deadline ? fmtShort(deadline) : t('No deadline'))}>
+          <Acc title={t('Schedule')}>
             <div className="pbx-field">
               <label>{t('Opens at')}</label>
-              <input type="datetime-local" className="pbx-select" value={openAt} aria-label={t('Opens at')} onChange={(e) => setOpenAt(e.target.value)} />
-              <div className="pbx-chips">
-                <button type="button" className="pbx-chip" onClick={() => setOpenAt(fromNow(0))}><span>{t('Now')}</span></button>
-                <button type="button" className="pbx-chip" onClick={() => setOpenAt(fromNow(1))}><span>{t('In 1 hour')}</span></button>
-                <button type="button" className="pbx-chip" onClick={() => setOpenAt(fromNow(24))}><span>{t('Tomorrow')}</span></button>
-                {openAt && <button type="button" className="pbx-chip" onClick={() => setOpenAt('')}><span>{t('Open when published')}</span></button>}
+              <div className="pbx-datewrap">
+                <input type="datetime-local" className="pbx-select" value={openAt} aria-label={t('Opens at')} onChange={(e) => setOpenAt(e.target.value)} />
+                {openAt && <button type="button" className="pbx-clear" aria-label={t('Clear')} title={t('Clear')} onClick={() => setOpenAt('')}>&times;</button>}
               </div>
-              <p className="pbx-note">{t('Students see the published exam before this time and can start it from this time on. On the exam day the group has no lesson: the exam takes its place.')}</p>
             </div>
             <div className="pbx-field">
               <label>{t('Deadline')}</label>
-              <input type="datetime-local" className="pbx-select" value={deadline} aria-label={t('Deadline')} onChange={(e) => setDeadline(e.target.value)} />
-              <div className="pbx-chips">
-                <button type="button" className="pbx-chip" onClick={() => setDeadline(fromBase(1))}><span>{t('+1 day')}</span></button>
-                <button type="button" className="pbx-chip" onClick={() => setDeadline(fromBase(3))}><span>{t('+3 days')}</span></button>
-                <button type="button" className="pbx-chip" onClick={() => setDeadline(fromBase(7))}><span>{t('+1 week')}</span></button>
-                {deadline && <button type="button" className="pbx-chip" onClick={() => setDeadline('')}><span>{t('No deadline')}</span></button>}
+              <div className="pbx-datewrap">
+                <input type="datetime-local" className="pbx-select" value={deadline} aria-label={t('Deadline')} onChange={(e) => setDeadline(e.target.value)} />
+                {deadline && <button type="button" className="pbx-clear" aria-label={t('Clear')} title={t('Clear')} onClick={() => setDeadline('')}>&times;</button>}
               </div>
-              <p className="pbx-note">{t('Students cannot start this exam after the deadline. Papers already started can still be finished.')}</p>
             </div>
           </Acc>
 
-          <Acc title={t('Time limit')} summary={dur ? dur + ' ' + t('min') : t('No time limit')} defaultOpen={false}>
+          <Acc title={t('Time limit')} defaultOpen={false}>
             <div className="pbx-dur">
               <input type="number" inputMode="numeric" min="1" max="600" step="1" className={'pbx-select pbx-dur-in' + (attempted && dur !== '' && !(Number(dur) >= 1 && Number(dur) <= 600) ? ' bad' : '')} value={dur} placeholder="—"
                      aria-label={t('Exam duration (minutes)')} onChange={(e) => setDur(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))} />
@@ -509,10 +490,9 @@ export default function ExamEditor({ state, onClose, onSaved }) {
               {['30', '45', '60', '90', '120'].map((m) => <button key={m} type="button" className={'pbx-chip' + (dur === m ? ' on' : '')} onClick={() => setDur(m)}><span>{m}</span></button>)}
               <button type="button" className={'pbx-chip' + (dur === '' ? ' on' : '')} onClick={() => setDur('')}><span>{t('No time limit')}</span></button>
             </div>
-            <p className="pbx-note">{t('The timer starts when you press Start and cannot be paused.')} {t('Leave empty for no time limit')}.</p>
           </Acc>
 
-          <Acc title={t('Template')} summary="" defaultOpen={false}>
+          <Acc title={t('Template')} defaultOpen={false}>
             <select className="pbx-select" value="" onChange={(e) => { loadTemplate(e.target.value); e.target.value = ''; }}>
               <option value="">{t('Start from a template…')}</option>
               {TEMPLATES.map((x) => <option key={x.id} value={x.id}>{t(x.label)}</option>)}
@@ -532,7 +512,6 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             </div>
           </section>
 
-          <p className="pbx-tip">{t('Tip: press Enter in the last box to add the next item (Ctrl + Enter in the big boxes). Ctrl + S saves.')}</p>
         </aside>
 
         <main className="pbx-body" id="pbxBody">
@@ -571,7 +550,6 @@ export default function ExamEditor({ state, onClose, onSaved }) {
                   <div className="pbx-sec-sum">{t(kindLabel(s.type))} &middot; {count} {t('questions')}</div>
 
                   <div className="pbx-sec-body">
-                    <p className="pbx-hint">{t(SECTION_HINT[s.type])}</p>
                     {(s.part || partOpen[s.key]) ? (
                       <div className="pbx-part">
                         <label>{t('Part title (optional, e.g. النحو)')}</label>

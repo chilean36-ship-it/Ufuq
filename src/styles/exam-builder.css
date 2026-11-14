@@ -301,3 +301,9 @@ html:not([data-theme="light"]) .pbx{ color-scheme:dark; }
 .pbx-side > *{ flex-shrink:0; }
 .pbx-newsec .pbx-btn{ white-space:normal; height:auto; padding-block:8px; text-align:center; }
 .pbx-newsec .pbx-btn{ border-radius:14px; }
+
+.pbx-acc > summary{ justify-content:space-between; }
+.pbx-datewrap{ position:relative; display:flex; align-items:center; }
+.pbx-datewrap .pbx-select{ padding-inline-end:44px; }
+.pbx-clear{ position:absolute; inset-inline-end:40px; width:24px; height:24px; border:0; border-radius:50%; background:var(--p-surface2); color:var(--p-mut); font-size:16px; line-height:1; cursor:pointer; display:grid; place-items:center; }
+.pbx-clear:hover{ background:var(--p-bad-soft); color:var(--p-bad); }

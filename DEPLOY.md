@@ -168,3 +168,7 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 - `supabase/migrations/20261203_exam_open_at.sql` (safe to run twice): `written_exams.open_at`; `start_written_exam` refuses students before it (`EXAM_NOT_OPEN_YET`); `my_level_exams()` returns `open_at`; new `exam_days(p_groups)` (Tashkent dates of published exams that have `open_at`).
 - Run the SQL BEFORE the site goes to `main`: the teacher editor saves `open_at`. (The student list works without the column.)
 - A published exam with `open_at` takes that Tashkent day's lesson: it is hidden from the student week / next lesson / Live, the monthly attendance (the day is not counted) and the teacher calendar / overview / My group. Existing exams have no `open_at`, so nothing changes for them.
+
+## Certificates: on-time papers only, automatic grading after the deadline — APPLIED to live ldbthwpikixtykwmvudy (2026-11-14, MCP)
+- `supabase/migrations/20261204_certificates_on_time_and_auto_grading.sql`: `my_certificates()` ranks only papers handed in before the final's deadline and shows places only after every on-time paper is graded; Vault secret `grade_cron_secret`; `ufuq_cron_secret_ok()`; `ufuq_grade_overdue_papers()` + pg_cron job `ufuq-grade-overdue` (every 5 min, 6 papers per run).
+- Edge Function `grade-exam` v8 (deployed via MCP from the live v7 code + the x-cron-secret path, verify_jwt stays true). Checked: right secret -> reaches the handler (404 for an unknown paper), wrong secret -> 401.
