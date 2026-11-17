@@ -172,3 +172,5 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 ## Certificates: on-time papers only, automatic grading after the deadline — APPLIED to live ldbthwpikixtykwmvudy (2026-11-14, MCP)
 - `supabase/migrations/20261204_certificates_on_time_and_auto_grading.sql`: `my_certificates()` ranks only papers handed in before the final's deadline and shows places only after every on-time paper is graded; Vault secret `grade_cron_secret`; `ufuq_cron_secret_ok()`; `ufuq_grade_overdue_papers()` + pg_cron job `ufuq-grade-overdue` (every 5 min, 6 papers per run).
 - Edge Function `grade-exam` v8 (deployed via MCP from the live v7 code + the x-cron-secret path, verify_jwt stays true). Checked: right secret -> reaches the handler (404 for an unknown paper), wrong secret -> 401.
+
+- PENDING APPLY (2026-11-17): `20261130_level3_midterm_listening.sql`, `20261130b_level3_final_listening.sql`: data only, same shape as the Level 2 ones. Five Gemini fusha listening questions (audio in `public/listening/level3/g/`) appended to every Level 3 midterm / final paper lacking `@@audio:`. Idempotent; run once the audio is deployed.
