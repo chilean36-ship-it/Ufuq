@@ -62,8 +62,12 @@ const hideBoot = () => {
   b.classList.add('out');
   setTimeout(() => b.remove(), 400);
 };
-requestAnimationFrame(() => requestAnimationFrame(hideBoot));
-setTimeout(hideBoot, 1500);
+// /app (the dictionary cover) keeps its own first-paint screen until the app itself is on screen (AppRoot calls __hideBoot),
+// so nothing of the website's loader shows in between.
+const isCover = document.documentElement.classList.contains('cover');
+window.__hideBoot = hideBoot;
+if (!isCover) requestAnimationFrame(() => requestAnimationFrame(hideBoot));
+setTimeout(hideBoot, isCover ? 7000 : 1500);
 
 // Offline rejim: sahifalar va (bir marta ochilgan) audio/rasmlarni keshlab,
 // internet bo'lmaganda ham ishlashi uchun Service Worker (port of the

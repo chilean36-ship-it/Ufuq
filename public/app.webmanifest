@@ -1,7 +1,7 @@
 {
   "id": "/app",
-  "name": "Lug'at — English Dictionary",
-  "short_name": "Lug'at",
+  "name": "Dictionary",
+  "short_name": "Dictionary",
   "description": "English–Uzbek dictionary: the most useful English words with meanings, pronunciation and favourites.",
   "lang": "uz",
   "start_url": "/app?source=pwa",
@@ -12,8 +12,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#f3f6fc",
-  "theme_color": "#2457d6",
+  "background_color": "#121212",
+  "theme_color": "#121212",
   "categories": [
     "education",
     "reference"
@@ -40,7 +40,7 @@
   ],
   "shortcuts": [
     {
-      "name": "Lug'at",
+      "name": "Dictionary",
       "url": "/app",
       "icons": [
         {
