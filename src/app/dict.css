@@ -1,15 +1,14 @@
 /* The dictionary cover of the app (own light look on purpose: nothing here resembles the Ufuq app) */
-.dg{ --bg:#f3f6fc; --card:#ffffff; --tx:#0f1b33; --mu:#62708a; --ln:#e2e8f3; --ac:#2457d6; --ac2:#3b7bf6; --acs:#e6eeff;
+.dg{ --bg:#121212; --card:#1a1d26; --tx:#e8eefb; --mu:#8c9ab4; --ln:#272d3c; --ac:#6b9bff; --ac2:#4a7ef0; --acs:#1d2a4a;
   position:fixed; inset:0; z-index:2147483000; display:flex; flex-direction:column; overflow:hidden; background:var(--bg); color:var(--tx);
   padding-inline:max(0px, calc((100vw - 640px) / 2)); font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-tap-highlight-color:transparent; -webkit-text-size-adjust:100%; }
-@media (prefers-color-scheme:dark){ .dg{ --bg:#0c1424; --card:#131d33; --tx:#e8eefb; --mu:#8c9ab4; --ln:#22304d; --ac:#6b9bff; --ac2:#4a7ef0; --acs:#1b2a4d; } }
 .dg *{ box-sizing:border-box; }
 .dg button{ font:inherit; color:inherit; cursor:pointer; border:0; background:none; padding:0; }
 
 .dg-head{ flex:none; padding:calc(14px + env(safe-area-inset-top)) 16px 10px; background:var(--bg); display:grid; gap:12px; }
 .dg-brand{ display:flex; align-items:center; gap:12px; }
-.dg-logo{ width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font:800 20px/1 Inter, system-ui, sans-serif; color:#fff; background:linear-gradient(145deg,var(--ac2),var(--ac)); box-shadow:0 8px 20px -8px var(--ac); }
+.dg-logo{ width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font:800 20px/1 Inter, system-ui, sans-serif; color:#fff; background:linear-gradient(145deg,#3b7bf6,#2457d6); box-shadow:0 8px 20px -8px var(--ac); }
 .dg-brand h1{ margin:0; font:800 24px/1.1 Inter, system-ui, sans-serif; letter-spacing:-.3px; }
 .dg-brand p{ margin:3px 0 0; font-size:13px; color:var(--mu); }
 .dg-search{ display:flex; align-items:center; gap:10px; height:50px; padding:0 14px; border-radius:16px; background:var(--card); border:1.5px solid var(--ln); color:var(--mu); transition:border-color .2s, box-shadow .2s; }
@@ -20,11 +19,11 @@
 .dg-x{ width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:var(--acs); color:var(--ac); }
 .dg-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:14px; background:var(--acs); }
 .dg-tabs button{ height:38px; border-radius:11px; font-size:14px; font-weight:700; color:var(--mu); display:flex; align-items:center; justify-content:center; gap:7px; transition:background .2s, color .2s; }
-.dg-tabs button.on{ background:var(--card); color:var(--ac); box-shadow:0 2px 8px rgba(20,40,90,.12); }
+.dg-tabs button.on{ background:var(--card); color:var(--ac); box-shadow:0 2px 8px rgba(0,0,0,.35); }
 .dg-tabs i{ font-style:normal; font-size:12px; padding:1px 7px; border-radius:99px; background:var(--acs); }
 
 .dg-body{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:4px 34px calc(24px + env(safe-area-inset-bottom)) 16px; scroll-behavior:smooth; }
-.dg-today{ margin:6px 0 14px; padding:16px 16px 14px; border-radius:20px; color:#fff; background:linear-gradient(140deg,var(--ac2),var(--ac)); box-shadow:0 14px 30px -16px var(--ac); animation:dgIn .4s ease backwards; }
+.dg-today{ margin:6px 0 14px; padding:16px 16px 14px; border-radius:20px; color:#fff; background:linear-gradient(140deg,#3b7bf6,#2457d6); box-shadow:0 14px 30px -16px var(--ac); animation:dgIn .4s ease backwards; }
 .dg-kicker{ font-size:11.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; opacity:.85; }
 .dg-today-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
 .dg-today b{ font:800 28px/1.1 Inter, system-ui, sans-serif; } .dg-today em{ margin-left:8px; font-style:normal; font-size:13px; opacity:.85; }

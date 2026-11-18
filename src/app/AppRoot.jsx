@@ -122,7 +122,7 @@ export default function AppRoot() {
     const undo = [
       setMeta('meta[name="apple-mobile-web-app-title"]', 'content', 'Dictionary'),
       setMeta('link[rel="apple-touch-icon"]', 'href', '/app/apple-touch-icon.png'),
-      setMeta('meta[name="theme-color"]', 'content', '#2457d6'),
+      setMeta('meta[name="theme-color"]', 'content', '#121212'),
     ];
     return () => { document.title = prevTitle; undo.forEach((u) => u()); };
   }, []);
