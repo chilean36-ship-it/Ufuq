@@ -1,24 +1,53 @@
 {
   "id": "/app",
-  "name": "Ufuq — Arabic Learning",
-  "short_name": "Ufuq",
-  "description": "Learn Arabic with Ustaz Ali: live lessons, homework, audio library and an AI practice partner.",
+  "name": "Lug'at — English Dictionary",
+  "short_name": "Lug'at",
+  "description": "English–Uzbek dictionary: the most useful English words with meanings, pronunciation and favourites.",
   "lang": "uz",
   "start_url": "/app?source=pwa",
   "scope": "/app",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
-  "background_color": "#121212",
-  "theme_color": "#121212",
-  "categories": ["education"],
+  "background_color": "#f3f6fc",
+  "theme_color": "#2457d6",
+  "categories": [
+    "education",
+    "reference"
+  ],
   "icons": [
-    { "src": "/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/app/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Home", "url": "/app", "icons": [{ "src": "/app/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Ufuq AI", "url": "/app/ai", "icons": [{ "src": "/app/icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "Lug'at",
+      "url": "/app",
+      "icons": [
+        {
+          "src": "/app/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }
