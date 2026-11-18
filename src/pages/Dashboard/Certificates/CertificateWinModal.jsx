@@ -11,7 +11,6 @@ const CSS = `
   background:radial-gradient(420px 220px at 50% 0%, rgba(229,200,120,.28), transparent 70%), var(--bg-2); box-shadow:0 40px 90px -30px rgba(0,0,0,.9); animation:cwRise .4s cubic-bezier(.2,.8,.2,1) both; }
 .cw-medal{ width:92px; height:92px; margin:0 auto 14px; border-radius:50%; display:grid; place-items:center; font:700 44px 'Fraunces',serif; color:#2F2208;
   background:linear-gradient(135deg,#F6E3A1,#C9A24B 55%,#8A6516); box-shadow:0 0 0 8px rgba(200,160,60,.18), 0 18px 36px -12px rgba(200,160,60,.8); animation:cwPop .6s cubic-bezier(.2,1.4,.3,1) .1s both; }
-.cw.p2 .cw-medal{ background:linear-gradient(135deg,#F4F6F9,#B3BCC8 55%,#66707E); color:#1F2530; box-shadow:0 0 0 8px rgba(160,170,185,.2), 0 18px 36px -12px rgba(150,160,175,.8); }
 .cw h2{ margin:0 0 8px; font-family:'Fraunces',serif; font-size:26px; color:var(--text); }
 .cw p{ margin:0 0 20px; color:var(--text-muted); font-size:14.5px; line-height:1.6; }
 .cw-btn{ display:block; width:100%; margin-top:10px; padding:13px 18px; border-radius:12px; border:none; cursor:pointer; font:700 15px 'Inter',sans-serif; color:var(--bg); background:linear-gradient(180deg,var(--gold-bright),var(--gold)); }

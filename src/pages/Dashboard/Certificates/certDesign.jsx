@@ -2,9 +2,12 @@
 export const CERT_W = 1400;
 export const CERT_H = 990;
 
+/* ONE standard design for every place: the same gold palette, so every winner gets an equally colourful certificate.
+   Only the wording (and the number in the seal) tells the places apart. Do not give a place its own palette. */
+const GOLD = { a: '#F6E3A1', b: '#C9A24B', c: '#8A6516', ink: '#2F2208', paper1: '#FFFDF7', paper2: '#F7EFD9', paper3: '#EBDDB6' };
 export const THEMES = {
-  1: { a: '#F6E3A1', b: '#C9A24B', c: '#8A6516', ink: '#2F2208', paper1: '#FFFDF7', paper2: '#F7EFD9', paper3: '#EBDDB6', label: 'FIRST PLACE', ar: 'المركز الأول' },
-  2: { a: '#F4F6F9', b: '#B3BCC8', c: '#66707E', ink: '#1F2530', paper1: '#FFFFFF', paper2: '#F2F4F7', paper3: '#DFE4EA', label: 'SECOND PLACE', ar: 'المركز الثاني' },
+  1: { ...GOLD, label: 'FIRST PLACE', ar: 'المركز الأول' },
+  2: { ...GOLD, label: 'SECOND PLACE', ar: 'المركز الثاني' },
 };
 export const SERIF = "Fraunces, 'Playfair Display', Georgia, 'Times New Roman', serif";
 export const SANS = "Inter, 'Segoe UI', Arial, sans-serif";
