@@ -12,6 +12,7 @@ import { APP_LANGS } from './strings';
 import { haptic, useCountUp, useToast } from './hooks';
 import Sheet from './Sheet';
 import { Ico } from './ui';
+import { lockApp } from './dictLock';
 
 const GOALS = [5, 10, 20, 30];
 
@@ -100,6 +101,7 @@ export default function MeScreen({ onNavigate, role, activity }) {
       <div className="ua-rows2" style={{ '--i': 5 }}>
         {!isStandalone() && <div className="ua-row ua-install"><InstallAppButton variant="side" force /></div>}
         <Row icon="help" tone="sky" label={t('helpChat')} href="https://t.me/ufuq_support" />
+        <Row icon="eye" tone="violet" label={t('lockApp')} onClick={() => { lockApp(); window.location.replace('/app'); }} />
         <Row icon="out" danger label={t('signOut')} onClick={() => setSheet('out')} />
       </div>
       <p className="ua-ver">Ufuq · {t('version')} 2.0</p>

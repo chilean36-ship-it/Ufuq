@@ -1,5 +1,6 @@
 // Extra texts for the redesigned app screens (merged into APP_DICT by strings.js).
 const EN = {
+  lockApp: 'Hide app (back to dictionary)',
   adminPanel: 'Admin panel', teacherPanel: 'Teacher panel', studentApp: 'Student app', staffHint: 'Choose where to go',
   bestWord: 'Best', avgWord: 'Average',
   groupSwitch: 'Switch group', groupsTitle: 'Your groups', groupOne: 'Group',
@@ -22,6 +23,7 @@ const EN = {
   installBanner: 'Install for the best experience', startsAt: 'Starts', hello2: 'Hello',
 };
 const UZ = {
+  lockApp: 'Ilovani yashirish (lug‘atga qaytish)',
   adminPanel: 'Admin paneli', teacherPanel: 'O‘qituvchi paneli', studentApp: 'Talaba ilovasi', staffHint: 'Qayerga o‘tishni tanlang',
   bestWord: 'Eng yaxshi', avgWord: 'O‘rtacha',
   groupSwitch: 'Guruhni almashtirish', groupsTitle: 'Guruhlaringiz', groupOne: 'Guruh',
@@ -44,6 +46,7 @@ const UZ = {
   installBanner: 'Eng yaxshi tajriba uchun o‘rnating', startsAt: 'Boshlanadi', hello2: 'Salom',
 };
 const RU = {
+  lockApp: 'Скрыть приложение (вернуться к словарю)',
   adminPanel: 'Панель администратора', teacherPanel: 'Панель учителя', studentApp: 'Приложение студента', staffHint: 'Выберите, куда перейти',
   bestWord: 'Лучший', avgWord: 'Среднее',
   groupSwitch: 'Сменить группу', groupsTitle: 'Ваши группы', groupOne: 'Группа',
@@ -66,6 +69,7 @@ const RU = {
   installBanner: 'Установите для лучшего опыта', startsAt: 'Начало', hello2: 'Привет',
 };
 const AR = {
+  lockApp: 'إخفاء التطبيق (العودة إلى القاموس)',
   adminPanel: 'لوحة المشرف', teacherPanel: 'لوحة المعلّم', studentApp: 'تطبيق الطالب', staffHint: 'اختر وجهتك',
   bestWord: 'الأفضل', avgWord: 'المتوسط',
   groupSwitch: 'تبديل المجموعة', groupsTitle: 'مجموعاتك', groupOne: 'المجموعة',

@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { markFromApp } from '../components/BackToApp';
+import DictionaryGate from './DictionaryGate';
+import { isUnlocked, unlockApp } from './dictLock';
 import { supabase } from '../lib/supabaseClient';
 import { getSessionAndRole, hasStoredSession, isOAuthCallback, ufuqSignOut } from '../lib/auth';
 import BlockedNotice from '../components/BlockedNotice';
@@ -109,6 +111,20 @@ function Root() {
 
 /** `/app/*` — the Ufuq app: onboarding → account → (always signed in afterwards) the student's app. */
 export default function AppRoot() {
+  const [open, setOpen] = useState(isUnlocked);
+  const unlock = useCallback(() => { unlockApp(); setOpen(true); }, []);
+  // The app presents itself as a dictionary: tab title, theme colour, "add to home screen" name and icon (restored when leaving /app).
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "Lug'at";
+    const setMeta = (sel, attr, val) => { const el = document.querySelector(sel); if (!el) return () => {}; const was = el.getAttribute(attr); el.setAttribute(attr, val); return () => { if (was != null) el.setAttribute(attr, was); }; };
+    const undo = [
+      setMeta('meta[name="apple-mobile-web-app-title"]', 'content', "Lug'at"),
+      setMeta('link[rel="apple-touch-icon"]', 'href', '/app/apple-touch-icon.png'),
+      setMeta('meta[name="theme-color"]', 'content', '#2457d6'),
+    ];
+    return () => { document.title = prevTitle; undo.forEach((u) => u()); };
+  }, []);
   useEffect(() => {
     document.body.classList.add('ua-body');
     document.documentElement.classList.add('ua-html');
@@ -151,6 +167,7 @@ export default function AppRoot() {
       document.removeEventListener('touchmove', noMultiTouch);
     };
   }, []);
+  if (!open) return <DictionaryGate onUnlock={unlock} />;
   return (
     <AppProvider>
       <PageStyle css={tokensCss} />
