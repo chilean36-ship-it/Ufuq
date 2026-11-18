@@ -95,7 +95,7 @@ export default function DictionaryGate({ onUnlock }) {
   return (
     <div className="dg" role="main">
       <header className="dg-head">
-        <div className="dg-brand"><span className="dg-logo" aria-hidden="true">Aa</span><div><h1>Lug‘at</h1><p>Inglizcha–o‘zbekcha · eng kerakli so‘zlar</p></div></div>
+        <div className="dg-brand"><span className="dg-logo" aria-hidden="true">Aa</span><div><h1>Dictionary</h1><p>Inglizcha–o‘zbekcha · eng kerakli so‘zlar</p></div></div>
         <label className="dg-search">
           <Icon d={I.search} />
           <input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false}

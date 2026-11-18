@@ -1,7 +1,7 @@
 {
   "id": "/app",
-  "name": "Lug'at — English Dictionary",
-  "short_name": "Lug'at",
+  "name": "Dictionary",
+  "short_name": "Dictionary",
   "description": "English–Uzbek dictionary: the most useful English words with meanings, pronunciation and favourites.",
   "lang": "uz",
   "start_url": "/app?source=pwa",
@@ -40,7 +40,7 @@
   ],
   "shortcuts": [
     {
-      "name": "Lug'at",
+      "name": "Dictionary",
       "url": "/app",
       "icons": [
         {
