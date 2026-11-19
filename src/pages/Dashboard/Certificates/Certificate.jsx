@@ -39,7 +39,7 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
       <rect width={W} height={H} fill={`url(#bg${id})`} />
       {logo ? (
         /* small logos on an even grid inside the frame: 6 columns x 4 rows, the same gap everywhere; the 4 cells under the big centre logo are left out */
-        <g opacity=".09" filter={`url(#${lf})`}>
+        <g opacity=".17" filter={`url(#${lf})`}>
           {Array.from({ length: 24 }, (_, i) => {
             const cx = 70 + 105 + (i % 6) * 210, cy = 70 + 106.25 + Math.floor(i / 6) * 212.5;
             if (Math.abs(cx - M) < 300 && Math.abs(cy - H / 2) < 150) return null;
@@ -51,7 +51,7 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
       )}
       {/* large faint star behind the text */}
       {logo ? (
-        <image href={logo} xlinkHref={logo} x={M - 310} y={H / 2 + 10 - 310} width="620" height="620" preserveAspectRatio="xMidYMid meet" opacity=".085" filter={`url(#${lf})`} />
+        <image href={logo} xlinkHref={logo} x={M - 310} y={H / 2 + 10 - 310} width="620" height="620" preserveAspectRatio="xMidYMid meet" opacity=".13" filter={`url(#${lf})`} />
       ) : (
         <>
           <Khatam cx={M} cy={H / 2 + 10} r={330} stroke={th.b} sw={1.2} opacity=".14" />
@@ -65,7 +65,7 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
       <rect x="58" y="58" width={W - 116} height={H - 116} fill="none" stroke={th.b} strokeOpacity=".55" strokeWidth="1" strokeDasharray="2 6" />
       <CornerOrnament x={46} y={46} sx={1} sy={1} g={g} logo={logo} lf={lf} />
       <CornerOrnament x={W - 46} y={46} sx={-1} sy={1} g={g} logo={logo} lf={lf} />
-      <CornerOrnament x={46} y={H - 46} sx={1} sy={-1} g={g} logo={logo} lf={lf} />
+      <CornerOrnament x={46} y={H - 46} sx={1} sy={-1} g={g} logo={logo} lf={lf} bare={!!serial} />
       <CornerOrnament x={W - 46} y={H - 46} sx={-1} sy={-1} g={g} logo={logo} lf={lf} />
       {[M - 300, M + 300].map((x) => <Khatam key={x} cx={x} cy={46} r={10} fill={`url(#${g})`} />)}
       {[M - 300, M + 300].map((x) => <Khatam key={'b' + x} cx={x} cy={H - 46} r={10} fill={`url(#${g})`} />)}
@@ -101,21 +101,22 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
 
       <Seal cx={M} cy={850} th={th} g={g} place={place} />
 
-      {/* verification: the QR opens the public check page for this serial */}
+      {/* verification: the QR card sits INSIDE the bottom-left corner, tucked into the thin corner lines (this corner has no logo / curls) */}
       {serial && (
         <g>
-          <rect x="446" y="786" width="124" height="124" rx="8" fill="#fff" stroke={th.b} strokeWidth="1.5" />
-          <QrCode value={verifyUrl(serial)} x={456} y={796} size={104} />
-          <text x="508" y="924" textAnchor="middle" fontFamily={ARABIC} fontSize="14" fill={th.ink} fillOpacity=".7">امسح للتحقق</text>
-          <text x="508" y="946" textAnchor="middle" fontFamily={SANS} fontWeight="700" fontSize="15" letterSpacing="1" fill={th.ink} fillOpacity=".8">{serial}</text>
+          <rect x="78" y="780" width="122" height="138" rx="10" fill="#fff" stroke={th.b} strokeWidth="1.8" />
+          <rect x="83" y="785" width="112" height="128" rx="6" fill="none" stroke={th.b} strokeOpacity=".35" strokeWidth="1" />
+          <text x="139" y="802" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="13" fill={th.c}>امسح للتحقق</text>
+          <QrCode value={verifyUrl(serial)} x={95} y={808} size={88} />
+          <text x="139" y="907" textAnchor="middle" fontFamily={SANS} fontWeight="700" fontSize="11" letterSpacing=".4" fill="#2a2a2a">{serial}</text>
         </g>
       )}
 
       {/* footer: date and signature */}
       <g fontFamily={SANS} fill={th.ink}>
-        <path d="M150 884 H430" stroke={th.b} strokeWidth="1.5" />
-        <text x="290" y="876" textAnchor="middle" fontFamily={SERIF} fontSize="22">{date}</text>
-        <text x="290" y="912" textAnchor="middle" fontFamily={ARABIC} fontSize="20" fillOpacity=".65">تاريخ الإصدار</text>
+        <path d="M240 884 H430" stroke={th.b} strokeWidth="1.5" />
+        <text x="335" y="876" textAnchor="middle" fontFamily={SERIF} fontSize="22">{date}</text>
+        <text x="335" y="912" textAnchor="middle" fontFamily={ARABIC} fontSize="20" fillOpacity=".65">تاريخ الإصدار</text>
         <path d="M970 884 H1250" stroke={th.b} strokeWidth="1.5" />
         <text x="1110" y="870" textAnchor="middle" fontFamily={ARABIC} fontWeight="700" fontSize="36" fill={th.c}>علي حفني</text>
         <text x="1110" y="912" textAnchor="middle" fontFamily={ARABIC} fontSize="20" fillOpacity=".65">الأستاذ · مؤسس الأكاديمية</text>

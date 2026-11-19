@@ -36,16 +36,16 @@ export function Khatam({ cx, cy, r, fill, stroke, sw = 1.6, opacity = 1 }) {
   );
 }
 
-export function CornerOrnament({ x, y, sx, sy, g, logo, lf }) {
+export function CornerOrnament({ x, y, sx, sy, g, logo, lf, bare }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
       <g fill="none" stroke={`url(#${g})`} strokeLinecap="round">
         <path d="M0 0 H120 M0 0 V120" strokeWidth="5" />
         <path d="M18 18 H96 M18 18 V96" strokeWidth="1.6" />
-        <path d="M34 34 H72 M34 34 V72" strokeWidth="1" />
-        <path d="M128 0 q16 18 0 36 M0 128 q18 16 36 0" strokeWidth="2" />
+        {!bare && <path d="M34 34 H72 M34 34 V72" strokeWidth="1" />}
+        {!bare && <path d="M128 0 q16 18 0 36 M0 128 q18 16 36 0" strokeWidth="2" />}
       </g>
-      {logo ? (
+      {bare ? null : logo ? (
         /* the Ufuq mark instead of the star; the outer scale() mirrors the corner, this one cancels it so the logo is never flipped */
         <g transform={`translate(46 46) scale(${sx} ${sy})`}>
           <image href={logo} xlinkHref={logo} x="-34" y="-34" width="68" height="68" preserveAspectRatio="xMidYMid meet" filter={`url(#${lf})`} />
