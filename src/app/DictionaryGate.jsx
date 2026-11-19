@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ENTRIES, POS_NAME } from './dictData';
 import { SECRET } from './dictLock';
+import { revealCover } from './reveal';
 import './dict.css';
 
 const FAV_KEY = 'lugat-saralangan';
@@ -38,9 +39,23 @@ export default function DictionaryGate({ onUnlock }) {
   const listRef = useRef(null);
 
   const term = q.trim().toLowerCase();
+  const inputRef = useRef(null);
+  const firedRef = useRef(false);
+  // The secret word was typed: a gold disc grows out of the word itself, covers the whole screen, and the app appears from under it.
   useEffect(() => {
-    if (term !== SECRET) return undefined;
-    const id = setTimeout(onUnlock, 180);
+    if (term !== SECRET || firedRef.current) return undefined;
+    const id = setTimeout(() => {
+      firedRef.current = true;
+      let x = window.innerWidth / 2; let y = 120;
+      const el = inputRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+        let w = 0;
+        try { const c = document.createElement('canvas').getContext('2d'); c.font = cs.font; w = c.measureText(el.value).width; } catch (e) { /* ignore */ }
+        x = r.left + (parseFloat(cs.paddingLeft) || 0) + w / 2; y = r.top + r.height / 2;
+      }
+      revealCover(x, y, onUnlock);
+    }, 160);
     return () => clearTimeout(id);
   }, [term, onUnlock]);
 
@@ -98,7 +113,7 @@ export default function DictionaryGate({ onUnlock }) {
         <div className="dg-brand"><span className="dg-logo" aria-hidden="true">Aa</span><div><h1>Dictionary</h1><p>Inglizcha–o‘zbekcha · eng kerakli so‘zlar</p></div></div>
         <label className="dg-search">
           <Icon d={I.search} />
-          <input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false}
+          <input ref={inputRef} type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false}
                  placeholder="So‘z qidirish…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="So‘z qidirish" />
           {q && <button type="button" className="dg-x" onClick={() => setQ('')} aria-label="Tozalash"><Icon d={I.x} size={16} /></button>}
         </label>

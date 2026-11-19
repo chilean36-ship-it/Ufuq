@@ -102,7 +102,7 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
       <div className={'ua-ptr' + (busy ? ' busy' : '')} style={{ height: busy ? 44 : pull * 54, opacity: busy ? 1 : pull }} aria-hidden="true"><span className="ua-spin" style={{ transform: busy ? undefined : `rotate(${pull * 300}deg)` }} /></div>
 
       <div className="ua-brandrow" style={{ '--i': 0 }}>
-        <span className="ua-brand"><Logo size={30} /><b>Ufuq</b></span>
+        <span className="ua-brand"><Logo size={40} /><b>Ufuq</b></span>
         <span className="ua-brand-act">
           {isPaid && (
             <button type="button" className={'ua-tbtn' + (notifs.unread > 0 ? ' ring' : '')} onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
@@ -223,11 +223,6 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
         </div>
       </section>
 
-      {/* AI banner */}
-      <button type="button" className="ua-ai-banner" style={{ '--i': 6 }} onClick={() => window.dispatchEvent(new Event('ufuq-ai-open'))}>
-        <span className="ua-ai-banner-t"><b>{t('aiPromoT')}</b><small>{t('aiPromoS')}</small><span className="ua-pill dark">{t('askAi')}</span></span>
-        <span className="ua-ai-banner-ic"><Ico n="ai" size={44} sw={1.4} /></span>
-      </button>
 
 
       {isPaid && <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} items={notifs.items} onMarkRead={notifs.markRead} onMarkAll={notifs.markAllRead} onNavigate={(v) => { setNotifOpen(false); onNavigate(v); }} />}

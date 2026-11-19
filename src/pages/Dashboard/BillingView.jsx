@@ -264,7 +264,7 @@ export default function BillingView({ onUpgrade }) {
         </div>
         <div className="bl-hero-side">
           <span className={'bl-chip ' + heroKind}>{heroChip}</span>
-          {canBuy && <button type="button" className="bl-upgrade" onClick={onUpgrade}>{active ? t('Renew plan') : t('Upgrade plan')} <span aria-hidden="true">→</span></button>}
+          {canBuy && <button type="button" className="bl-upgrade" onClick={onUpgrade}>{active ? t('Renew plan') : t('Upgrade plan')}</button>}
         </div>
       </section>
 

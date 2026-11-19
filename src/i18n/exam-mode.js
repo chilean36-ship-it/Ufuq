@@ -1,5 +1,6 @@
 // Strings for the exam room (full-screen exam mode, AI checking, teacher approval). Key = English text.
 const uz = {
+  'days': 'kun', 'hours': 'soat', 'min': 'daqiqa', 'sec': 'soniya', 'Exam': 'Imtihon',
   'Save for offline': 'Internetsiz uchun saqlash', 'Saved on this device': 'Qurilmada saqlangan', 'Saving…': 'Saqlanmoqda…',
   'Not enough space on this device.': 'Qurilmada joy yetarli emas.', 'This file cannot be saved for offline yet.': 'Bu faylni hozircha internetsiz uchun saqlab bo‘lmaydi.',
   'Could not save. Check your connection.': 'Saqlab bo‘lmadi. Internetni tekshiring.',
@@ -64,6 +65,7 @@ const uz = {
   'Discard changes?': 'O‘zgarishlar bekor qilinsinmi?', 'Your changes to this exam have not been saved.': 'Imtihondagi o‘zgarishlaringiz saqlanmagan.', 'Discard': 'Bekor qilish', 'Keep editing': 'Tahrirlashni davom ettirish',
 };
 const ru = {
+  'days': 'дней', 'hours': 'часов', 'min': 'мин', 'sec': 'сек', 'Exam': 'Экзамен',
   'Save for offline': 'Сохранить для офлайн', 'Saved on this device': 'Сохранено на устройстве', 'Saving…': 'Сохранение…',
   'Not enough space on this device.': 'Недостаточно места на устройстве.', 'This file cannot be saved for offline yet.': 'Этот файл пока нельзя сохранить для офлайн.',
   'Could not save. Check your connection.': 'Не удалось сохранить. Проверьте интернет.',
@@ -126,6 +128,7 @@ const ru = {
   'Discard changes?': 'Отменить изменения?', 'Your changes to this exam have not been saved.': 'Изменения в экзамене не сохранены.', 'Discard': 'Отменить', 'Keep editing': 'Продолжить редактирование',
 };
 const ar = {
+  'days': 'أيام', 'hours': 'ساعات', 'min': 'دقائق', 'sec': 'ثوانٍ', 'Exam': 'اختبار',
   'Save for offline': 'حفظ للاستخدام دون إنترنت', 'Saved on this device': 'محفوظ على الجهاز', 'Saving…': 'جارٍ الحفظ…',
   'Not enough space on this device.': 'لا توجد مساحة كافية على الجهاز.', 'This file cannot be saved for offline yet.': 'لا يمكن حفظ هذا الملف للاستخدام دون إنترنت حاليًا.',
   'Could not save. Check your connection.': 'تعذّر الحفظ. تحقق من الاتصال.',

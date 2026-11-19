@@ -389,3 +389,7 @@ html[data-theme="light"] .group-chat-fullview{ --gc-other:#FFFFFF; --gc-ink:#1D1
   .main.gc-focus .group-chat-card .gc-msg-row{ max-width:88%; }
   .main.gc-focus .group-chat-card .group-chat-body{ padding-inline:12px; }
 }
+
+/* no scrollbar arrows inside the message box */
+.group-chat-input{ scrollbar-width:none; -ms-overflow-style:none; }
+.group-chat-input::-webkit-scrollbar{ display:none; width:0; height:0; }

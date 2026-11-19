@@ -33,6 +33,7 @@ import paymentsDict from '../../i18n/admin-payments';
 import { canOpenPage } from '../../lib/adminTiers';
 import { fetchPanelProfile, inApp, outRoute, panelRoute, verifySuperAdmin } from '../../lib/panelAccess';
 import PanelTabBar from '../../components/panel/PanelTabBar';
+import PanelMoreSheet from '../../components/panel/PanelMoreSheet';
 import panelSwitchDict from '../../i18n/panel-switch';
 import examLevelsDict from '../../i18n/exam-levels';
 import adminFill from '../../i18n/admin-fill';
@@ -43,10 +44,11 @@ import fillMissing from '../../i18n/fill-missing';
 import adminExtra from '../../i18n/admin-extra';
 import adminRedesign from '../../i18n/admin-redesign';
 import adminStaff from '../../i18n/admin-staff';
+import adminPopup from '../../i18n/admin-popup';
 
 // Admin shares several pages with the teacher panel, so its dictionary = teacher + new strings + admin (admin wins).
 import examModeDict from '../../i18n/exam-mode';
-const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}) }; return acc; }, {});
+const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}), ...(adminPopup[k] || {}) }; return acc; }, {});
 const COLLAPSE_KEY = 'ufuq-panel-collapsed';
 import { supabase } from '../../lib/supabaseClient';
 import { getFreshUser, resolveFullName, useLiveName } from '../../lib/profileName';
@@ -132,6 +134,7 @@ function AdminInner() {
   const [nonce, setNonce] = useState(0);            // bumped on every navigation so a page re-fetches (old showPage())
   useScrollTop(page + ':' + nonce);                 // each sidebar click starts the section at the top
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);   // the app's Menu sheet (replaces the side drawer on phones inside the app)
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch (e) { return false; } });
   const [cmdOpen, setCmdOpen] = useState(false);
   const toggleCollapsed = useCallback(() => setCollapsed((c) => { const v = !c; try { localStorage.setItem(COLLAPSE_KEY, v ? '1' : '0'); } catch (e) { /* ignore */ } return v; }), []);
@@ -323,7 +326,11 @@ function AdminInner() {
         </div>
       </div>
 
-      {inApp() && isMobile && guard.ok && <PanelTabBar items={isSuper ? ['overview', 'groups', 'students', 'announcements'] : ['overview', 'materials', 'announcements']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setSidebarOpen((o) => !o)} moreOpen={sidebarOpen} />}
+      {inApp() && isMobile && guard.ok && <PanelTabBar items={isSuper ? ['overview', 'groups', 'students', 'announcements'] : ['overview', 'materials', 'announcements']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setMoreOpen(true)} moreOpen={moreOpen} />}
+      {inApp() && isMobile && guard.ok && <PanelMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
+                                                       switchItem={canSwitchToTeacher ? { label: t('Switch to Teacher panel'), onSelect: switchToTeacher } : null}
+                                                       studentItem={!isSuper ? { label: t('Student panel'), href: outRoute('/dashboard') } : null}
+                                                       name={myName} roleLabel={t(isSuper ? 'Main admin' : 'Admin')} avatarUrl={myAvatarUrl} />}
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} placeholder={t('Search pages…')} emptyText={t('No pages match.')}
                       items={[...flatNav, { page: 'profile', label: 'Profile', icon: <ProfileNavIcon /> }].map((n) => ({ page: n.page, icon: n.icon, label: t(n.label) }))}
                       onPick={showPage} />

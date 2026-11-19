@@ -108,7 +108,7 @@ export default function UpgradeModal({ open, onClose }) {
                 : t('Billed monthly'))}
             </div>
             <button type="button" className="um-btn go" disabled={!plan} onClick={() => { onClose(); navigate(`/checkout?plan=${plan.id}`); }}>
-              {active ? t('Renew') : t('Get started')} <span aria-hidden="true">→</span>
+              {active ? t('Renew') : t('Get started')}
             </button>
             <ul className="um-list">
               {PRO_ITEMS.map((k) => <li key={k}>{TICK}<span>{t(k)}</span></li>)}

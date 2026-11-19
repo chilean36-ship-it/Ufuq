@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from '../../components/panel/PanelContext';
 import { askUfuqAi, TEACHER_SYSTEM_PROMPT } from '../Dashboard/AiChat/aiClient';
+import PopupComposer from './PopupComposer';
 
 const KINDS = ['system', 'group', 'task', 'lesson', 'exam'];
 const KIND_LABEL = { system: 'System', group: 'Group', task: 'Tasks', lesson: 'Lesson', exam: 'Exam' };
@@ -19,7 +20,8 @@ const BODY_MAX = 600;
 /** Send a notification to a whole group or a single student. The "sent" list is kept for this visit only
  *  (the notifications table is per-recipient, so there's no single sent-log to read back). */
 export default function AnnouncementsPage() {
-  const { t, toast, currentGroup: g, announcePrefill, clearAnnouncePrefill } = usePanel();
+  const { t, toast, currentGroup: g, announcePrefill, clearAnnouncePrefill, isSuper } = usePanel();
+  const [tab, setTab] = useState('msg');   // super admin only: 'msg' = message to a group / student, 'popup' = app pop-up
   const code = g ? g.code : null;
   const [members, setMembers] = useState([]);
   const [target, setTarget] = useState('__all__');
@@ -107,6 +109,13 @@ export default function AnnouncementsPage() {
       <div className="page-head">
         <h2>{t('Messages to students')}</h2>
       </div>
+      {isSuper && (
+        <div className="tpl-row" role="tablist" style={{ marginBottom: 14 }}>
+          <button type="button" role="tab" aria-selected={tab === 'msg'} className={'btn btn-sm' + (tab === 'msg' ? ' btn-gold' : '')} onClick={() => setTab('msg')}>{t('Message')}</button>
+          <button type="button" role="tab" aria-selected={tab === 'popup'} className={'btn btn-sm' + (tab === 'popup' ? ' btn-gold' : '')} onClick={() => setTab('popup')}>{t('App pop-up')}</button>
+        </div>
+      )}
+      {isSuper && tab === 'popup' ? <PopupComposer /> : (
       <div className="two-col">
         <div className="panel">
           <div className="panel-head"><h3>{t('New message')}</h3></div>
@@ -194,6 +203,7 @@ export default function AnnouncementsPage() {
           </div>
         </div>
       </div>
+      )}
     </section>
   );
 }

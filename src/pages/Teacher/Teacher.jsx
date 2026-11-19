@@ -29,6 +29,7 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { clearCachedRole, ufuqGetSession } from '../../lib/auth';
 import { fetchPanelProfile, inApp, isSuperAdmin, outRoute, panelRoute, verifySuperAdmin } from '../../lib/panelAccess';
 import PanelTabBar from '../../components/panel/PanelTabBar';
+import PanelMoreSheet from '../../components/panel/PanelMoreSheet';
 import panelSwitchDict from '../../i18n/panel-switch';
 import teacherClassDict from '../../i18n/teacher-class';
 import examLevelsDict from '../../i18n/exam-levels';
@@ -113,6 +114,7 @@ function TeacherInner() {
   const [nonce, setNonce] = useState(0);
   useScrollTop(page + ':' + nonce);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);   // the app's Menu sheet (replaces the side drawer on phones inside the app)
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch (e) { return false; } });
   const [cmdOpen, setCmdOpen] = useState(false);
   const expandSidebar = useCallback(() => { setCollapsed(false); try { localStorage.setItem(COLLAPSE_KEY, '0'); } catch (e) { /* ignore */ } }, []);
@@ -281,7 +283,10 @@ function TeacherInner() {
         </div>
       </div>
 
-      {inApp() && isMobile && guard.ok && <PanelTabBar items={['overview', 'groups', 'attendance', 'tasks']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setSidebarOpen((o) => !o)} moreOpen={sidebarOpen} />}
+      {inApp() && isMobile && guard.ok && <PanelTabBar items={['overview', 'groups', 'attendance', 'tasks']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setMoreOpen(true)} moreOpen={moreOpen} />}
+      {inApp() && isMobile && guard.ok && <PanelMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
+                                                       switchItem={canSwitchToAdmin ? { label: t('Switch to Admin panel'), onSelect: switchToAdmin } : null}
+                                                       studentItem={null} name={myName} roleLabel={t('Teacher')} avatarUrl={myAvatarUrl} />}
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} placeholder={t('Search pages…')} emptyText={t('No pages match.')}
                       items={[...flatNav, { page: 'profile', label: 'Profile', icon: <ProfileNavIcon /> }].map((n) => ({ page: n.page, icon: n.icon, label: t(n.label) }))}
                       onPick={showPage} />

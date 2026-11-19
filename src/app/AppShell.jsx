@@ -12,7 +12,9 @@ import pageCss from '../pages/Dashboard/dashboard.css?inline';
 import profileViewCss from '../pages/Profile/profile-view.css?inline';
 import cabinetDict from '../pages/Dashboard/cabinetDict';
 import { useApp } from './AppContext';
-import { Ico, Logo } from './ui';
+import { Logo, TabIcon } from './ui';
+import { centerOf, rippleFrom } from './reveal';
+import WhatsNew from './WhatsNew';
 import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
 import MeScreen from './MeScreen';
@@ -55,8 +57,8 @@ function TabBar() {
       <div className="ua-rail-brand" aria-hidden="true"><Logo size={32} /><b>Ufuq</b></div>
       <span className={'ua-tab-pill' + (idx === 2 ? ' ai' : '')} aria-hidden="true" />
       {tabs.map((x) => (
-        <NavLink key={x.to} to={x.to} end={x.end} onClick={() => haptic(6)} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
-          <span className="ua-tab-ic"><Ico n={x.icon} size={x.center ? 25 : 23} sw={x.center ? 1.9 : 1.8} /></span>
+        <NavLink key={x.to} to={x.to} end={x.end} onClick={(e) => { haptic(6); if (x.center) { const p = centerOf(e.currentTarget.querySelector('.ua-tab-ic')); document.body.style.setProperty('--rv-x', p.x + 'px'); document.body.style.setProperty('--rv-y', p.y + 'px'); rippleFrom(p.x, p.y); } }} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
+          <span className="ua-tab-ic"><TabIcon n={x.icon} size={x.center ? 28 : 25} /></span>
           <span className="ua-tab-l">{t(x.label)}</span>
         </NavLink>
       ))}
@@ -145,6 +147,7 @@ function Inner() {
         <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
       </Suspense>
       <ResultModals refreshGroup={refreshGroup} switchGroup={switchGroup} onNavigate={onNavigate} />
+      {role === 'student' && <WhatsNew userId={user && user.id} onNavigate={onNavigate} />}
     </div>
     </AppUiCtx.Provider>
   );

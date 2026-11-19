@@ -1,32 +1,31 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCabinetI18n } from '../context/CabinetI18nContext';
 import { useDashboardData } from '../context/DashboardDataContext';
-import { getExamHistory } from '../pages/Dashboard/Exam/examData';
+import { getAllExamHistory } from '../pages/Dashboard/Exam/examData';
 import useLiveRefresh from '../hooks/useLiveRefresh';
 import PageStyle from '../components/PageStyle';
 import ProgressLine, { LINE_CSS } from '../components/ProgressLine';
-import { fmtDate } from '../lib/dateLocale';
 import { useApp } from './AppContext';
 import { useCountUp } from './hooks';
 import { Ico } from './ui';
 
 /** Native progress screen: latest result with its change, the line chart, and every graded exam as an animated bar. */
 export default function ProgressScreen() {
-  const { t, lang } = useCabinetI18n();
+  const { t } = useCabinetI18n();
   const { t: ta } = useApp();
   const { user, groupCode, groupReady } = useDashboardData();
   const joined = !!groupCode;
   const userId = user && user.id;
   const [history, setHistory] = useState(null);
 
-  const load = useCallback(async () => { const h = await getExamHistory(groupCode, userId); setHistory(h); }, [groupCode, userId]);
+  const load = useCallback(async () => { const h = await getAllExamHistory(userId); setHistory(h.map((x) => (x.title === '—' ? { ...x, title: t('Exam') } : x))); }, [userId, t]);
   useEffect(() => {
     if (!groupReady || !joined) return undefined;
     let cancelled = false;
     setHistory(null);
-    (async () => { const h = await getExamHistory(groupCode, userId); if (!cancelled) setHistory(h); })();
+    (async () => { const h = await getAllExamHistory(userId); if (!cancelled) setHistory(h.map((x) => (x.title === '—' ? { ...x, title: t('Exam') } : x))); })();
     return () => { cancelled = true; };
-  }, [groupReady, joined, groupCode, userId]);
+  }, [groupReady, joined, userId, t]);
   useLiveRefresh(load, [{ table: 'written_exam_submissions', filter: userId ? 'user_id=eq.' + userId : undefined }], { enabled: joined && !!userId });
 
   const last = history && history.length ? history[history.length - 1] : null;
@@ -64,15 +63,6 @@ export default function ProgressScreen() {
             <div className="ua-card2-h"><h3>{t('Exam results over time')}</h3></div>
             <ProgressLine items={history} />
           </section>
-          <div className="ua-hist">
-            {history.slice().reverse().map((h, i) => (
-              <div className="ua-hrow bar" key={h.id} style={{ '--i': 3 + Math.min(i, 8) }}>
-                <span className="ua-hrow-t"><b>{h.title}</b><small>{fmtDate(h.at, lang, { month: 'short', day: 'numeric', year: 'numeric' })}</small></span>
-                <span className="ua-hrow-p">{h.pct}%</span>
-                <span className="ua-bar2"><i style={{ width: h.pct + '%', '--d': i }} /></span>
-              </div>
-            ))}
-          </div>
         </>
       )}
     </div>

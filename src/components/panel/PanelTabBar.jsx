@@ -13,6 +13,8 @@ const ICON = {
   materials: <svg {...s}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>,
   more: <svg {...s}><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>,
 };
+// short tab names so the five labels fit on a phone
+const SHORT = { UZ: { overview: 'Asosiy', tasks: 'Vazifa', students: 'Talaba', groups: 'Guruh' }, RU: { overview: 'Главная', tasks: 'Задания', students: 'Ученики', announcements: 'Сообщения', attendance: 'Посещ.' } };
 const MORE_LABEL = { EN: 'More', UZ: 'Yana', RU: 'Ещё', AR: 'المزيد' };
 
 /** Bottom tab bar of the admin / teacher panels when they run inside the Ufuq app (phones only): the main pages one tap away,
@@ -30,12 +32,15 @@ export default function PanelTabBar({ items, nav, page, onNavigate, onMore, more
   }, []);
   const entries = items.map((p) => nav.find((n) => n.page === p)).filter(Boolean);
   const inMain = entries.some((n) => n.page === page);
+  const count = entries.length + 1;
+  const idx = moreOpen || !inMain ? entries.length : entries.findIndex((n) => n.page === page);
   return (
-    <nav className={'ptb' + (typing ? ' hide' : '')} aria-label="Menu">
+    <nav className={'ptb' + (typing ? ' hide' : '')} aria-label="Menu" style={{ '--n': count, '--idx': idx }}>
+      <span className="ptb-pill" aria-hidden="true" />
       {entries.map((n) => (
         <button type="button" key={n.page} className={'ptb-i' + (page === n.page && !moreOpen ? ' on' : '')} aria-current={page === n.page ? 'page' : undefined} onClick={() => onNavigate(n.page)}>
           <span className="ptb-ic">{ICON[n.page] || ICON.overview}{n.badge > 0 && <i>{n.badge > 9 ? '9+' : n.badge}</i>}</span>
-          <span className="ptb-l">{t(n.label)}</span>
+          <span className="ptb-l">{(SHORT[String(lang || 'EN').toUpperCase()] || {})[n.page] || t(n.label)}</span>
         </button>
       ))}
       <button type="button" className={'ptb-i' + (moreOpen || !inMain ? ' on' : '')} aria-expanded={!!moreOpen} onClick={onMore}>

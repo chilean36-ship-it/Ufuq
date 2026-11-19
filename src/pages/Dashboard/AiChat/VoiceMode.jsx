@@ -5,7 +5,7 @@ import {
   VOICE_LANGS, getVoiceProvider, readSavedVoiceLang, saveVoiceLang, stripForSpeech, voiceBcp, voiceLabel,
 } from './voiceAdapter';
 import { I } from './icons';
-import { releaseMic, watchVoice } from '../../../lib/serverStt';
+import { releaseMic } from '../../../lib/serverStt';
 import { stopSpeaking } from '../../../lib/speak';
 
 const MAX_SILENT_ROUNDS = 3; // after this many empty listening rounds we wait for a tap instead of looping forever
@@ -40,6 +40,9 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const watchRef = useRef(null);   // barge-in watcher while the assistant speaks
   const silenceRef = useRef(0);
   const bumpRef = useRef(0);
+  const levelRef = useRef(0);      // live loudness of what the person says (0..1), drives the orb
+  const deniedRef = useRef(false); // the microphone is blocked: do not keep re-asking after typed turns
+  const [typed, setTyped] = useState('');
   const orbRef = useRef(null);
   const endBtnRef = useRef(null);
   const api = useRef({});
@@ -76,14 +79,14 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       endSilenceMs: 650,                         // quick turn-taking, like a call
       preheard: !!(opts && opts.bargeIn),        // the person interrupted: they are already talking
       onInterim: (txt) => { if (token === tokenRef.current) { bumpRef.current = 1; setUserText(txt); } },
-      onLevel: (lv) => { if (token === tokenRef.current && lv > 0.15) bumpRef.current = 1; },
+      onLevel: (lv) => { if (token === tokenRef.current) { levelRef.current = Math.max(levelRef.current, lv); if (lv > 0.15) bumpRef.current = 1; } },
       onError: (code) => { if (token === tokenRef.current) errRef.current = code; },
       onDone: (text) => {
         if (token !== tokenRef.current || !aliveRef.current) return;
         listenRef.current = null;
         const err = errRef.current;
         errRef.current = null;
-        if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') { setProblem('denied'); setPhaseBoth('idle'); return; }
+        if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') { deniedRef.current = true; setProblem('denied'); setPhaseBoth('idle'); return; }
         if (err === 'language-not-supported') { setProblem('lang'); setPhaseBoth('idle'); return; }
         if (err === 'network') { setProblem('network'); setPhaseBoth('idle'); return; }
         if (err === 'unsupported') { setProblem('unsupported'); setPhaseBoth('idle'); return; }
@@ -138,7 +141,8 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     const done = () => {
       if (!aliveRef.current) return;
       speakRef.current = null;
-      if (phaseRef.current === 'speaking' && !mutedRef.current) api.current.startListening();
+      if (phaseRef.current === 'speaking' && !mutedRef.current && !deniedRef.current) api.current.startListening();
+      else if (phaseRef.current === 'speaking') setPhaseBoth('idle');
     };
     // No usable voice (e.g. Uzbek on many devices): show the answer as text and keep the conversation going.
     if (!spoken || !prov.support().tts || !prov.hasVoice(bcp)) {
@@ -148,14 +152,8 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       return;
     }
     speakRef.current = prov.speak(spoken, { lang: bcp, onBoundary: () => { bumpRef.current = 1; }, onEnd: done });
-    // Barge-in: if the person starts talking over the answer, stop it at once and listen (not while muted).
-    setTimeout(() => {
-      if (!aliveRef.current || mutedRef.current || phaseRef.current !== 'speaking' || watchRef.current) return;
-      watchRef.current = watchVoice({ onVoice: () => {
-        watchRef.current = null;
-        if (aliveRef.current && !mutedRef.current && phaseRef.current === 'speaking') { killSpeech(); api.current.startListening({ bargeIn: true }); }
-      } });
-    }, 700);
+    // No automatic barge-in: room noise or the assistant's own voice through the speaker must never cut the answer off.
+    // The person interrupts by tapping the orb.
   };
 
   const onOrb = () => {
@@ -166,7 +164,19 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     if (p === 'listening') { if (listenRef.current) listenRef.current.stop(); return; }
     if (mutedRef.current) { toggleMute(); return; }
     silenceRef.current = 0;
+    deniedRef.current = false;
     api.current.startListening();
+  };
+
+  // Typed message: the assistant works without any microphone
+  const sendTyped = (e) => {
+    e.preventDefault();
+    const text = typed.trim();
+    if (!text || limitRef.current) return;
+    setTyped('');
+    killListen(); killSpeech(); killRequest();
+    setProblem(null); setNotice('');
+    api.current.handleUser(text);
   };
 
   // Mute = only MY microphone is off. The assistant keeps thinking / speaking and finishes its answer (like a call);
@@ -259,17 +269,18 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
           target = Math.min(1, 0.06 + Math.sqrt(sum / data.length) * 4.2);
         } else {
           bumpRef.current *= 0.9;
-          target = 0.1 + bumpRef.current * 0.55 + 0.04 * Math.sin(t * 3);
+          levelRef.current *= 0.82;
+          target = 0.1 + Math.max(bumpRef.current * 0.5, levelRef.current * 1.05) + 0.04 * Math.sin(t * 3);
         }
       } else if (p === 'speaking') {
         bumpRef.current *= 0.88;
-        target = 0.26 + 0.24 * Math.abs(Math.sin(t * 6.3)) + bumpRef.current * 0.28;
+        target = 0.28 + 0.26 * Math.abs(Math.sin(t * 6.3)) + 0.1 * Math.abs(Math.sin(t * 2.1 + 1)) + bumpRef.current * 0.32;
       } else if (p === 'thinking') {
         target = 0.12 + 0.06 * Math.sin(t * 4);
       } else {
         target = 0.03 + 0.02 * Math.sin(t * 1.4);
       }
-      cur += (target - cur) * 0.22;
+      cur += (target - cur) * 0.3;
       if (orbRef.current) orbRef.current.style.setProperty('--lvl', cur.toFixed(3));
       raf = requestAnimationFrame(loop);
     };
@@ -297,9 +308,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     <div className="uai-voice" role="dialog" aria-modal="true" aria-label="Ufuq AI Live">
       <div className="uai-voice-top">
         <div className="uai-voice-brand">
-          <span className="uai-logo sm">{I.logo}</span>
           <span>Ufuq AI</span>
-          <em>{tr('live')}</em>
         </div>
         <button type="button" className="uai-ibtn" onClick={onClose} aria-label={tr('back')} title={tr('back')}>{I.close}</button>
       </div>
@@ -330,6 +339,10 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       </div>
 
       <div className="uai-voice-foot">
+        <form className="uai-vtype" onSubmit={sendTyped}>
+          <input type="text" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={tr('vType')} dir="auto" aria-label={tr('vType')} enterKeyHint="send" />
+          <button type="submit" disabled={!typed.trim()} aria-label={tr('send')}>{I.send}</button>
+        </form>
         <div className="uai-vlangs" role="group" aria-label={tr('vLang')}>
           {VOICE_LANGS.map((l) => (
             <button type="button" key={l.id} className={'uai-vlang' + (vlang === l.id ? ' on' : '')} aria-pressed={vlang === l.id} onClick={() => changeLang(l.id)}>{l.label}</button>

@@ -189,22 +189,31 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
 
   useLayoutEffect(() => {
     if (!menu || !menuRef.current) return;
-    const btnRect = menu.btn.getBoundingClientRect();
     const menuRect = menuRef.current.getBoundingClientRect();
     const margin = 8;
-    let top = btnRect.bottom + 6;
-    if (top + menuRect.height > window.innerHeight - margin) top = btnRect.top - menuRect.height - 6;
+    let top; let left;
+    if (menu.pt) {
+      // right-click / long-press: open right where the finger or cursor is (the ⋮ button can be hidden, so it is no anchor)
+      top = menu.pt.y + 4;
+      if (top + menuRect.height > window.innerHeight - margin) top = menu.pt.y - menuRect.height - 4;
+      left = menu.pt.x;
+      if (left + menuRect.width > window.innerWidth - margin) left = menu.pt.x - menuRect.width;
+    } else {
+      const btnRect = menu.btn.getBoundingClientRect();
+      top = btnRect.bottom + 6;
+      if (top + menuRect.height > window.innerHeight - margin) top = btnRect.top - menuRect.height - 6;
+      left = btnRect.right - menuRect.width;
+    }
     top = Math.max(margin, Math.min(top, window.innerHeight - menuRect.height - margin));
-    let left = btnRect.right - menuRect.width;
     left = Math.max(margin, Math.min(left, window.innerWidth - menuRect.width - margin));
     setMenuPos({ top, left });
   }, [menu]);
 
-  const openMenu = (btn, id) => {
-    if (!btn) return;
-    if (menu && menu.btn === btn) { closeMenu(); return; }
+  const openMenu = (btn, id, pt) => {
+    if (!btn && !pt) return;
+    if (!pt && menu && menu.btn === btn) { closeMenu(); return; }
     setMenuPos(null);
-    setMenu({ id, btn });
+    setMenu({ id, btn, pt: pt || null });
   };
 
   const startReply = (msg) => {
@@ -272,6 +281,35 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
   };
   const hasText = input.trim().length > 0;
 
+  /* Telegram-style swipe right on a message to reply (touch only; vertical scrolling is never blocked) */
+  const swipeRef = useRef(null);
+  const onTouchStart = (e) => {
+    const row = e.target.closest && e.target.closest('.gc-msg-row');
+    if (!row || e.touches.length !== 1) { swipeRef.current = null; return; }
+    swipeRef.current = { row, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, lock: null };
+  };
+  const onTouchMove = (e) => {
+    const s = swipeRef.current; if (!s) return;
+    const dx = e.touches[0].clientX - s.x; const dy = e.touches[0].clientY - s.y;
+    if (s.lock === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) s.lock = (dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4) ? 'x' : 'y';
+    if (s.lock !== 'x') return;
+    s.dx = Math.min(dx, 90);
+    const col = s.row.querySelector('.gc-msg-col');
+    s.row.classList.add('swipe-reply'); s.row.style.setProperty('--sw', String(Math.min(1, s.dx / 60)));
+    if (col) col.style.transform = 'translateX(' + (s.dx * 0.6) + 'px)';
+  };
+  const onTouchEnd = () => {
+    const s = swipeRef.current; swipeRef.current = null;
+    if (!s || s.lock !== 'x') return;
+    const col = s.row.querySelector('.gc-msg-col'); if (col) col.style.transform = '';
+    s.row.classList.remove('swipe-reply'); s.row.style.removeProperty('--sw');
+    if (s.dx >= 60) {
+      const id = s.row.getAttribute('data-msg-id');
+      const m = messages.find((x) => String(x.id) === id);
+      if (m && !String(m.id).startsWith('temp-')) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* ignore */ } startReply(m); }
+    }
+  };
+
   const pinned = messages.find((m) => m.is_pinned);
 
   /* ---------- message list ---------- */
@@ -306,7 +344,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
 
     rows.push(
       <div key={m.id} data-msg-id={m.id}
-           onContextMenu={(e) => { e.preventDefault(); openMenu(e.currentTarget.querySelector('.gc-msg-more-btn'), m.id); }}
+           onContextMenu={(e) => { e.preventDefault(); openMenu(e.currentTarget.querySelector('.gc-msg-more-btn'), m.id, { x: e.clientX, y: e.clientY }); }}
            className={'gc-msg-row ' + (isMine ? 'is-mine' : '') + ' ' + (m.is_pinned ? 'gc-has-pin' : '') + ' ' + (isDim ? 'gc-dim' : '') + ' ' + (isFirstInGroup ? '' : 'gc-grouped')}>
         {isLastInGroup
           ? <div className="gc-msg-avatar" style={isMine ? undefined : { background: gcHexToRgba(senderColor, 0.2), color: senderColor }}>{(isMine ? (myAvatarUrl || avatars[m.sender_id]) : avatars[m.sender_id])
@@ -432,7 +470,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
         )}
 
         <div className="gc-body-wrap">
-          <div className="group-chat-body" id="groupChatBody" ref={bodyRef} onScroll={onBodyScroll}>
+          <div className="group-chat-body" id="groupChatBody" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
             {messages.length === 0
               ? (
                 <div className="group-chat-empty" id="groupChatEmpty">
