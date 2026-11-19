@@ -44,6 +44,7 @@ export default function PanelMoreSheet({ open, onClose, nav, page, onNavigate, o
 
   const signOut = async () => { onClose(); await ufuqSignOut(); navigate(outRoute('/index'), { replace: true }); };
   const go = (p) => { onNavigate(p); onClose(); };
+  const openAi = () => { onClose(); setTimeout(() => window.dispatchEvent(new Event('ufuq-ai-open')), 260); };
 
   return createPortal(
     <div className={'pms' + (open ? ' open' : '')} aria-hidden={open ? 'false' : 'true'}>
@@ -58,8 +59,12 @@ export default function PanelMoreSheet({ open, onClose, nav, page, onNavigate, o
           </button>
         </div>
         <div className="pms-grid">
+          <button type="button" className="pms-tile ai" style={{ '--k': 0 }} onClick={openAi}>
+            <span className="pms-ic"><svg {...s} fill="currentColor" stroke="none"><path d="M11 2.6c.6 4.3 2.6 6.3 6.9 6.9-4.3.6-6.3 2.6-6.9 6.9-.6-4.3-2.6-6.3-6.9-6.9 4.3-.6 6.3-2.6 6.9-6.9z" /><path d="M18.2 14.2c.25 1.9 1.1 2.75 3 3-1.9.25-2.75 1.1-3 3-.25-1.9-1.1-2.75-3-3 1.9-.25 2.75-1.1 3-3z" /></svg></span>
+            <span className="pms-l">Ufuq AI</span>
+          </button>
           {nav.map((n, i) => (
-            <button type="button" key={n.page} className={'pms-tile ' + TONES[i % TONES.length] + (n.page === page ? ' on' : '')} style={{ '--k': i }} onClick={() => go(n.page)}>
+            <button type="button" key={n.page} className={'pms-tile ' + TONES[(i + 1) % TONES.length] + (n.page === page ? ' on' : '')} style={{ '--k': i + 1 }} onClick={() => go(n.page)}>
               <span className="pms-ic">{PAGE_ICON[n.page] || n.icon}</span>
               <span className="pms-l">{t(n.label)}</span>
             </button>
