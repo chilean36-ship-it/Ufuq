@@ -59,11 +59,11 @@ export default function WrittenExamsPanel() {
       if (cand.length === 0) { setExams([]); return; }
       const ids = cand.map((e) => e.id);
       const [qs, subs] = await Promise.all([
-        supabase.from('written_exam_questions').select('exam_id').in('exam_id', ids),
+        supabase.rpc('written_exam_question_counts', { p_exam_ids: ids }),   // a server-side count: listing the rows hits the 1000-row API cap once many exams have 40+ questions
         supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', ids),
       ]);
       const qc = {}, sc = {}, pc = {}, anyN = {};
-      (qs.data || []).forEach((q) => { qc[q.exam_id] = (qc[q.exam_id] || 0) + 1; });
+      (qs.data || []).forEach((q) => { qc[q.exam_id] = Number(q.n) || 0; });
       (subs.data || []).forEach((s) => { anyN[s.exam_id] = (anyN[s.exam_id] || 0) + 1; if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; if (s.status === 'submitted') pc[s.exam_id] = (pc[s.exam_id] || 0) + 1; });
       // one copy per (level, kind) for this group's level; everything else of the group stays as it is
       const best = new Map();
