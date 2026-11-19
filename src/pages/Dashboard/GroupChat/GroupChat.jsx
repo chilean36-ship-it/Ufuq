@@ -189,22 +189,31 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
 
   useLayoutEffect(() => {
     if (!menu || !menuRef.current) return;
-    const btnRect = menu.btn.getBoundingClientRect();
     const menuRect = menuRef.current.getBoundingClientRect();
     const margin = 8;
-    let top = btnRect.bottom + 6;
-    if (top + menuRect.height > window.innerHeight - margin) top = btnRect.top - menuRect.height - 6;
+    let top; let left;
+    if (menu.pt) {
+      // right-click / long-press: open right where the finger or cursor is (the ⋮ button can be hidden, so it is no anchor)
+      top = menu.pt.y + 4;
+      if (top + menuRect.height > window.innerHeight - margin) top = menu.pt.y - menuRect.height - 4;
+      left = menu.pt.x;
+      if (left + menuRect.width > window.innerWidth - margin) left = menu.pt.x - menuRect.width;
+    } else {
+      const btnRect = menu.btn.getBoundingClientRect();
+      top = btnRect.bottom + 6;
+      if (top + menuRect.height > window.innerHeight - margin) top = btnRect.top - menuRect.height - 6;
+      left = btnRect.right - menuRect.width;
+    }
     top = Math.max(margin, Math.min(top, window.innerHeight - menuRect.height - margin));
-    let left = btnRect.right - menuRect.width;
     left = Math.max(margin, Math.min(left, window.innerWidth - menuRect.width - margin));
     setMenuPos({ top, left });
   }, [menu]);
 
-  const openMenu = (btn, id) => {
-    if (!btn) return;
-    if (menu && menu.btn === btn) { closeMenu(); return; }
+  const openMenu = (btn, id, pt) => {
+    if (!btn && !pt) return;
+    if (!pt && menu && menu.btn === btn) { closeMenu(); return; }
     setMenuPos(null);
-    setMenu({ id, btn });
+    setMenu({ id, btn, pt: pt || null });
   };
 
   const startReply = (msg) => {
@@ -335,7 +344,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
 
     rows.push(
       <div key={m.id} data-msg-id={m.id}
-           onContextMenu={(e) => { e.preventDefault(); openMenu(e.currentTarget.querySelector('.gc-msg-more-btn'), m.id); }}
+           onContextMenu={(e) => { e.preventDefault(); openMenu(e.currentTarget.querySelector('.gc-msg-more-btn'), m.id, { x: e.clientX, y: e.clientY }); }}
            className={'gc-msg-row ' + (isMine ? 'is-mine' : '') + ' ' + (m.is_pinned ? 'gc-has-pin' : '') + ' ' + (isDim ? 'gc-dim' : '') + ' ' + (isFirstInGroup ? '' : 'gc-grouped')}>
         {isLastInGroup
           ? <div className="gc-msg-avatar" style={isMine ? undefined : { background: gcHexToRgba(senderColor, 0.2), color: senderColor }}>{(isMine ? (myAvatarUrl || avatars[m.sender_id]) : avatars[m.sender_id])

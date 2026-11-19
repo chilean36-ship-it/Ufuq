@@ -412,7 +412,6 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
       <div className={'uai-panel' + (open && !suppress ? ' open' : '') + (full ? ' full' : '')} id="aiChatPanel" role="dialog" aria-label="Ufuq AI" aria-hidden={open ? 'false' : 'true'}>
         <aside className={'uai-side' + (sideOpen ? ' open' : '')} aria-label={tr('history')}>
           <div className="uai-side-brand">
-            <span className="uai-logo">{I.logo}</span>
             <div className="uai-brand-text">
               <b>Ufuq AI</b>
               <small>{tr('subtitle')}</small>
@@ -443,7 +442,6 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
         <header className="uai-head">
           <button type="button" className="uai-ibtn uai-hist-btn" onClick={() => setSideOpen((v) => !v)} aria-label={tr('openHistory')} title={tr('openHistory')}>{I.history}</button>
           <div className="uai-brand">
-            <span className="uai-logo uai-head-logo">{I.logo}</span>
             <div className="uai-brand-text">
               <b>Ufuq AI</b>
               <small className="uai-head-sub">{tr('subtitle')}</small>
@@ -462,7 +460,6 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
           <div className="uai-thread">
             {messages.length === 0 && !typing && (
               <div className="uai-empty" id="aiEmptyState">
-                <span className="uai-logo xl">{I.logo}</span>
                 <h2 className="uai-greet"><span>{greet}</span></h2>
                 <p className="uai-greet-sub">{tr('greetSub')}</p>
                 <div className="uai-chips">
@@ -481,7 +478,6 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
                 <div key={m.id} className="uai-msg user"><div className="uai-bubble" dir="auto">{m.text}</div></div>
               ) : (
                 <div key={m.id} className="uai-msg bot">
-                  <span className="uai-logo xs">{I.logo}</span>
                   <div className="uai-bot-body">
                     <Markdown text={m.text} />
                     {m.offline ? <div className="uai-offline">{tr('offlineNote')}</div> : null}
@@ -499,7 +495,6 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
 
             {typing && (
               <div className="uai-msg bot" id="aiTypingIndicator">
-                <span className="uai-logo xs spin">{I.logo}</span>
                 <div className="uai-bot-body"><div className="uai-skel"><i /><i /><i /></div></div>
               </div>
             )}

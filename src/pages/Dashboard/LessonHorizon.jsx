@@ -96,6 +96,21 @@ export default function LessonHorizon({ t, groupName, resolve, onKindChange, tea
     sub = teacher ? t('No lessons scheduled yet.') : t("Your teacher hasn't scheduled the next lesson yet.");
   }
 
+  // App look: a progress ring with an orbiting dot and tick-over unit tiles (the classic arc is hidden there).
+  let ringP = 0; let units = [];
+  if (kind === 'live') {
+    ringP = clamp((now - start) / Math.max(1, end - start), 0, 1);
+    const s2 = Math.max(0, Math.floor((end - now) / 1000));
+    units = [[Math.floor(s2 / 3600), 'h'], [Math.floor((s2 % 3600) / 60), 'm'], [s2 % 60, 's']];
+  } else if (kind === 'next') {
+    const ms = Math.max(0, start - now);
+    ringP = 1 - clamp(ms / (7 * DAY_MS), 0, 1);
+    const s2 = Math.floor(ms / 1000);
+    const d = Math.floor(s2 / 86400);
+    units = d > 0 ? [[d, 'd'], [Math.floor((s2 % 86400) / 3600), 'h'], [Math.floor((s2 % 3600) / 60), 'm']] : [[Math.floor(s2 / 3600), 'h'], [Math.floor((s2 % 3600) / 60), 'm'], [s2 % 60, 's']];
+  }
+  const UNIT_LABEL = { d: t('days'), h: t('hours'), m: t('min'), s: t('sec') };
+
   return (
     <div className={'lh lh-' + kind}>
       <div className="lh-chip" role="status">
@@ -120,6 +135,23 @@ export default function LessonHorizon({ t, groupName, resolve, onKindChange, tea
           <div className="lh-count-label">{sub}</div>
         </div>
       </div>
+
+      <div className="lh-ring" aria-hidden="true">
+        <svg viewBox="0 0 120 120" focusable="false">
+          <defs><linearGradient id="lhrGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F3D77E" /><stop offset="1" stopColor="#B98B3E" /></linearGradient></defs>
+          <circle className="lhr-track" cx="60" cy="60" r="52" />
+          <circle className="lhr-bar" cx="60" cy="60" r="52" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - ringP} transform="rotate(-90 60 60)" />
+        </svg>
+        {kind !== 'none' && <span className="lhr-orbit" style={{ transform: 'rotate(' + (ringP * 360).toFixed(1) + 'deg)' }}><i /></span>}
+        <div className="lhr-in"><b>{big}</b><small>{sub}</small></div>
+      </div>
+      {units.length > 0 && (
+        <div className="lh-units" aria-hidden="true">
+          {units.map(([v, k]) => (
+            <div className="lh-unit" key={k}><b key={v}>{pad(v)}</b><small>{UNIT_LABEL[k]}</small></div>
+          ))}
+        </div>
+      )}
 
       <h2 className="my-group-name lh-name" id="pageGroupName">{groupName || '—'}</h2>
     </div>
