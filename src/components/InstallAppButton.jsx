@@ -6,18 +6,22 @@ import { canPromptInstall, isIOS, isStandalone, promptInstall, onInstallChange }
 
 /* "Install the Ufuq app" button for the website (landing, cabinet). Self-contained: own texts, own dialog. */
 const TXT = {
-  UZ: { btn: 'Ilovani o‘rnatish', title: 'Ufuq ilovasi', sub: 'Telefoningizning bosh ekraniga qo‘shing — ilova alohida ochiladi va har safar avtomatik kiradi.', open: 'Ilovani ochish', close: 'Yopish',
+  UZ: { btn: 'Ilovani o‘rnatish', title: 'Ufuq ilovasi', sub: 'Telefon yoki kompyuteringizga o‘rnating — ilova alohida ochiladi va har safar avtomatik kiradi.', open: 'Ilovani ochish', close: 'Yopish',
     ios1: 'Safari pastidagi “Ulashish” tugmasini bosing', ios2: '“Bosh ekranga qo‘shish” ni tanlang', ios3: '“Qo‘shish” ni bosing — tayyor',
-    and1: 'Brauzer menyusini (⋮) oching', and2: '“Ilovani o‘rnatish” yoki “Bosh ekranga qo‘shish” ni tanlang', and3: 'Tasdiqlang — Ufuq ilovasi paydo bo‘ladi' },
-  RU: { btn: 'Установить приложение', title: 'Приложение Ufuq', sub: 'Добавьте на главный экран — приложение откроется отдельно и будет входить автоматически.', open: 'Открыть приложение', close: 'Закрыть',
+    and1: 'Brauzer menyusini (⋮) oching', and2: '“Ilovani o‘rnatish” yoki “Bosh ekranga qo‘shish” ni tanlang', and3: 'Tasdiqlang — Ufuq ilovasi paydo bo‘ladi',
+    dsk1: 'Manzil satrining o‘ng chetidagi o‘rnatish belgisini (ekran yoki ⊕) bosing — “O‘rnatish”', dsk2: 'Belgi yo‘q bo‘lsa: Chrome — ⋮ → “Saqlash va ulashish” → “Sahifani ilova sifatida o‘rnatish”; Edge — ⋯ → “Ilovalar” → “Bu saytni ilova sifatida o‘rnatish”', dsk3: 'Tasdiqlang — Ufuq alohida oynada ochiladi' },
+  RU: { btn: 'Установить приложение', title: 'Приложение Ufuq', sub: 'Установите на телефон или компьютер — приложение откроется отдельно и будет входить автоматически.', open: 'Открыть приложение', close: 'Закрыть',
     ios1: 'Нажмите «Поделиться» внизу Safari', ios2: 'Выберите «На экран “Домой”»', ios3: 'Нажмите «Добавить» — готово',
-    and1: 'Откройте меню браузера (⋮)', and2: 'Выберите «Установить приложение» или «Добавить на главный экран»', and3: 'Подтвердите — значок Ufuq появится на экране' },
-  AR: { btn: 'تثبيت التطبيق', title: 'تطبيق Ufuq', sub: 'أضفه إلى الشاشة الرئيسية — يعمل كتطبيق مستقل ويدخل تلقائيًا.', open: 'فتح التطبيق', close: 'إغلاق',
+    and1: 'Откройте меню браузера (⋮)', and2: 'Выберите «Установить приложение» или «Добавить на главный экран»', and3: 'Подтвердите — значок Ufuq появится на экране',
+    dsk1: 'Нажмите значок установки справа в адресной строке (экран или ⊕) — «Установить»', dsk2: 'Нет значка: Chrome — ⋮ → «Приложения и сохранение» → «Установить страницу как приложение»; Edge — ⋯ → «Приложения» → «Установить этот сайт как приложение»', dsk3: 'Подтвердите — Ufuq откроется в отдельном окне' },
+  AR: { btn: 'تثبيت التطبيق', title: 'تطبيق Ufuq', sub: 'ثبّته على هاتفك أو حاسوبك — يعمل كتطبيق مستقل ويدخل تلقائيًا.', open: 'فتح التطبيق', close: 'إغلاق',
     ios1: 'اضغط زر «مشاركة» أسفل Safari', ios2: 'اختر «إضافة إلى الشاشة الرئيسية»', ios3: 'اضغط «إضافة» — تم',
-    and1: 'افتح قائمة المتصفح (⋮)', and2: 'اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»', and3: 'أكّد وسيظهر رمز Ufuq' },
-  EN: { btn: 'Install the app', title: 'The Ufuq app', sub: 'Add it to your home screen — it opens on its own and keeps you signed in.', open: 'Open the app', close: 'Close',
+    and1: 'افتح قائمة المتصفح (⋮)', and2: 'اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»', and3: 'أكّد وسيظهر رمز Ufuq',
+    dsk1: 'اضغط أيقونة التثبيت في يمين شريط العنوان (شاشة أو ⊕) ثم «تثبيت»', dsk2: 'إن لم تظهر: Chrome — ⋮ ← «حفظ ومشاركة» ← «تثبيت الصفحة كتطبيق»؛ Edge — ⋯ ← «التطبيقات» ← «تثبيت هذا الموقع كتطبيق»', dsk3: 'أكّد — يُفتح Ufuq في نافذة مستقلة' },
+  EN: { btn: 'Install the app', title: 'The Ufuq app', sub: 'Install it on your phone or computer — it opens on its own and keeps you signed in.', open: 'Open the app', close: 'Close',
     ios1: 'Tap the Share button at the bottom of Safari', ios2: 'Choose “Add to Home Screen”', ios3: 'Tap “Add” — done',
-    and1: 'Open the browser menu (⋮)', and2: 'Choose “Install app” or “Add to Home screen”', and3: 'Confirm — the Ufuq icon appears on your screen' },
+    and1: 'Open the browser menu (⋮)', and2: 'Choose “Install app” or “Add to Home screen”', and3: 'Confirm — the Ufuq icon appears on your screen',
+    dsk1: 'Click the install icon at the right end of the address bar (a screen or ⊕) — “Install”', dsk2: 'No icon? Chrome — ⋮ → “Cast, save, and share” → “Install page as app”; Edge — ⋯ → “Apps” → “Install this site as an app”', dsk3: 'Confirm — Ufuq opens in its own window' },
 };
 const lang = () => { try { const l = localStorage.getItem(LANG_KEY); return TXT[l] ? l : 'EN'; } catch (e) { return 'EN'; } };
 
@@ -60,7 +64,8 @@ export default function InstallAppButton({ variant = 'hero', className = '', for
     if (canPromptInstall()) { await promptInstall(); return; }
     setOpen(true);
   }
-  const steps = isIOS() ? [L.ios1, L.ios2, L.ios3] : [L.and1, L.and2, L.and3];
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+  const steps = isIOS() ? [L.ios1, L.ios2, L.ios3] : /Android/i.test(ua) ? [L.and1, L.and2, L.and3] : [L.dsk1, L.dsk2, L.dsk3];
 
   const style = variant === 'nav'
     ? { padding: '8px 14px', borderRadius: 999, border: '1px solid var(--gold,#C9A24B)', color: 'var(--gold-bright,#E5C878)', background: 'transparent', fontSize: 13.5, fontWeight: 600 }

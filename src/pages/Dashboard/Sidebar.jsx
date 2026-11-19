@@ -121,7 +121,7 @@ export default function Sidebar({ active, onNavigate, learningOpen, onToggleLear
       </nav>
 
       <div className="sb-foot">
-        <InstallAppButton variant="side" className="sb-install" />
+        <InstallAppButton variant="side" className="sb-install" force />   {/* shown in the student cabinet (the landing page keeps it hidden) */}
         <a className={'sb-link' + (active === 'settings' ? ' active' : '')} href="#" id="settingsLink" onClick={go('settings')}>
           <span className="sb-icon"><Icon name="settings" /></span>
           <span className="sb-foot-label">{t('Settings')}</span>
