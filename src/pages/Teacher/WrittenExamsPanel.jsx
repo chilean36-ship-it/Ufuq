@@ -133,8 +133,8 @@ export default function WrittenExamsPanel() {
   const sections = lvl === 'all' ? [...LEVEL_NUMS, ...(hasNone ? [0] : [])].filter((k) => (byLevel[k] || []).length) : [lvl];
   const levelName = (k) => (k === 0 ? t('No level') : t('Level') + ' ' + k);
   const nowMs = Date.now();
-  const kindOf = (e) => (e.exam_kind === 'midterm' ? 'midterm' : e.exam_kind === 'final' ? 'final' : 'other');
-  const kindText = (e) => (e.exam_kind === 'midterm' ? t('Midterm') : e.exam_kind === 'final' ? t('Final exam') : t('Exam'));
+  const kindOf = (e) => (e.exam_kind === 'midterm' ? 'midterm' : e.exam_kind === 'final' ? 'final' : (e.exam_kind === 'pop1' || e.exam_kind === 'pop2') ? 'pop' : 'other');
+  const kindText = (e) => (e.exam_kind === 'midterm' ? t('Midterm') : e.exam_kind === 'final' ? t('Final exam') : e.exam_kind === 'pop1' ? t('Pop quiz 1') : e.exam_kind === 'pop2' ? t('Pop quiz 2') : t('Exam'));
   const KIND_ICO = {
     midterm: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6M8 13h8M8 17h5" /></svg>,
     final: <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6" /><path d="M8.5 14L7 22l5-3 5 3-1.5-8" /></svg>,
@@ -152,7 +152,7 @@ export default function WrittenExamsPanel() {
     return (
       <article className={'xc ' + k + (e.is_published ? ' pub' : ' draft')} key={e.id}>
         <div className="xc-top">
-          <span className={'xc-kind ' + k}>{KIND_ICO[k]}{kindText(e)}</span>
+          <span className={'xc-kind ' + k}>{KIND_ICO[k] || KIND_ICO.other}{kindText(e)}</span>
           <span className="xc-lvl">{levelName(e.level >= 1 && e.level <= MAX_LEVEL ? e.level : 0)}</span>
           <label className="xl-switch xc-sw" title={t(e.is_published ? 'Unpublish' : 'Publish')}>
             <input type="checkbox" role="switch" checked={!!e.is_published} onChange={() => togglePublish(e)} />

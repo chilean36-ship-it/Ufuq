@@ -20,6 +20,11 @@
 // v8: a request that carries the header x-cron-secret (checked by the database function ufuq_cron_secret_ok, secret kept in Vault)
 //     is treated as staff: this is how ufuq_grade_overdue_papers() grades papers left unchecked after an exam deadline.
 //
+// v9: items whose criteria start with "@@exact:" (multiple choice and typed error-correction of the 2026-11 exams) are scored
+//     by the server WITHOUT AI: 100 when the answer equals one of the accepted forms ("a|b|c"), else 0. The lines after the
+//     first one are a short explanation shown to the student. Questions may carry a weight (written_exam_questions.weight);
+//     the total is then the weighted average (the database trigger zz_weighted_total applies the same rule to every save).
+//
 // Call: supabase.functions.invoke('grade-exam', { body: { submission_id } })
 // Secrets: ANTHROPIC_API_KEY (Claude Haiku 5.5, primary) and GEMINI_API_KEY (Gemini 3.1 Flash-Lite, backup) — see _shared/llm.ts
 // Access: the student (own submission, one successful check) or the teacher of the group / an admin (re-check).
@@ -153,6 +158,36 @@ function splitQuestion(text: string) {
   return { sec, bank, body: lines.slice(i).join("\n").trim() };
 }
 
+// ---------------------------------------------------------------- exact (non-AI) items
+/** Light normalisation for exact items: vowel marks, tatweel, punctuation and spacing never matter; letters (hamza, ta marbuta ...) do. */
+const lightNorm = (s: string) => String(s || "").normalize("NFC").replace(/[ً-ْٰـ]/g, "")
+  .replace(/[\s‎‏.,،;؛:!?؟"'«»()\[\]\-]+/g, " ").trim();
+
+/** "@@exact: a|b" on the first line (+ an explanation on the next lines) → accepted forms; null when the criteria are an ordinary AI answer key. */
+function parseExact(crit: string): { accept: string[]; shown: string; why: string } | null {
+  const m = /^@@exact:[ \t]*([^\n]*)\n?([\s\S]*)$/.exec(String(crit || "").trim());
+  if (!m) return null;
+  const forms = m[1].split("|").map((x) => x.trim()).filter(Boolean);
+  if (forms.length === 0) return null;
+  return { accept: forms.map(lightNorm), shown: forms[0], why: (m[2] || "").replace(/^@@why:[ \t]*/, "").trim().slice(0, 400) };
+}
+function exactFeedback(ok: boolean, shown: string, why: string): Fb {
+  const tail = why ? " " + why : "";
+  return ok
+    ? { uz: "To'g'ri." + tail, en: "Correct." + tail, ru: "Верно." + tail, ar: "صحيح." + tail }
+    : {
+      uz: "Noto'g'ri. To'g'ri javob: " + shown + "." + tail, en: "Incorrect. The correct answer: " + shown + "." + tail,
+      ru: "Неверно. Правильный ответ: " + shown + "." + tail, ar: "غير صحيح. الإجابة الصحيحة: " + shown + "." + tail,
+    };
+}
+
+/** Weighted average (0-100, integer) of the items: weight 1 for every item unless the exam gives its own weights. */
+function weightedTotal(qs: Array<{ id: string; weight?: number | null }>, scoreOf: (id: string) => number): number {
+  let num = 0, den = 0;
+  for (const q of qs) { const w = Number(q.weight) > 0 ? Number(q.weight) : 1; num += w * scoreOf(q.id); den += w; }
+  return den > 0 ? Math.round(num / den) : 0;
+}
+
 // ---------------------------------------------------------------- AI access
 /** Claude Haiku 5.5 first, Gemini 3.1 Flash-Lite as backup (see _shared/llm.ts). Resolves with the model's "results" array. */
 async function askJSON(system: string, payload: unknown, deadline: number): Promise<unknown[]> {
@@ -226,8 +261,12 @@ Deno.serve(withCors(async (req: Request) => {
   }
   if (!isOwner && !isStaff) return json({ error: "Forbidden" }, 403);
 
-  const { data: questions } = await db.from("written_exam_questions")
+  // weight comes with migration 20261205_exam_v2_pop_quizzes.sql; until it is applied the exam is graded with equal weights
+  let qRes = await db.from("written_exam_questions")
+    .select("id, order_num, type, question_text, weight").eq("exam_id", submission.exam_id).order("order_num");
+  if (qRes.error) qRes = await db.from("written_exam_questions")
     .select("id, order_num, type, question_text").eq("exam_id", submission.exam_id).order("order_num");
+  const questions = qRes.data as Array<{ id: string; order_num: number; type: string; question_text: string; weight?: number | null }> | null;
   if (!questions || questions.length === 0) return json({ error: "This exam has no questions" }, 400);
   const { data: criteriaRows } = await db.from("written_exam_criteria")
     .select("question_id, criteria_text").in("question_id", questions.map((q: { id: string }) => q.id));
@@ -296,7 +335,7 @@ Deno.serve(withCors(async (req: Request) => {
     const done = (answers || []).filter((a) => a.ai_score !== null && a.ai_score !== undefined);
     if (done.length > 0 && done.length >= questions.length) {
       const sc = new Map(done.map((a) => [a.question_id, a.ai_score as number]));
-      const tot = Math.round(questions.reduce((sum, q) => sum + (sc.get(q.id) ?? 0), 0) / questions.length);
+      const tot = weightedTotal(questions, (id) => sc.get(id) ?? 0);
       await db.from("written_exam_submissions").update({ status: "graded", total_score: tot }).eq("id", submissionId).eq("status", "submitted");
       return json({ ok: true, graded: true, total_score: tot, already: true, status: "graded" });
     }
@@ -353,6 +392,13 @@ Deno.serve(withCors(async (req: Request) => {
       const parts = String(ans).split("\n");
       const emptyAnswer = !ans || ((q.type === "matching" || q.type === "antonym") && parts.every((p) => !p.trim()));
       if (emptyAnswer) { scored.set(q.id, { question_id: q.id, score: 0, feedback: NO_ANSWER.uz, fb: NO_ANSWER }); continue; }
+      // multiple choice / typed correction: the server decides, no AI
+      const ex = parseExact(criteriaByQ.get(q.id) || "");
+      if (ex) {
+        const ok = ex.accept.includes(lightNorm(ans));
+        scored.set(q.id, { question_id: q.id, score: ok ? 100 : 0, feedback: exactFeedback(ok, ex.shown, ex.why).uz, fb: exactFeedback(ok, ex.shown, ex.why) });
+        continue;
+      }
       const p = splitQuestion(q.question_text);
       toAsk.push({
         question_id: q.id, type: q.type, section: p.sec, question: p.body,
@@ -406,7 +452,7 @@ Deno.serve(withCors(async (req: Request) => {
     // The AI result is final: the submission is graded right now. (If a teacher had set scores, they keep priority.)
     const { data: tScores } = await db.from("written_exam_answers").select("question_id, teacher_score").eq("submission_id", submissionId);
     const teacher = new Map((tScores || []).filter((a) => a.teacher_score !== null && a.teacher_score !== undefined).map((a) => [a.question_id, a.teacher_score as number]));
-    const finalTotal = Math.round(questions.reduce((sum, q) => sum + (teacher.has(q.id) ? teacher.get(q.id)! : (scored.get(q.id)?.score ?? 0)), 0) / questions.length);
+    const finalTotal = weightedTotal(questions, (id) => (teacher.has(id) ? teacher.get(id)! : (scored.get(id)?.score ?? 0)));
     const { error: stErr } = await db.from("written_exam_submissions").update({ status: "graded", total_score: finalTotal }).eq("id", submissionId);
     if (stErr) { console.error("grade-exam: status update failed —", stErr.message); return json({ ok: false, error: stErr.message }); }
     return json({ ok: true, graded: true, total_score: finalTotal, checked: rows.length, status: "graded" });

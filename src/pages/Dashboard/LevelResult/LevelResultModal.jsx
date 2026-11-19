@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { lockScroll, unlockScroll } from '../../../lib/scrollLock';
-import { LEVEL_MAX, PASS_MARK, fmtPts } from '../../../lib/scoring';
+import { LEVEL_MAX, fmtPts } from '../../../lib/scoring';
 import PageStyle from '../../../components/PageStyle';
 import css from './level-result.css?inline';
 
@@ -104,10 +104,10 @@ export default function LevelResultModal({ item, onClose }) {
         {hasScore && (
           <>
             <div className="lrm-score">
-              <b>{fmtPts(Math.round(shown * 10) / 10)}</b><span>/ {LEVEL_MAX}</span>
+              <b>{fmtPts(Math.round(shown * 10) / 10)}</b><span>/ {fmtPts(Number(item.max_points) || LEVEL_MAX)}</span>
             </div>
             <div className="lrm-sub">
-              {t('Midterm')}: <b>{fmtPts(item.midterm_points)}</b> · {t('Final exam')}: <b>{fmtPts(item.final_points)}</b> · {t('Pass mark is')} {PASS_MARK}
+              {t('Midterm')}: <b>{fmtPts(item.midterm_points)}</b> · {t('Final exam')}: <b>{fmtPts(item.final_points)}</b> · {t('Pass mark is')} {fmtPts(item.pass_mark != null ? Number(item.pass_mark) : (Number(item.max_points) || LEVEL_MAX) / 2)}
             </div>
           </>
         )}

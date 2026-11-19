@@ -469,8 +469,8 @@ export default function WrittenRunner({ exam, existingSub, userId, onSubChange, 
 
   // ---- one answer box, shared by the exam room and the read-only paper ----
   const buildField = (q, bank, val, item) => {
-    if (item && item.audio && item.opts && item.opts.length > 1) {
-      return <ListeningField subId={sub.id} qid={q.id} audio={item.audio} opts={item.opts} value={val || ''} readOnly={readOnly} onPick={(o) => onType(q.id, o)} />;
+    if (item && item.opts && item.opts.length > 1) {   // listening (with audio) and multiple choice (without) share one option list
+      return <ListeningField subId={sub.id} qid={q.id} audio={item.audio || ''} opts={item.opts} value={val || ''} readOnly={readOnly} onPick={(o) => onType(q.id, o)} />;
     }
     const ph = readOnly ? undefined : t('Write your answer here');
     let field;

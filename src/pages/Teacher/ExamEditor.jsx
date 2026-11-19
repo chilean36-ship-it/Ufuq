@@ -7,7 +7,7 @@ import css from '../../styles/exam-builder.css?inline';
 import { Q_TYPES, TEMPLATES, LISTENING_SECTIONS, LISTENING_DB_TYPE, parseQ, buildQ, shuffled } from '../../lib/examPaper';
 import { lockScroll, unlockScroll } from '../../lib/scrollLock';
 import { LEVEL_LIST, MAX_LEVEL } from '../../lib/levels';
-import { MIDTERM_MAX, FINAL_MAX, LEVEL_MAX, PASS_MARK } from '../../lib/scoring';
+import { MIDTERM_MAX, FINAL_MAX, POP1_MAX, POP2_MAX, LEVEL_MAX, PASS_MARK } from '../../lib/scoring';
 
 /**
  * Exam editor for teachers and admins — a full-screen workspace instead of a long pop-up.
@@ -102,7 +102,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
   const open = state.open;
   const [title, setTitle] = useState('');
   const [level, setLevel] = useState('');       // exam level 1..MAX_LEVEL ('' = not chosen yet)
-  const [kind, setKind] = useState('');         // '' = other exam (100 points) | 'midterm' (50) | 'final' (100)
+  const [kind, setKind] = useState('');         // '' = other exam (100 points) | 'midterm' (25) | 'final' (50) | 'pop1' (25) | 'pop2' (50)
   const [deadline, setDeadline] = useState('');   // 'YYYY-MM-DDTHH:mm' in the teacher's local time ('' = no deadline)
   const [openAt, setOpenAt] = useState('');       // when students may START ('' = as soon as it is published); also the exam DAY: that day's lesson is replaced by the exam
   const [dur, setDur] = useState('');           // time limit in minutes ('' = no limit)
@@ -455,7 +455,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
               ))}
             </div>
             <div className="pbx-kindcards" role="group" aria-label={t('Exam type')}>
-              {[['midterm', t('Midterm'), MIDTERM_MAX], ['final', t('Final exam'), FINAL_MAX], ['', t('Other exam'), FINAL_MAX]].map(([k, label, pts]) => (
+              {[['midterm', t('Midterm'), MIDTERM_MAX], ['final', t('Final exam'), FINAL_MAX], ['pop1', t('Pop quiz 1'), POP1_MAX], ['pop2', t('Pop quiz 2'), POP2_MAX], ['', t('Other exam'), 100]].map(([k, label, pts]) => (
                 <button key={k || 'other'} type="button" aria-pressed={kind === k} className={'pbx-kc' + (kind === k ? ' on' : '')} onClick={() => setKind(k)}>
                   <b>{label}</b><span>{pts} {t('points')}</span>
                 </button>

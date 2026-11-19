@@ -14,6 +14,7 @@ const uz = {
   'Passed': 'O\'tdi', 'Not passed': 'O\'tmadi', 'In progress': 'Jarayonda',
   'The group keeps its letter and shows its level (Group A8). When every student passes the level exams the group moves up; a student who fails moves to the nearest lower group.': 'Guruh harfini saqlaydi va darajasini ko\'rsatadi (Group A8). Hamma talaba daraja imtihonidan o\'tsa guruh yuqoriga ko\'tariladi; o\'ta olmagan talaba eng yaqin pastdagi guruhga o\'tadi.',
   'Moved to': 'Ko\'chirildi',
+  'Pop quiz 1': 'Kutilmagan imtihon 1', 'Pop quiz 2': 'Kutilmagan imtihon 2', 'Pop quizzes': 'Kutilmagan imtihonlar',
 };
 const ru = {
   'Other exams': 'Другие экзамены', 'completed': 'пройдено',
@@ -29,6 +30,7 @@ const ru = {
   'Passed': 'Сдано', 'Not passed': 'Не сдано', 'In progress': 'В процессе',
   'The group keeps its letter and shows its level (Group A8). When every student passes the level exams the group moves up; a student who fails moves to the nearest lower group.': 'Группа сохраняет свою букву и показывает уровень (Group A8). Когда все студенты сдают экзамены уровня, группа переходит выше; не сдавший студент переводится в ближайшую нижнюю группу.',
   'Moved to': 'Переведён в',
+  'Pop quiz 1': 'Внезапный экзамен 1', 'Pop quiz 2': 'Внезапный экзамен 2', 'Pop quizzes': 'Внезапные экзамены',
 };
 const ar = {
   'Other exams': 'اختبارات أخرى', 'completed': 'مكتمل',
@@ -44,6 +46,7 @@ const ar = {
   'Passed': 'ناجح', 'Not passed': 'راسب', 'In progress': 'قيد التقدم',
   'The group keeps its letter and shows its level (Group A8). When every student passes the level exams the group moves up; a student who fails moves to the nearest lower group.': 'يحتفظ الفوج بحرفه ويعرض مستواه (Group A8). عندما ينجح جميع الطلاب في اختبارات المستوى يرتقي الفوج؛ ومن يرسب ينتقل إلى أقرب فوج أدنى.',
   'Moved to': 'تم النقل إلى',
+  'Pop quiz 1': 'الامتحان المفاجئ ١', 'Pop quiz 2': 'الامتحان المفاجئ ٢', 'Pop quizzes': 'الامتحانات المفاجئة',
 };
 
 // Level result window (congratulation / left-the-group): UZ, then RU and AR below. EN uses the key itself.

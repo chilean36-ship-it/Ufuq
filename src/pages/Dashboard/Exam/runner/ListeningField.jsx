@@ -48,7 +48,7 @@ export default function ListeningField({ subId, qid, audio, opts, value, readOnl
 
   return (
     <div className="xl" dir="rtl" lang="ar">
-      {!readOnly && (
+      {!readOnly && audio && (
         <div className="xl-player">
           <button type="button" className={'xl-play' + (playing ? ' on' : '')} disabled={playing || left <= 0} onClick={play}>
             <span aria-hidden="true">{playing ? '❙❙' : '▶'}</span>
@@ -59,7 +59,7 @@ export default function ListeningField({ subId, qid, audio, opts, value, readOnl
           </span>
         </div>
       )}
-      {failed && <p className="xl-err" role="alert">تعذّر تشغيل الصوت. تحقّق من الاتصال ثم حاول مرة أخرى.</p>}
+      {audio && failed && <p className="xl-err" role="alert">تعذّر تشغيل الصوت. تحقّق من الاتصال ثم حاول مرة أخرى.</p>}
       <div className="xl-opts" role="radiogroup">
         {opts.map((o, i) => (
           <label key={o} className={'xl-opt' + (value === o ? ' on' : '')}>

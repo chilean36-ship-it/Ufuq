@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { supabase } from '../../../lib/supabaseClient';
 import useLiveRefresh from '../../../lib/liveRefresh';
-import { MIDTERM_MAX, FINAL_MAX, LEVEL_MAX, PASS_MARK, fmtPts } from '../../../lib/scoring';
+import { MIDTERM_MAX, FINAL_MAX, LEVEL_MAX, fmtPts } from '../../../lib/scoring';
 
-/** Student's level progress: Midterm (50) + Final (100) = 150, pass mark 75. Data: my_level_results() RPC.
+/** Student's level progress: Pop quiz 1 (25) + Pop quiz 2 (50) + Midterm (25) + Final (50) = 150, pass mark = half of the points that were open (75 of 150). Data: my_level_results() RPC (max_points / pass_mark come from the server).
  *  useLevelResults() loads it once for the page; <LevelCard> is the compact card of the current level and
  *  <EarlierLevelsModal> (opened from the button in the page header) lists the levels already behind the student. */
 export function useLevelResults(userId, level) {
@@ -25,7 +25,7 @@ export function useLevelResults(userId, level) {
 
   if (!rows) return { ready: false, cur: null, older: [], moves };
   const mine = rows.find((r) => Number(r.level) === Number(level));
-  const cur = mine || (level ? { level, passed: false, complete: false, total_points: 0, midterm_done: false, final_done: false, midterm_points: 0, final_points: 0 } : null);
+  const cur = mine || (level ? { level, passed: false, complete: false, total_points: 0, midterm_done: false, final_done: false, midterm_points: 0, final_points: 0, max_points: MIDTERM_MAX + FINAL_MAX, pass_mark: (MIDTERM_MAX + FINAL_MAX) / 2 } : null);
   const older = rows.filter((r) => !cur || Number(r.level) !== Number(cur.level)).sort((a, b) => b.level - a.level);
   return { ready: true, cur, older, moves };
 }
@@ -33,11 +33,15 @@ export function useLevelResults(userId, level) {
 const statusOf = (r) => (r.passed ? 'pass' : (r.complete ? 'fail' : 'wait'));
 const pctOf = (v, max) => Math.max(0, Math.min(100, (Number(v) || 0) / max * 100));
 
-function Ring({ value, size = 76, stroke = 8 }) {
+/** Max / pass mark of a level row (the server sends them; 150 / 75 when an older server does not). */
+const maxOf = (r) => Number(r && r.max_points) || LEVEL_MAX;
+const passOf = (r) => (r && r.pass_mark != null ? Number(r.pass_mark) : maxOf(r) / 2);
+
+function Ring({ value, max = LEVEL_MAX, pass = LEVEL_MAX / 2, size = 76, stroke = 8 }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const p = pctOf(value, LEVEL_MAX);
-  const passAngle = (PASS_MARK / LEVEL_MAX) * 360 - 90;   // where the pass mark sits on the ring
+  const p = pctOf(value, max);
+  const passAngle = (pass / max) * 360 - 90;   // where the pass mark sits on the ring
   const px = size / 2 + r * Math.cos((passAngle * Math.PI) / 180);
   const py = size / 2 + r * Math.sin((passAngle * Math.PI) / 180);
   return (
@@ -59,18 +63,22 @@ export function LevelCard({ data }) {
   const st = statusOf(cur);
   const label = st === 'pass' ? t('Passed') : st === 'fail' ? t('Not passed') : t('In progress');
   const total = Number(cur.total_points) || 0;
-  const need = Math.max(0, PASS_MARK - total);
+  const max = maxOf(cur); const pass = passOf(cur);
+  const need = Math.max(0, pass - total);
+  const popMax = Math.max(0, max - MIDTERM_MAX - FINAL_MAX);
+  const popPts = Math.max(0, total - (Number(cur.midterm_points) || 0) - (Number(cur.final_points) || 0));
   const mv = data.moves[cur.level];
   const parts = [
     { key: 'm', name: t('Midterm'), done: cur.midterm_done, pts: cur.midterm_points, max: MIDTERM_MAX },
     { key: 'f', name: t('Final exam'), done: cur.final_done, pts: cur.final_points, max: FINAL_MAX },
+    ...(popMax > 0 ? [{ key: 'p', name: t('Pop quizzes'), done: popPts > 0, pts: popPts, max: popMax }] : []),
   ];
   return (
     <section className={'ex2-lv ' + st + (open ? ' open' : '')} aria-label={t('Level results')}>
       <button type="button" className="ex2-lv-main" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <span className="ex2-ring-wrap">
-          <Ring value={total} />
-          <span className="ex2-ring-num"><b>{fmtPts(total)}</b><small>/ {LEVEL_MAX}</small></span>
+          <Ring value={total} max={max} pass={pass} />
+          <span className="ex2-ring-num"><b>{fmtPts(total)}</b><small>/ {fmtPts(max)}</small></span>
         </span>
         <span className="ex2-lv-body">
           <span className="ex2-lv-head"><b>{t('Level')} {cur.level}</b><span className={'ex2-lvl-badge ' + st}>{label}</span></span>
@@ -92,7 +100,7 @@ export function LevelCard({ data }) {
             : need > 0
               ? t('{n} more points to pass').replace('{n}', fmtPts(need))
               : t('Pass mark reached')}
-            <span> · {t('Pass mark')}: {PASS_MARK} / {LEVEL_MAX}</span></p>
+            <span> · {t('Pass mark')}: {fmtPts(pass)} / {fmtPts(max)}</span></p>
           {mv && mv.to_level !== cur.level && <p>{t('Moved to')}: {t('Level')} {mv.to_level}</p>}
         </div>
       )}
@@ -129,6 +137,9 @@ export function EarlierLevelsModal({ data, onClose }) {
             const st = statusOf(r);
             const label = st === 'pass' ? t('Passed') : st === 'fail' ? t('Not passed') : t('In progress');
             const mv = data.moves[r.level];
+            const max = maxOf(r); const pass = passOf(r);
+            const popMax = Math.max(0, max - MIDTERM_MAX - FINAL_MAX);
+            const popPts = Math.max(0, (Number(r.total_points) || 0) - (Number(r.midterm_points) || 0) - (Number(r.final_points) || 0));
             return (
               <article className={'ex2-old ' + st} key={r.level}>
                 <div className="ex2-old-top">
@@ -139,12 +150,13 @@ export function EarlierLevelsModal({ data, onClose }) {
                   </div>
                   <span className={'ex2-lvl-badge ' + st}>{label}</span>
                 </div>
-                <div className="ex2-old-total"><b>{fmtPts(r.total_points)}</b><small>/ {LEVEL_MAX}</small>
-                  <span className="track"><i style={{ width: pctOf(r.total_points, LEVEL_MAX) + '%' }} /><u style={{ left: pctOf(PASS_MARK, LEVEL_MAX) + '%' }} /></span>
+                <div className="ex2-old-total"><b>{fmtPts(r.total_points)}</b><small>/ {fmtPts(max)}</small>
+                  <span className="track"><i style={{ width: pctOf(r.total_points, max) + '%' }} /><u style={{ left: pctOf(pass, max) + '%' }} /></span>
                 </div>
                 <div className="ex2-old-parts">
                   <span>{t('Midterm')}: <b>{r.midterm_done ? fmtPts(r.midterm_points) : '—'}</b> / {MIDTERM_MAX}</span>
                   <span>{t('Final exam')}: <b>{r.final_done ? fmtPts(r.final_points) : '—'}</b> / {FINAL_MAX}</span>
+                  {popMax > 0 && <span>{t('Pop quizzes')}: <b>{fmtPts(popPts)}</b> / {popMax}</span>}
                 </div>
               </article>
             );

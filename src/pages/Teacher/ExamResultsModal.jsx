@@ -185,7 +185,7 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
     graded: [t('Graded'), 'ok'], pending: [t('Needs approval'), 'gold'], waiting: [t('Checking…'), 'wait'],
     running: [t('Writing now'), 'run'], missing: [t('Not submitted'), 'miss'],
   };
-  const kindLabel = kind === 'midterm' ? t('Midterm') : kind === 'final' ? t('Final exam') : t('Exam');
+  const kindLabel = kind === 'midterm' ? t('Midterm') : kind === 'final' ? t('Final exam') : kind === 'pop1' ? t('Pop quiz 1') : kind === 'pop2' ? t('Pop quiz 2') : t('Exam');
   const FILTERS = [['all', t('All'), stats.all], ['submitted', t('Submitted'), stats.submitted], ['pending', t('Needs approval'), stats.pending], ['missing', t('Not submitted'), stats.missing], ...(stats.moved ? [['moved', t('Moved up'), stats.moved]] : [])];
 
   return (

@@ -23,7 +23,7 @@ Arabic-learning platform (teacher: Ustaz Ali Hifniy). React 18 + Vite SPA, Supab
 - Prices, access and grading are decided on the server (RPCs / Edge Functions); the browser is never trusted.
 - Payment enforcement at RLS level is intentionally NOT done yet (`payments_enforced = false`); leave it unless asked.
 - CSP is in report-only mode in `vercel.json` until verified on the live site.
-- Level system: 14 levels, exams 150 points (midterm 50 + final 100), pass mark 75; groups are letter + level (e.g. `Group A7`).
+- Level system: 14 levels; four exams = 150 points: pop quiz 1 (`pop1`, 25) + pop quiz 2 (`pop2`, 50) + midterm (25) + final (50). Pop quizzes («الامتحان المفاجئ», the old exams renamed) stay closed until staff open them. Pass mark = 50 % of the points that were open to the student (75 of 150; 37.5 of 75 while both pop quizzes are closed). New exams are multiple choice (`@@opts`, `@@pass`, criteria `@@exact:` graded without AI, `written_exam_questions.weight`); see `supabase/migrations/20261205_exam_v2_pop_quizzes.sql`. Groups are letter + level (e.g. `Group A7`).
 - Level groups (rules in the header of `supabase/migrations/20261201_level_groups_lifecycle.sql`): students move one by one; only RUNNING groups (`is_active`) are ever a target; a group closes itself when its last real student leaves and its letter runs elsewhere (`moved_on_at`) or on the final-exam deadline (`deadline_closed_at`). Every page except Admin > Groups lists running groups only. `profiles.level_free` = test account: never moved, never counted.
 
 ## Ufuq app (PWA, `/app`)

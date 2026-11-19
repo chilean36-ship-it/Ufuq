@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import useLiveRefresh from '../../../lib/liveRefresh';
 
-const COLS = 'id, from_level, to_level, outcome, total_points, midterm_points, final_points, from_group_name, to_group_name, to_group, reason, created_at';
+const COLS = 'id, from_level, to_level, outcome, total_points, midterm_points, final_points, max_points, pass_mark, from_group_name, to_group_name, to_group, reason, created_at';
 
 /**
  * The newest level result the student has not seen yet (level_transitions.seen_at is null).

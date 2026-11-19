@@ -29,12 +29,20 @@ export const LISTENING_DB_TYPE = 'short_answer';
 export const LISTENING_MAX_PLAYS = 2;
 export const isListening = (p) => !!(p && p.audio && p.opts && p.opts.length > 1);
 
-const MARK = /^@@(part|sec|bank|audio|opts):[ \t]*(.*)$/;
+/**
+ * Multiple-choice items (the exams of 2026-11 onward) use the same two markers WITHOUT audio: `@@opts: A|B|C|D` and, for a reading
+ * passage or a cloze text that several questions share, `@@pass: the whole text` (one line; repeated on each of its questions).
+ * The student picks one option and its text is the saved answer. The correct option sits in the criteria as `@@exact: option`
+ * (never sent to students) and is checked by the server without AI.
+ */
+export const isMcq = (p) => !!(p && !p.audio && p.opts && p.opts.length > 1);
 
-/** question_text → { part, sec, bank[], audio, opts[], body } */
+const MARK = /^@@(part|sec|bank|audio|opts|pass):[ \t]*(.*)$/;
+
+/** question_text → { part, sec, bank[], audio, opts[], pass, body } */
 export function parseQ(text) {
   const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
-  const out = { part: '', sec: '', bank: null, audio: '', opts: null, body: '' };
+  const out = { part: '', sec: '', bank: null, audio: '', opts: null, pass: '', body: '' };
   let i = 0;
   for (; i < lines.length; i++) {
     const m = lines[i].match(MARK);
@@ -43,20 +51,22 @@ export function parseQ(text) {
     else if (m[1] === 'sec') out.sec = m[2].trim();
     else if (m[1] === 'audio') out.audio = m[2].trim();
     else if (m[1] === 'opts') out.opts = m[2].split('|').map((w) => w.trim()).filter(Boolean);
+    else if (m[1] === 'pass') out.pass = m[2].trim();
     else out.bank = m[2].split('|').map((w) => w.trim()).filter(Boolean);
   }
   out.body = lines.slice(i).join('\n').trim();
   return out;
 }
 
-/** { part, sec, bank[], audio, opts[], body } → question_text */
-export function buildQ({ part, sec, bank, audio, opts, body }) {
+/** { part, sec, bank[], audio, opts[], pass, body } → question_text */
+export function buildQ({ part, sec, bank, audio, opts, pass, body }) {
   const head = [];
   if (part && part.trim()) head.push('@@part: ' + part.trim());
   if (sec && sec.trim()) head.push('@@sec: ' + sec.trim());
   if (bank && bank.length) head.push('@@bank: ' + bank.join('|'));
   if (audio && audio.trim()) head.push('@@audio: ' + audio.trim());
   if (opts && opts.length) head.push('@@opts: ' + opts.join('|'));
+  if (pass && pass.trim()) head.push('@@pass: ' + pass.trim());
   return head.concat([String(body || '').trim()]).join('\n');
 }
 
@@ -134,12 +144,13 @@ export function layoutQuestions(questions) {
       showBank: newSec && !!(p.bank && p.bank.length),
       audio: p.audio, opts: p.opts,
       number: hasSections ? n : idx + 1,
-      passage: null,
+      passage: null, ownPass: p.pass || '',
     };
   });
   // reading passages: followers of a reading question get its text
   let active = null;
   laid.forEach((l) => {
+    if (l.ownPass) { l.passage = l.ownPass; active = null; return; }   // an explicit @@pass: text needs no guessing
     const own = l.audio ? null : extractPassage(l.body);
     if (own) { active = { text: own.text, last: own.lastNo }; return; }
     if (!active) return;

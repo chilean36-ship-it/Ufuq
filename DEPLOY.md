@@ -174,3 +174,6 @@ Replaces the stage 9 rule "the group goes up when EVERY student passed". Migrati
 - Edge Function `grade-exam` v8 (deployed via MCP from the live v7 code + the x-cron-secret path, verify_jwt stays true). Checked: right secret -> reaches the handler (404 for an unknown paper), wrong secret -> 401.
 
 - PENDING APPLY (2026-11-17): `20261130_level3_midterm_listening.sql`, `20261130b_level3_final_listening.sql`: data only, same shape as the Level 2 ones. Five Gemini fusha listening questions (audio in `public/listening/level3/g/`) appended to every Level 3 midterm / final paper lacking `@@audio:`. Idempotent; run once the audio is deployed.
+
+
+- `20261205_exam_v2_pop_quizzes.sql` — APPLIED to live 2026-11-19 (pop quizzes, new 25/50/25/50 scoring, question weights, `@@exact` grading support). The new exam content itself is loaded from private files, not from the repo.

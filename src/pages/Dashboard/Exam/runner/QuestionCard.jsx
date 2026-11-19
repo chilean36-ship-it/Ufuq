@@ -33,7 +33,7 @@ export default function QuestionCard({ t, q, item, cur, total, qval, flagged, ct
                 <p className="xq-passage-t"><RichQ text={item.passage} /></p>
               </aside>
             )}
-            <p className={'xq-text' + (item.audio ? ' xq-text-ar' : '')} dir="auto"><RichQ text={item.body} /></p>
+            <p className={'xq-text' + (item.audio || (item.opts && item.opts.length > 1) ? ' xq-text-ar' : '')} dir="auto"><RichQ text={item.body} /></p>
             {field}
           </article>
           <p className="xq-hint">{t('Your answers are saved automatically.')}{GUARD_IS_MOBILE && total > 1 ? ' ' + t('Swipe left or right to change the question.') : ''}</p>
