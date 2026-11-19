@@ -58,11 +58,12 @@ export default function CertificatesView() {
   }, [open]);
 
   const propsFor = (r) => ({
-    name: name || (typeof localStorage !== 'undefined' && localStorage.getItem('ufuq-profile-name')) || '',
+    name: r.holder_name || name || (typeof localStorage !== 'undefined' && localStorage.getItem('ufuq-profile-name')) || '',
     levelNo: r.level, levelName: LEVEL_NAMES[Math.max(0, Number(r.level) - 1)] || '',
     place: Number(r.place), points: fmtPts(r.total_points), max: r.max_points || 150,
     date: new Date(r.issued_at).toLocaleDateString('ar-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }),
     number: `UFQ-L${r.level}-P${r.place}-${String(userId || '').replace(/-/g, '').slice(0, 6).toUpperCase()}`,
+    serial: r.serial || '',
     logo,
   });
 

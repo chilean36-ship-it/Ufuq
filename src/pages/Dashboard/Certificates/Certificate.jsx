@@ -1,14 +1,16 @@
+import { verifyUrl } from '../../../lib/certVerify';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CERT_W, CERT_H, THEMES, SERIF, SANS, ARABIC, levelNameAr, Khatam, CornerOrnament, Seal } from './certDesign';
+import { CERT_W, CERT_H, THEMES, SERIF, SANS, ARABIC, levelNameAr, tintMatrix, Khatam, CornerOrnament, Seal, QrCode } from './certDesign';
 
 export { CERT_W, CERT_H };
 
 /* The certificate itself: a 1400 × 990 SVG (A4 landscape), drawn rather than photographed, so it stays sharp at any size and
    exports to PNG / prints cleanly. `logo` is a data URL, so the export has no external dependencies. */
-export default function Certificate({ name, levelNo, levelName, place, points, max, date, number, logo, fontCss }) {
+export default function Certificate({ name, levelNo, levelName, place, points, max, date, number, serial, logo, fontCss }) {
   const th = THEMES[place] || THEMES[1];
   const id = 'c' + place;
   const g = `g${id}`;
+  const lf = `lf${id}`;   // paints the logo gold
   const W = CERT_W, H = CERT_H, M = W / 2;
   const shownName = String(name || '').trim() || 'Student';
   const nameSize = shownName.length > 30 ? 50 : shownName.length > 22 ? 60 : shownName.length > 16 ? 70 : 80;
@@ -24,28 +26,47 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
         <radialGradient id={`bg${id}`} cx=".5" cy=".45" r=".8">
           <stop offset="0" stopColor={th.paper1} /><stop offset=".65" stopColor={th.paper2} /><stop offset="1" stopColor={th.paper3} />
         </radialGradient>
+        <filter id={lf} colorInterpolationFilters="sRGB"><feColorMatrix type="matrix" values={tintMatrix(th.b)} /></filter>
         <pattern id={`pt${id}`} width="64" height="64" patternUnits="userSpaceOnUse">
           <g fill="none" stroke={th.b} strokeOpacity=".16" strokeWidth="1">
             <rect x="14" y="14" width="36" height="36" /><rect x="14" y="14" width="36" height="36" transform="rotate(45 32 32)" />
             <circle cx="32" cy="32" r="6" />
           </g>
         </pattern>
+
       </defs>
 
       <rect width={W} height={H} fill={`url(#bg${id})`} />
-      <rect width={W} height={H} fill={`url(#pt${id})`} />
+      {logo ? (
+        /* small logos on an even grid inside the frame: 6 columns x 4 rows, the same gap everywhere; the 4 cells under the big centre logo are left out */
+        <g opacity=".09" filter={`url(#${lf})`}>
+          {Array.from({ length: 24 }, (_, i) => {
+            const cx = 70 + 105 + (i % 6) * 210, cy = 70 + 106.25 + Math.floor(i / 6) * 212.5;
+            if (Math.abs(cx - M) < 300 && Math.abs(cy - H / 2) < 150) return null;
+            return <image key={i} href={logo} xlinkHref={logo} x={cx - 40} y={cy - 40} width="80" height="80" preserveAspectRatio="xMidYMid meet" />;
+          })}
+        </g>
+      ) : (
+        <rect width={W} height={H} fill={`url(#pt${id})`} />
+      )}
       {/* large faint star behind the text */}
-      <Khatam cx={M} cy={H / 2 + 10} r={330} stroke={th.b} sw={1.2} opacity=".14" />
-      <Khatam cx={M} cy={H / 2 + 10} r={250} stroke={th.b} sw={1} opacity=".12" />
+      {logo ? (
+        <image href={logo} xlinkHref={logo} x={M - 310} y={H / 2 + 10 - 310} width="620" height="620" preserveAspectRatio="xMidYMid meet" opacity=".085" filter={`url(#${lf})`} />
+      ) : (
+        <>
+          <Khatam cx={M} cy={H / 2 + 10} r={330} stroke={th.b} sw={1.2} opacity=".14" />
+          <Khatam cx={M} cy={H / 2 + 10} r={250} stroke={th.b} sw={1} opacity=".12" />
+        </>
+      )}
 
       {/* frames */}
       <rect x="26" y="26" width={W - 52} height={H - 52} fill="none" stroke={`url(#${g})`} strokeWidth="9" />
       <rect x="46" y="46" width={W - 92} height={H - 92} fill="none" stroke={`url(#${g})`} strokeWidth="2" />
       <rect x="58" y="58" width={W - 116} height={H - 116} fill="none" stroke={th.b} strokeOpacity=".55" strokeWidth="1" strokeDasharray="2 6" />
-      <CornerOrnament x={46} y={46} sx={1} sy={1} g={g} />
-      <CornerOrnament x={W - 46} y={46} sx={-1} sy={1} g={g} />
-      <CornerOrnament x={46} y={H - 46} sx={1} sy={-1} g={g} />
-      <CornerOrnament x={W - 46} y={H - 46} sx={-1} sy={-1} g={g} />
+      <CornerOrnament x={46} y={46} sx={1} sy={1} g={g} logo={logo} lf={lf} />
+      <CornerOrnament x={W - 46} y={46} sx={-1} sy={1} g={g} logo={logo} lf={lf} />
+      <CornerOrnament x={46} y={H - 46} sx={1} sy={-1} g={g} logo={logo} lf={lf} />
+      <CornerOrnament x={W - 46} y={H - 46} sx={-1} sy={-1} g={g} logo={logo} lf={lf} />
       {[M - 300, M + 300].map((x) => <Khatam key={x} cx={x} cy={46} r={10} fill={`url(#${g})`} />)}
       {[M - 300, M + 300].map((x) => <Khatam key={'b' + x} cx={x} cy={H - 46} r={10} fill={`url(#${g})`} />)}
 
@@ -80,6 +101,16 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
 
       <Seal cx={M} cy={850} th={th} g={g} place={place} />
 
+      {/* verification: the QR opens the public check page for this serial */}
+      {serial && (
+        <g>
+          <rect x="446" y="786" width="124" height="124" rx="8" fill="#fff" stroke={th.b} strokeWidth="1.5" />
+          <QrCode value={verifyUrl(serial)} x={456} y={796} size={104} />
+          <text x="508" y="924" textAnchor="middle" fontFamily={ARABIC} fontSize="14" fill={th.ink} fillOpacity=".7">امسح للتحقق</text>
+          <text x="508" y="946" textAnchor="middle" fontFamily={SANS} fontWeight="700" fontSize="15" letterSpacing="1" fill={th.ink} fillOpacity=".8">{serial}</text>
+        </g>
+      )}
+
       {/* footer: date and signature */}
       <g fontFamily={SANS} fill={th.ink}>
         <path d="M150 884 H430" stroke={th.b} strokeWidth="1.5" />
@@ -90,7 +121,7 @@ export default function Certificate({ name, levelNo, levelName, place, points, m
         <text x="1110" y="912" textAnchor="middle" fontFamily={ARABIC} fontSize="20" fillOpacity=".65">الأستاذ · مؤسس الأكاديمية</text>
       </g>
       {stars.map((i) => <Khatam key={i} cx={M - 110 + i * 44} cy={H - 70} r={5} fill={th.b} opacity=".5" />)}
-      <text x={M} y={H - 46} textAnchor="middle" fontFamily={ARABIC} fontSize="17" fill={th.ink} fillOpacity=".55">{`شهادة رقم ${number}`}</text>
+      {!serial && <text x={M} y={H - 46} textAnchor="middle" fontFamily={ARABIC} fontSize="17" fill={th.ink} fillOpacity=".55">{`شهادة رقم ${number}`}</text>}
     </svg>
   );
 }

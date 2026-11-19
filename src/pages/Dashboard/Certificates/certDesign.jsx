@@ -1,3 +1,4 @@
+import qrcode from 'qrcode-generator';
 /* Drawing parts of the certificate (kept apart from the export helpers in Certificate.jsx). */
 export const CERT_W = 1400;
 export const CERT_H = 990;
@@ -8,12 +9,20 @@ const GOLD = { a: '#F6E3A1', b: '#C9A24B', c: '#8A6516', ink: '#2F2208', paper1:
 export const THEMES = {
   1: { ...GOLD, label: 'FIRST PLACE', ar: 'المركز الأول' },
   2: { ...GOLD, label: 'SECOND PLACE', ar: 'المركز الثاني' },
+  3: { ...GOLD, label: 'THIRD PLACE', ar: 'المركز الثالث' },   // not issued today (top 2 only); ready if a 3rd place is ever added
 };
 export const SERIF = "Fraunces, 'Playfair Display', Georgia, 'Times New Roman', serif";
 export const SANS = "Inter, 'Segoe UI', Arial, sans-serif";
 export const ARABIC = "Amiri, 'Noto Naskh Arabic', 'Traditional Arabic', serif";
 
 export const LEVEL_NAMES_AR = ['المبتدئ', 'الأساسي', 'ما قبل المتوسط', 'المتوسط', 'فوق المتوسط', 'المتقدّم', 'المتمكّن', 'الإتقان', 'الخبير', 'العالِم', 'المتميّز', 'النخبة', 'الحكيم', 'المنير'];
+/** feColorMatrix values that paint every visible pixel of the (black) logo in one colour, keeping its shape. */
+export function tintMatrix(hex) {
+  const n = parseInt(String(hex).replace('#', ''), 16);
+  const f = (v) => (v / 255).toFixed(3);
+  return `0 0 0 0 ${f((n >> 16) & 255)}  0 0 0 0 ${f((n >> 8) & 255)}  0 0 0 0 ${f(n & 255)}  0 0 0 1 0`;
+}
+
 export const levelNameAr = (n) => LEVEL_NAMES_AR[Math.max(0, Number(n) - 1)] || '';
 
 /** Eight-pointed Islamic star (khatam): two squares rotated 45 degrees. */
@@ -27,7 +36,7 @@ export function Khatam({ cx, cy, r, fill, stroke, sw = 1.6, opacity = 1 }) {
   );
 }
 
-export function CornerOrnament({ x, y, sx, sy, g }) {
+export function CornerOrnament({ x, y, sx, sy, g, logo, lf }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
       <g fill="none" stroke={`url(#${g})`} strokeLinecap="round">
@@ -36,8 +45,17 @@ export function CornerOrnament({ x, y, sx, sy, g }) {
         <path d="M34 34 H72 M34 34 V72" strokeWidth="1" />
         <path d="M128 0 q16 18 0 36 M0 128 q18 16 36 0" strokeWidth="2" />
       </g>
-      <Khatam cx={46} cy={46} r={30} stroke={`url(#${g})`} sw={2} />
-      <Khatam cx={46} cy={46} r={14} fill={`url(#${g})`} />
+      {logo ? (
+        /* the Ufuq mark instead of the star; the outer scale() mirrors the corner, this one cancels it so the logo is never flipped */
+        <g transform={`translate(46 46) scale(${sx} ${sy})`}>
+          <image href={logo} xlinkHref={logo} x="-34" y="-34" width="68" height="68" preserveAspectRatio="xMidYMid meet" filter={`url(#${lf})`} />
+        </g>
+      ) : (
+        <>
+          <Khatam cx={46} cy={46} r={30} stroke={`url(#${g})`} sw={2} />
+          <Khatam cx={46} cy={46} r={14} fill={`url(#${g})`} />
+        </>
+      )}
     </g>
   );
 }
@@ -80,4 +98,20 @@ export function Seal({ cx, cy, th, g, place }) {
       <text y="15" textAnchor="middle" fontFamily={SERIF} fontWeight="700" fontSize="44" fill={th.ink}>{place}</text>
     </g>
   );
+}
+
+/** A QR code drawn as one SVG path (sharp at any size, exports to PNG / print like the rest of the certificate). */
+export function QrCode({ value, x, y, size, color = '#1a1a1a' }) {
+  const qr = qrcode(0, 'M');
+  qr.addData(String(value));
+  qr.make();
+  const n = qr.getModuleCount();
+  const u = size / n;
+  let d = '';
+  for (let r = 0; r < n; r += 1) {
+    for (let c = 0; c < n; c += 1) {
+      if (qr.isDark(r, c)) d += `M${(x + c * u).toFixed(2)} ${(y + r * u).toFixed(2)}h${u.toFixed(2)}v${u.toFixed(2)}h${(-u).toFixed(2)}z`;
+    }
+  }
+  return <path d={d} fill={color} shapeRendering="crispEdges" />;
 }
