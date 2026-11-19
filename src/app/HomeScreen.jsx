@@ -209,7 +209,7 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
 
       {/* homework shelf */}
       {joined && (
-        <section style={{ '--i': 4 }}>
+        <section className="ua-hw-sec" style={{ '--i': 4 }}>
           <div className="ua-sh-h"><h3>{t('hwShelf')}</h3>{pending.length > 0 && <span className={'ua-chip' + (overdueN ? ' warn' : '')}>{pending.length} {t('hwPending')}</span>}</div>
           {tasks === null ? <div className="ua-skel" /> : pending.length === 0 ? (
             <div className="ua-empty"><Ico n="check" size={22} sw={2.4} /><span>{t('hwAllDone')}</span></div>
@@ -227,7 +227,7 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
       )}
 
       {/* categories */}
-      <section style={{ '--i': 5 }}>
+      <section className="ua-q-sec" style={{ '--i': 5 }}>
         <div className="ua-sh-h"><h3>{t('quick')}</h3></div>
         <div className="ua-tiles">
           {TILES.map((x) => (
