@@ -66,11 +66,13 @@ function OfflineBar() {
   const { t } = useApp();
   const [off, setOff] = useState(() => typeof navigator !== 'undefined' && navigator.onLine === false);
   useEffect(() => {
+    // offline = the browser says so, or the server cannot be reached and answers come from what the device saved
     const on = () => setOff(false); const offf = () => setOff(true);
     window.addEventListener('online', on); window.addEventListener('offline', offf);
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', offf); };
+    window.addEventListener('ufuq-stale', offf); window.addEventListener('ufuq-fresh', on);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', offf); window.removeEventListener('ufuq-stale', offf); window.removeEventListener('ufuq-fresh', on); };
   }, []);
-  return off ? <div className="ua-offline" role="status">{t('offline')}</div> : null;
+  return off ? <div className="ua-offline" role="status">{t('offlineBar')}</div> : null;
 }
 
 function Inner() {
@@ -94,6 +96,17 @@ function Inner() {
 
   useEffect(() => { setAiSuppress(pathname.startsWith('/app/me/billing')); }, [pathname]);
   useEffect(() => { document.title = 'Ufuq'; }, []);
+  // While online, quietly load the screens that are opened later, so their code is on the device and they open without internet too.
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return undefined;
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 4000));
+    const cancel = window.cancelIdleCallback || clearTimeout;
+    const id = idle(() => {
+      [() => import('../pages/Dashboard/Library/LibraryView'), () => import('../pages/Dashboard/Exam/ExamView'), () => import('../pages/Dashboard/Certificates/CertificatesView'),
+        () => import('../pages/Dashboard/SettingsView'), () => import('../pages/Dashboard/Hifz/HifzLiveView')].forEach((load) => { load().catch(() => {}); });
+    });
+    return () => cancel(id);
+  }, []);
   // every tab opens at its top, not where the previous tab was scrolled to
   const tabSeg = pathname.split('/').slice(0, 4).join('/');
   useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; }, [tabSeg]);

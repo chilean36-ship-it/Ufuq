@@ -1,5 +1,8 @@
 // Strings for the exam room (full-screen exam mode, AI checking, teacher approval). Key = English text.
 const uz = {
+  'Save for offline': 'Internetsiz uchun saqlash', 'Saved on this device': 'Qurilmada saqlangan', 'Saving…': 'Saqlanmoqda…',
+  'Not enough space on this device.': 'Qurilmada joy yetarli emas.', 'This file cannot be saved for offline yet.': 'Bu faylni hozircha internetsiz uchun saqlab bo‘lmaydi.',
+  'Could not save. Check your connection.': 'Saqlab bo‘lmadi. Internetni tekshiring.',
   'Good standing — lessons missed this month: {n}.': 'Yaxshi holat — bu oyda qoldirilgan darslar: {n}.', 'Careful — lessons missed this month: {n}.': 'Diqqat — bu oyda qoldirilgan darslar: {n}.', 'Limit reached — lessons missed this month: {n}. Lesson sections are paused until your teacher allows access.': 'Limit to‘ldi — bu oyda qoldirilgan darslar: {n}. O‘qituvchi ruxsat bermaguncha dars bo‘limlari to‘xtatilgan.', 'Talk to your teacher or the administrator to open it again.': 'Qayta ochish uchun o‘qituvchi yoki administrator bilan gaplashing.',
   'Access paused: too many missed lessons': 'Kirish to‘xtatildi: ko‘p dars qoldirildi', 'Attendance limit reached': 'Davomat limiti to‘ldi', 'See my attendance': 'Davomatimni ko‘rish', 'You missed {n} lessons this month, so the lesson sections are paused. Please talk to your teacher or the administrator — they can allow access again.': 'Siz bu oyda {n} ta dars qoldirdingiz, shuning uchun dars bo‘limlari to‘xtatildi. O‘qituvchi yoki administrator bilan gaplashing — ular kirishga yana ruxsat berishi mumkin.', 'Allow access': 'Ruxsat berish', 'Lock again': 'Qayta qulflash', 'Locked': 'Qulflangan', 'Allowed': 'Ruxsat berilgan',
   'Seen by': 'Ko‘rganlar', 'Not seen yet': 'Hali hech kim ko‘rmagan',
@@ -61,6 +64,9 @@ const uz = {
   'Discard changes?': 'O‘zgarishlar bekor qilinsinmi?', 'Your changes to this exam have not been saved.': 'Imtihondagi o‘zgarishlaringiz saqlanmagan.', 'Discard': 'Bekor qilish', 'Keep editing': 'Tahrirlashni davom ettirish',
 };
 const ru = {
+  'Save for offline': 'Сохранить для офлайн', 'Saved on this device': 'Сохранено на устройстве', 'Saving…': 'Сохранение…',
+  'Not enough space on this device.': 'Недостаточно места на устройстве.', 'This file cannot be saved for offline yet.': 'Этот файл пока нельзя сохранить для офлайн.',
+  'Could not save. Check your connection.': 'Не удалось сохранить. Проверьте интернет.',
   'Good standing — lessons missed this month: {n}.': 'Всё хорошо — пропущено уроков в этом месяце: {n}.', 'Careful — lessons missed this month: {n}.': 'Внимание — пропущено уроков в этом месяце: {n}.', 'Limit reached — lessons missed this month: {n}. Lesson sections are paused until your teacher allows access.': 'Лимит исчерпан — пропущено уроков в этом месяце: {n}. Разделы с уроками закрыты, пока учитель не разрешит доступ.', 'Talk to your teacher or the administrator to open it again.': 'Чтобы открыть снова, обратитесь к учителю или администратору.',
   'Access paused: too many missed lessons': 'Доступ приостановлен: много пропусков', 'Attendance limit reached': 'Лимит пропусков исчерпан', 'See my attendance': 'Моя посещаемость', 'You missed {n} lessons this month, so the lesson sections are paused. Please talk to your teacher or the administrator — they can allow access again.': 'Вы пропустили {n} урока(ов) в этом месяце, поэтому разделы с уроками приостановлены. Обратитесь к учителю или администратору — они могут снова открыть доступ.', 'Allow access': 'Разрешить доступ', 'Lock again': 'Закрыть снова', 'Locked': 'Закрыт', 'Allowed': 'Разрешён',
   'Seen by': 'Просмотрели', 'Not seen yet': 'Пока никто не видел',
@@ -120,6 +126,9 @@ const ru = {
   'Discard changes?': 'Отменить изменения?', 'Your changes to this exam have not been saved.': 'Изменения в экзамене не сохранены.', 'Discard': 'Отменить', 'Keep editing': 'Продолжить редактирование',
 };
 const ar = {
+  'Save for offline': 'حفظ للاستخدام دون إنترنت', 'Saved on this device': 'محفوظ على الجهاز', 'Saving…': 'جارٍ الحفظ…',
+  'Not enough space on this device.': 'لا توجد مساحة كافية على الجهاز.', 'This file cannot be saved for offline yet.': 'لا يمكن حفظ هذا الملف للاستخدام دون إنترنت حاليًا.',
+  'Could not save. Check your connection.': 'تعذّر الحفظ. تحقق من الاتصال.',
   'Good standing — lessons missed this month: {n}.': 'وضع جيد — الدروس الفائتة هذا الشهر: {n}.', 'Careful — lessons missed this month: {n}.': 'انتبه — الدروس الفائتة هذا الشهر: {n}.', 'Limit reached — lessons missed this month: {n}. Lesson sections are paused until your teacher allows access.': 'بلغتَ الحدّ — الدروس الفائتة هذا الشهر: {n}. أقسام الدروس موقوفة حتى يسمح معلّمك بالوصول.', 'Talk to your teacher or the administrator to open it again.': 'تحدّث مع معلّمك أو المشرف لإعادة فتحها.',
   'Access paused: too many missed lessons': 'تم إيقاف الوصول: غياب كثير', 'Attendance limit reached': 'تم بلوغ حدّ الغياب', 'See my attendance': 'عرض حضوري', 'You missed {n} lessons this month, so the lesson sections are paused. Please talk to your teacher or the administrator — they can allow access again.': 'غبتَ عن {n} دروس هذا الشهر، لذا أُوقفت أقسام الدروس. تحدّث مع معلّمك أو المشرف — يمكنهما السماح بالوصول من جديد.', 'Allow access': 'السماح بالوصول', 'Lock again': 'إعادة القفل', 'Locked': 'مقفل', 'Allowed': 'مسموح',
   'Seen by': 'شاهده', 'Not seen yet': 'لم يشاهده أحد بعد',

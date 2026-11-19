@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { audioSourceCandidates, fmtClock } from './libraryData';
+import { getBlobUrl } from '../../../lib/offlineMedia';
 import AudioVisualizer from './AudioVisualizer';
 import './audio-player.css';
 import './audio-player-v4.css';
@@ -63,7 +64,17 @@ const I = {
  */
 export default function AudioPlayer({ lesson, autoPlay = false, compact = false, queueApi = null }) {
   const { t } = useCabinetI18n();
-  const sources = useMemo(() => audioSourceCandidates(lesson), [lesson]);
+  const baseSources = useMemo(() => audioSourceCandidates(lesson), [lesson]);
+  // a lesson saved on this device plays from there (works without internet); otherwise the usual addresses are tried
+  const [localUrl, setLocalUrl] = useState(null);
+  const [localChecked, setLocalChecked] = useState(false);
+  useEffect(() => {
+    let off = false;
+    setLocalChecked(false); setLocalUrl(null);
+    getBlobUrl(baseSources[0]).then((u) => { if (!off) { setLocalUrl(u); setLocalChecked(true); } });
+    return () => { off = true; };
+  }, [baseSources]);
+  const sources = useMemo(() => (localUrl ? [localUrl] : baseSources), [localUrl, baseSources]);
   const audioRef = useRef(null);
   const rootRef = useRef(null);
   const barsRef = useRef(null);
@@ -94,7 +105,7 @@ export default function AudioPlayer({ lesson, autoPlay = false, compact = false,
   const bars = useMemo(() => waveformFor(lesson.id), [lesson.id]);
 
   useEffect(() => {
-    if (!sources.length) return undefined;
+    if (!sources.length || !localChecked) return undefined;
     const audio = new Audio();
     audio.preload = 'metadata';
     audio.crossOrigin = null;
@@ -203,7 +214,7 @@ export default function AudioPlayer({ lesson, autoPlay = false, compact = false,
         try { ['play', 'pause', 'seekbackward', 'seekforward', 'previoustrack', 'nexttrack'].forEach((a) => navigator.mediaSession.setActionHandler(a, null)); } catch (e) { /* ignore */ }
       }
     };
-  }, [sources]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sources, localChecked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Volume / mute / loop / speed are applied to the live element whenever they change.
   useEffect(() => { const a = audioRef.current; if (a) { a.volume = volume; a.muted = muted; } }, [volume, muted, phase]);

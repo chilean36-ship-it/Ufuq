@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { clearOfflineData, readStoredUser } from './offlineFetch';
 
 /** Role -> its home route. Admin has no fixed home; it may open any of them. */
 export const ROLE_PAGES = { teacher: '/teacher', student: '/dashboard', admin: '/admin', login: '/index' };
@@ -104,7 +105,17 @@ export async function readProfileRole(userId) {
 export async function getSessionAndRole() {
   const { data } = await supabase.auth.getSession();
   const session = data && data.session;
-  if (!session) return null;
+  if (!session) {
+    // No network and the saved access token has expired (it cannot be refreshed offline): the student is still signed in on this device.
+    // Open the app with the remembered user and role; data comes from what the device saved. Never done while online.
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    const stored = offline ? readStoredUser() : null;
+    const cachedRole = stored ? readCachedRole() : null;
+    if (stored && cachedRole && cachedRole.uid === stored.id) {
+      return { user: stored, role: cachedRole.role, full_name: null, admin_tier: cachedRole.tier || undefined, status: undefined };
+    }
+    return null;
+  }
 
   let profile = null;
   for (let attempt = 0; attempt < 2 && !profile; attempt++) {
@@ -132,5 +143,6 @@ export async function getSessionAndRole() {
 /** Tizimdan chiqish (caller navigates to '/index' afterwards). */
 export async function ufuqSignOut(scope) {
   clearCachedRole();
+  clearOfflineData(); // saved offline data and media belong to the signed-in person
   await supabase.auth.signOut(scope ? { scope } : undefined); // scope: 'global' (every device) | 'others' | 'local'
 }

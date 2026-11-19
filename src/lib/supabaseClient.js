@@ -4,6 +4,7 @@
    Only the public (publishable) key belongs in the browser.
    ============================================================ */
 import { createClient } from '@supabase/supabase-js';
+import { offlineFetch } from './offlineFetch';
 
 export const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL || 'https://ldbthwpikixtykwmvudy.supabase.co';
@@ -17,6 +18,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
+  // database reads are remembered on the device and answered from it when there is no network (see lib/offlineFetch.js)
+  global: { fetch: (input, init) => offlineFetch(input, init) },
 });
 
 // Same name the old inline scripts used, so ported code reads identically.

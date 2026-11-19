@@ -8,6 +8,8 @@ import MediaTab from './MediaTab';
 import './library-audio.css';
 import Loader from '../../../components/Loader';
 import ZoomPan from '../../../components/ZoomPan';
+import { saveMedia, useOfflineFile, useOfflineSrc } from '../../../lib/offlineMedia';
+import { audioSourceCandidates } from './libraryData';
 
 const WAVE_HEIGHTS = [22, 40, 62, 34, 78, 48, 90, 56, 30, 70, 44, 84, 38, 60, 26, 52, 74, 36, 64, 28, 46, 80, 32, 58];
 /** Deterministic little waveform illustration per card, purely decorative. */
@@ -43,6 +45,7 @@ function PhotoCard({ photo, onOpen, saved, onToggleSave, index }) {
   const { t } = useCabinetI18n();
   const [idx, setIdx] = useState(0);
   const [broken, setBroken] = useState(false);
+  const tileSrc = useOfflineSrc(photo.urls[idx]);
   const onError = () => {
     if (idx + 1 < photo.urls.length) setIdx(idx + 1); else setBroken(true);
   };
@@ -51,7 +54,7 @@ function PhotoCard({ photo, onOpen, saved, onToggleSave, index }) {
       {broken ? (
         <div className="photo-broken-fallback">{BROKEN_ICON}<span>{t('Photo unavailable')}</span></div>
       ) : (
-        <img src={photo.urls[idx]} alt={photo.caption || t('Board photo')} loading="lazy" onError={onError} />
+        <img src={tileSrc} alt={photo.caption || t('Board photo')} loading="lazy" onError={onError} />
       )}
       {!broken && (
         <button type="button" className={'photo-save-btn' + (saved ? ' saved' : '')} aria-pressed={saved} aria-label={t(saved ? 'Saved' : 'Save')} onClick={(e) => { e.stopPropagation(); onToggleSave(photo); }}>
@@ -75,13 +78,16 @@ function PhotoLightbox({ photo, onClose, saved, onToggleSave }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [photo, onClose]);
   const open = !!photo;
+  const bigSrc = useOfflineSrc(open ? photo.urls[idx] : '');
+  // an opened photo stays on the device, so it opens again without internet (quietly; ignored when the host does not allow it)
+  useEffect(() => { if (open && photo.urls[idx]) saveMedia(photo.urls[idx]).catch(() => {}); }, [open, photo, idx]);
   return (
     <div className={'photo-lightbox' + (open ? ' open' : '')} id="photoLightbox" aria-hidden={open ? 'false' : 'true'} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="photo-lightbox-inner">
         <button type="button" className="photo-lightbox-close" id="photoLightboxClose" aria-label={t('Close')} onClick={onClose}>&times;</button>
         {open && (
           <div className="photo-zoomwrap">
-            <ZoomPan src={photo.urls[idx]} onError={() => { if (idx + 1 < photo.urls.length) setIdx(idx + 1); }} />
+            <ZoomPan src={bigSrc} onError={() => { if (idx + 1 < photo.urls.length) setIdx(idx + 1); }} />
           </div>
         )}
         <div className="photo-lightbox-caption" id="photoLightboxCaption">{open ? (photo.caption ? `${photo.caption} · ${photo.date}` : photo.date) : ''}</div>
@@ -92,6 +98,28 @@ function PhotoLightbox({ photo, onClose, saved, onToggleSave }) {
         )}
       </div>
     </div>
+  );
+}
+
+const DL_ICON = (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" /></svg>);
+const OK_ICON = (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l3 3 5-6" /></svg>);
+
+/** Saves the playing lesson on this device (works without internet) / removes it again. */
+function OfflineButton({ lesson }) {
+  const { t } = useCabinetI18n();
+  const url = audioSourceCandidates(lesson)[0] || '';
+  const { saved, busy, pct, error, save, remove, cancel } = useOfflineFile(url);
+  if (!url || /google/i.test(url)) return null;   // Drive links cannot be downloaded by the browser
+  const label = saved ? t('Saved on this device') : busy ? t('Saving…') + ' ' + Math.round(pct * 100) + '%' : t('Save for offline');
+  const note = error === 'space' ? t('Not enough space on this device.') : error === 'cors' ? t('This file cannot be saved for offline yet.') : error ? t('Could not save. Check your connection.') : '';
+  return (
+    <>
+      <button type="button" className={'apx-close apx-top-btn apx-off' + (saved ? ' on' : '')} aria-label={label} title={note || label}
+              onClick={() => { if (busy) cancel(); else if (saved) remove(); else save(); }}>
+        {saved ? OK_ICON : DL_ICON}{busy && <em>{Math.round(pct * 100)}</em>}
+      </button>
+      {note && <span className="apx-off-note" role="status">{note}</span>}
+    </>
   );
 }
 
@@ -140,6 +168,7 @@ function AudioLightbox({ lesson, queue, onSelect, onClose, saved, onToggleSave }
                 {saved ? STAR_ICON : STAR_OUTLINE}
               </button>
             )}
+            {open && <OfflineButton lesson={lesson} />}
             {q.length > 1 && (
               <button type="button" className={'apx-close apx-top-btn apx-qbtn' + (qOpen ? ' on' : '')} aria-expanded={qOpen} aria-label={t('Up next')} title={t('Up next')} onClick={() => setQOpen((v) => !v)}>
                 {QUEUE_ICON}<em>{q.length}</em>
