@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
     if (!action || !groupCode) {
       return json({ error: "action va groupCode majburiy" }, 400);
     }
-    if (typeof groupCode !== "string" || !/^[0-9]{5}$/.test(groupCode)) {
+    // Class codes are 5 digits; groups created by the level system are 'G' + 6 hex characters.
+    if (typeof groupCode !== "string" || !/^[A-Za-z0-9]{3,12}$/.test(groupCode)) {
       return json({ error: "groupCode noto'g'ri" }, 400);
     }
 
@@ -76,7 +77,13 @@ Deno.serve(async (req) => {
         groupCode,
       ).eq("teacher_id", userId).maybeSingle(),
     ]);
-    if (!member && !teacher) {
+    // Reading (download) of an EARLIER level group of the same letter stays allowed: the chat history follows the student up.
+    let seriesReader = false;
+    if (!member && !teacher && action === "download") {
+      const { data: series } = await supabase.rpc("ufuq_my_series_codes");
+      seriesReader = Array.isArray(series) && series.map((x: unknown) => String(x)).includes(groupCode);
+    }
+    if (!member && !teacher && !seriesReader) {
       return json({ error: "Bu guruhga a'zo emassiz" }, 403);
     }
 

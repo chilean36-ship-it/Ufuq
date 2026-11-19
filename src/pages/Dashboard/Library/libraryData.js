@@ -75,7 +75,7 @@ export function audioSourceCandidates(a) {
 
 /** Group codes whose materials this student sees: the own group plus the lower levels of the same letter (materials follow the student
  *  up the levels). Falls back to the own group when the server function is not available yet. */
-async function materialCodes(code) {
+export async function materialCodes(code) {
   if (!code) return [];
   try {
     const { data, error } = await supabase.rpc('ufuq_series_codes_for', { p_code: code });

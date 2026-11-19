@@ -5,7 +5,7 @@ import PageStyle from '../../../components/PageStyle';
 import chatCss from './chat.css?inline';
 import voiceCss from './voice-bubble.css?inline';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
-import { GC_EMOJI_GROUPS, gcCopyText as copyText, gcFormatDaySeparator, gcFormatDuration, gcFormatTime, gcHexToRgba, gcSenderColor } from './chatUtils';
+import { GC_EMOJI_GROUPS, gcCopyText as copyText, gcFormatDaySeparator, gcFormatDuration, gcFormatTime, gcHexToRgba, gcIsHistory, gcSenderColor } from './chatUtils';
 import { Svg, IconSearch, IconClose, IconSmile, IconChevronDown, QUICK_REACTIONS, MENU_ICONS, PreviewText, Ticks, ReactionChips, Bubble } from './chatParts';
 
 
@@ -222,13 +222,18 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
     return () => window.removeEventListener('keydown', onKey);
   }, [confirmId]);
   const runDelete = () => { const id = confirmId; setConfirmId(null); if (id) chat.deleteMessage(id); };
-  const canReactToMenuMsg = reactionsEnabled && menuMsg && !String(menuMsg.id).startsWith('temp-');
+  const menuIsHistory = gcIsHistory(menuMsg, groupCode); // earlier level: reply / copy only
+  const canReactToMenuMsg = reactionsEnabled && menuMsg && !menuIsHistory && !String(menuMsg.id).startsWith('temp-');
   const menuItems = [];
   if (menuMsg) {
     const mine = menuMsg.sender_id === myId;
     const isText = menuMsg.message_type === 'text';
     menuItems.push({ action: 'reply', label: 'Reply', icon: 'reply' });
     if (isText && menuMsg.content) menuItems.push({ action: 'copy', label: 'Copy', icon: 'copy' });
+  }
+  if (menuMsg && !menuIsHistory) {
+    const mine = menuMsg.sender_id === myId;
+    const isText = menuMsg.message_type === 'text';
     if (mine && isText) menuItems.push({ action: 'edit', label: 'Edit', icon: 'edit' });
     if (canModerate) menuItems.push({ action: 'pin', label: menuMsg.is_pinned ? 'Unpin' : 'Pin', icon: 'pin', active: menuMsg.is_pinned });
     if (mine && !String(menuMsg.id).startsWith('temp-')) menuItems.push({ action: 'info', label: 'Seen by', icon: 'info' });
@@ -274,6 +279,9 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
   let lastDay = null;
   messages.forEach((m, i) => {
     const dayKey = gcFormatDaySeparator(m.created_at);
+    // First message of the CURRENT group after earlier-level history: a divider, and the day label is shown again.
+    const startsCurrent = i > 0 && gcIsHistory(messages[i - 1], groupCode) && !gcIsHistory(m, groupCode);
+    if (startsCurrent) { rows.push(<div className="gc-unread-sep" key={'h' + m.id}>{t('Current level')}</div>); lastDay = null; }
     const isNewDay = dayKey !== lastDay;
     if (isNewDay) { rows.push(<div className="gc-day-sep" key={'d' + i}>{t(dayKey)}</div>); lastDay = dayKey; }
     if (firstUnreadId && m.id === firstUnreadId) rows.push(<div className="gc-unread-sep" key={'u' + m.id}>{t('New messages')}</div>);

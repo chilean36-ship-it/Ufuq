@@ -8,7 +8,24 @@ export const GC_MEDIA_MAX_MB = 5;   // photos / videos — previewed inline, kep
 export const GC_FILE_MAX_MB = 25;   // any other file (audio, pdf, docs, zip…)
 
 export const MESSAGE_COLUMNS =
-  'id, sender_id, sender_name, content, message_type, voice_path, voice_duration, media_path, file_name, file_size, file_mime, created_at, edited_at, reply_to_id, is_pinned, pinned_by, pinned_at';
+  'id, group_code, sender_id,sender_name, content, message_type, voice_path, voice_duration, media_path, file_name, file_size, file_mime, created_at, edited_at, reply_to_id, is_pinned, pinned_by, pinned_at';
+
+/** A message from an EARLIER level group of the same letter (shown read-only above the current group's messages). */
+export function gcIsHistory(msg, groupCode) {
+  return !!(msg && msg.group_code && groupCode && msg.group_code !== groupCode);
+}
+
+/** The current group plus the lower-level groups of the same letter, whose chat the student may still read. */
+export async function gcSeriesCodes(groupCode) {
+  if (!groupCode) return [];
+  try {
+    const { data, error } = await supabase.rpc('ufuq_series_codes_for', { p_code: groupCode });
+    if (!error && Array.isArray(data)) {
+      return [...new Set([groupCode, ...data.map((x) => String(x))])].filter((c) => /^[A-Za-z0-9]+$/.test(c));
+    }
+  } catch (e) { /* server function missing: own group only */ }
+  return [groupCode];
+}
 
 /* ---------- R2 (Cloudflare) presigned URLs ---------- */
 // Chat files (voice, photos, video, documents) live in Cloudflare R2. The `r2-presign` edge

@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import useLiveRefresh from '../../../lib/liveRefresh';
 import {
   GC_FILE_MAX_MB, GC_MEDIA_MAX_MB, GC_VOICE_MAX_SECONDS, GC_VOICE_MIN_MS, MESSAGE_COLUMNS,
-  gcBaseMime, gcForgetSignedUrl, gcGetSignedUrl, gcPeekSignedUrl, gcPickRecordingMimeType, gcR2Delete, gcR2Upload,
+  gcBaseMime, gcForgetSignedUrl, gcGetSignedUrl, gcIsHistory, gcPeekSignedUrl, gcPickRecordingMimeType, gcR2Delete, gcR2Upload, gcSeriesCodes,
 } from './chatUtils';
 
 /** Drops later rows that share an id (a realtime INSERT can land before the optimistic row is swapped for the real one). */
@@ -96,12 +96,12 @@ export function useGroupChat({ groupCode, user, myName, t }) {
     const cutoff = lastReadAtRef.current ? new Date(lastReadAtRef.current).getTime() : 0;
     let count = 0, firstId = null;
     for (const m of messagesRef.current) {
-      if (m.sender_id === userId) continue;
+      if (m.sender_id === userId || gcIsHistory(m, groupCode)) continue; // earlier-level history is never "unread"
       if (new Date(m.created_at).getTime() > cutoff) { count++; if (!firstId) firstId = m.id; }
     }
     setFirstUnread(firstId);
     setUnread(count);
-  }, [userId, setFirstUnread, setUnread]);
+  }, [userId, groupCode, setFirstUnread, setUnread]);
 
   // last_read_at = the newest message's own (server) timestamp, so clock skew between devices can never mark
   // a message as read before it was. An empty chat falls back to now().
@@ -110,7 +110,8 @@ export function useGroupChat({ groupCode, user, myName, t }) {
     if (!groupCode || !userId) return;
     lastReadSentRef.current = Date.now();
     const list = messagesRef.current.filter((m) => !String(m.id).startsWith('temp-'));
-    const newest = list.length ? list[list.length - 1].created_at : new Date().toISOString();
+    const own = list.filter((m) => !gcIsHistory(m, groupCode));
+    const newest = own.length ? own[own.length - 1].created_at : new Date().toISOString();
     lastReadAtRef.current = newest;
     const base = { group_code: groupCode, user_id: userId, last_read_at: newest };
     try {
@@ -178,8 +179,10 @@ export function useGroupChat({ groupCode, user, myName, t }) {
     // Reactions + everybody's read position (for the "seen" ticks). Both are optional: if the SQL hasn't been run
     // yet the chat keeps working, it just doesn't show them.
     (async () => {
+      const codes = await gcSeriesCodes(groupCode); // earlier levels of the same letter stay readable
+      if (cancelled) return;
       const { data, error } = await supabase.from('group_message_reactions')
-        .select('message_id, user_id, emoji, user_name').eq('group_code', groupCode).limit(5000);
+        .select('message_id, user_id, emoji, user_name').in('group_code', codes).limit(5000);
       if (cancelled) return;
       if (error) { console.error('Reaksiyalarni yuklashda xatolik:', error.message); setReactionsEnabled(false); return; }
       const grouped = {};
@@ -199,13 +202,14 @@ export function useGroupChat({ groupCode, user, myName, t }) {
       let loaded = [];
       let lastRead = null;
       try {
+        const codes = await gcSeriesCodes(groupCode); // this group + the lower levels of the same letter
         const [msgsRes, readRes] = await Promise.all([
-          supabase.from('group_messages').select(MESSAGE_COLUMNS).eq('group_code', groupCode)
-            .order('created_at', { ascending: true }).limit(200),
+          supabase.from('group_messages').select(MESSAGE_COLUMNS).in('group_code', codes)
+            .order('created_at', { ascending: false }).limit(300),
           supabase.from('group_chat_reads').select('last_read_at').eq('group_code', groupCode).eq('user_id', userId).maybeSingle(),
         ]);
         if (msgsRes.error) throw msgsRes.error;
-        loaded = msgsRes.data || [];
+        loaded = (msgsRes.data || []).slice().reverse(); // newest 300, shown oldest -> newest
         lastRead = readRes && !readRes.error && readRes.data ? readRes.data.last_read_at : null;
         if (readRes && readRes.error) console.error("O'qilgan holatni olishda xatolik:", readRes.error.message);
       } catch (err) {
@@ -450,7 +454,7 @@ export function useGroupChat({ groupCode, user, myName, t }) {
     if (!id || String(id).startsWith('temp-')) return;
     const prev = messagesRef.current;
     const target = prev.find((m) => m.id === id);
-    if (!target) return;
+    if (!target || gcIsHistory(target, groupCode)) return; // earlier-level history is read-only
     if (target.sender_id !== userId && !canModerate) return;
     stopVoiceIf(id);
     commitMessages((list) => list.filter((m) => m.id !== id));
@@ -469,6 +473,7 @@ export function useGroupChat({ groupCode, user, myName, t }) {
   // One reaction per person per message: tapping a new emoji replaces yours, tapping the same one removes it.
   const toggleReaction = useCallback(async (messageId, emoji) => {
     if (!userId || !groupCode || !reactionsEnabled || !messageId || String(messageId).startsWith('temp-')) return;
+    if (gcIsHistory(messagesRef.current.find((m) => m.id === messageId), groupCode)) return; // history is read-only
     const before = reactionsRef.current[messageId] || [];
     const mine = before.find((r) => r.user_id === userId);
     const restore = () => commitReactions((all) => ({ ...all, [messageId]: before }));
@@ -488,7 +493,7 @@ export function useGroupChat({ groupCode, user, myName, t }) {
   const togglePin = useCallback(async (id) => {
     if (!canModerate) return;
     const msg = messagesRef.current.find((m) => m.id === id);
-    if (!msg) return;
+    if (!msg || gcIsHistory(msg, groupCode)) return;
     const clear = { is_pinned: false, pinned_by: null, pinned_at: null };
     if (msg.is_pinned) {
       const { error } = await supabase.from('group_messages').update(clear).eq('id', id);
@@ -535,7 +540,7 @@ export function useGroupChat({ groupCode, user, myName, t }) {
   const prefetchVoice = useCallback((id) => {
     const msg = messagesRef.current.find((m) => m.id === id);
     if (!msg || !msg.voice_path || msg._uploading) return;
-    gcGetSignedUrl(groupCode, msg.voice_path).catch(() => {});
+    gcGetSignedUrl(msg.group_code || groupCode, msg.voice_path).catch(() => {});
   }, [groupCode]);
 
   const toggleVoice = useCallback(async (id) => {
@@ -547,6 +552,7 @@ export function useGroupChat({ groupCode, user, myName, t }) {
     if (a.id === id && a.el && a.el.paused && a.el.currentTime > 0 && !a.el.ended) { a.el.play().catch(() => {}); return; }
 
     const knownDuration = Number(msg.voice_duration) || 0;
+    const mediaGroup = msg.group_code || groupCode; // the group the file was uploaded to (an earlier level for history)
     let retried = false;
     const start = (url) => {
       const el = new Audio();
@@ -566,8 +572,8 @@ export function useGroupChat({ groupCode, user, myName, t }) {
         if (!retried) {
           // The signed URL may have expired — fetch a fresh one once.
           retried = true;
-          gcForgetSignedUrl(groupCode, msg.voice_path);
-          gcGetSignedUrl(groupCode, msg.voice_path).then((fresh) => {
+          gcForgetSignedUrl(mediaGroup, msg.voice_path);
+          gcGetSignedUrl(mediaGroup, msg.voice_path).then((fresh) => {
             if (audioRef.current.id !== id) return;
             el.src = fresh; el.load(); el.play().catch(() => emit(id, { playing: false, error: true }));
           }).catch(() => emit(id, { playing: false, error: true }));
@@ -585,10 +591,10 @@ export function useGroupChat({ groupCode, user, myName, t }) {
     };
 
     // Fast path: URL already signed -> play() runs inside the tap (works on iPhone).
-    const cached = gcPeekSignedUrl(groupCode, msg.voice_path);
+    const cached = gcPeekSignedUrl(mediaGroup, msg.voice_path);
     if (cached) { start(cached); return; }
     try {
-      start(await gcGetSignedUrl(groupCode, msg.voice_path));
+      start(await gcGetSignedUrl(mediaGroup, msg.voice_path));
     } catch (err) {
       console.error('Ovozli xabarni ijro etishda xatolik:', err && err.message);
       emit(id, { playing: false, error: true });

@@ -157,14 +157,15 @@ export function ReactionChips({ list, myId, onToggle }) {
 export function Bubble({ msg, chat, groupCode, isLast, term, isMine, seenBy }) {
   const { t } = useCabinetI18n();
   const tail = isLast ? '' : 'gc-no-tail';
+  const mediaGroup = msg.group_code || groupCode; // files of an earlier level live under THAT group's key prefix
   const isMedia = msg.message_type === 'image' || msg.message_type === 'video';
   if (msg.message_type === 'voice') return <VoiceBubble msg={msg} chat={chat} isLast={isLast} />;
   if (isMedia) {
     return (
       <div className={'gc-msg-bubble gc-media-bubble ' + tail + ' ' + (msg._uploading ? 'gc-media-uploading' : '')}>
         {msg.message_type === 'video'
-          ? <SignedMedia as="video" className="gc-media-el" groupCode={groupCode} path={msg.media_path} localUrl={msg._localUrl} controls playsInline />
-          : <SignedMedia as="img" className="gc-media-el" groupCode={groupCode} path={msg.media_path} localUrl={msg._localUrl} alt={t('Photo')} loading="lazy" />}
+          ? <SignedMedia as="video" className="gc-media-el" groupCode={mediaGroup} path={msg.media_path} localUrl={msg._localUrl} controls playsInline />
+          : <SignedMedia as="img" className="gc-media-el" groupCode={mediaGroup} path={msg.media_path} localUrl={msg._localUrl} alt={t('Photo')} loading="lazy" />}
       </div>
     );
   }
@@ -172,12 +173,12 @@ export function Bubble({ msg, chat, groupCode, isLast, term, isMine, seenBy }) {
     return (
       <div className={'gc-msg-bubble gc-file-bubble gc-file-bubble--audio ' + tail + ' ' + (msg._uploading ? 'gc-file-uploading' : '')}>
         <div className="gc-file-name" title={msg.file_name || 'Audio'}>🎵 {msg.file_name || 'Audio'}</div>
-        <SignedMedia as="audio" className="gc-audio-el" groupCode={groupCode} path={msg._uploading ? null : msg.media_path} controls preload="none" />
+        <SignedMedia as="audio" className="gc-audio-el" groupCode={mediaGroup} path={msg._uploading ? null : msg.media_path} controls preload="none" />
       </div>
     );
   }
   if (msg.message_type === 'file') {
-    const activate = () => downloadFile(groupCode, msg.media_path, msg.file_name || 'file');
+    const activate = () => downloadFile(mediaGroup, msg.media_path, msg.file_name || 'file');
     return (
       <div className={'gc-msg-bubble gc-file-bubble ' + tail + ' ' + (msg._uploading ? 'gc-file-uploading' : '')}
            role="button" tabIndex={0}

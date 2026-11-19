@@ -4,6 +4,7 @@ import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { supabase } from '../../../lib/supabaseClient';
 import { useDashboardData } from '../../../context/DashboardDataContext';
 import { signMedia } from '../../../lib/mediaUpload';
+import { materialCodes } from './libraryData';
 import Loader from '../../../components/Loader';
 
 import { fmtDate } from '../../../lib/dateLocale';
@@ -30,9 +31,11 @@ export default function MediaTab({ groupCode, active }) {
 
   const loadItems = async (silent) => {
     if (!groupCode) { setItems([]); return null; }
+    // The own group plus the lower levels of the same letter: videos / audio follow the student up the levels.
+    const codes = await materialCodes(groupCode);
     const { data, error } = await supabase.from('group_media')
       .select('id, kind, title, description, duration_seconds, created_at, group_media_targets!inner(group_code)')
-      .eq('group_media_targets.group_code', groupCode)
+      .in('group_media_targets.group_code', codes)
       .order('created_at', { ascending: false });
     if (error) return silent ? null : [];
     return data || [];
