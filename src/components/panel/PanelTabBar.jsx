@@ -30,8 +30,11 @@ export default function PanelTabBar({ items, nav, page, onNavigate, onMore, more
   }, []);
   const entries = items.map((p) => nav.find((n) => n.page === p)).filter(Boolean);
   const inMain = entries.some((n) => n.page === page);
+  const count = entries.length + 1;
+  const idx = moreOpen || !inMain ? entries.length : entries.findIndex((n) => n.page === page);
   return (
-    <nav className={'ptb' + (typing ? ' hide' : '')} aria-label="Menu">
+    <nav className={'ptb' + (typing ? ' hide' : '')} aria-label="Menu" style={{ '--n': count, '--idx': idx }}>
+      <span className="ptb-pill" aria-hidden="true" />
       {entries.map((n) => (
         <button type="button" key={n.page} className={'ptb-i' + (page === n.page && !moreOpen ? ' on' : '')} aria-current={page === n.page ? 'page' : undefined} onClick={() => onNavigate(n.page)}>
           <span className="ptb-ic">{ICON[n.page] || ICON.overview}{n.badge > 0 && <i>{n.badge > 9 ? '9+' : n.badge}</i>}</span>
