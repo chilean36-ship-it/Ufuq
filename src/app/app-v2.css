@@ -232,3 +232,62 @@
 [dir="rtl"] .ua-tsw.light i{ transform:translateX(-24px); }
 .ua-tav{ width:38px !important; height:38px !important; flex:none; }
 .ua-hchip.fire{ background:rgba(255,159,67,.3); }
+
+/* ---- ranking tabs + progress bars ---- */
+.ua-rk-tabs{ position:relative; display:grid; grid-template-columns:repeat(var(--n),1fr); padding:4px; border-radius:16px; background:var(--bg-3); border:1px solid var(--line); }
+.ua-rk-tabpill{ position:absolute; top:4px; bottom:4px; inset-inline-start:4px; width:calc((100% - 8px) / var(--n)); border-radius:12px; background:var(--bg-2); box-shadow:0 2px 10px rgba(0,0,0,.28), inset 0 0 0 1px rgba(201,162,75,.4); transform:translateX(calc(var(--idx) * 100%)); transition:transform .38s cubic-bezier(.3,1.3,.4,1); }
+[dir="rtl"] .ua-rk-tabpill{ transform:translateX(calc(var(--idx) * -100%)); }
+.ua-rk-tabs button{ position:relative; z-index:1; height:34px; padding:0 4px; border:0; background:transparent; color:var(--text-muted); font:700 12.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color .2s, transform .15s; }
+.ua-rk-tabs button.on{ color:var(--gold-bright); } .ua-rk-tabs button:active{ transform:scale(.93); }
+.ua-rk-mid{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.ua-rk .ua-rk-name{ flex:none; display:flex; align-items:center; gap:7px; }
+.ua-rk-bar{ display:block; height:5px; border-radius:99px; background:color-mix(in srgb, var(--text) 10%, transparent); overflow:hidden; }
+.ua-rk-bar u{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); transform-origin:left; animation:uaBarGrow .7s cubic-bezier(.2,.8,.2,1) backwards; animation-delay:calc(var(--k,0) * 50ms + .15s); }
+[dir="rtl"] .ua-rk-bar u{ transform-origin:right; }
+.ua-rk:nth-child(1) .ua-rk-bar u{ background:linear-gradient(90deg,#E5C878,#F6E3A1); }
+@keyframes uaBarGrow{ from{ transform:scaleX(0); } }
+.ua-rk{ animation:uaRowIn .42s cubic-bezier(.2,.8,.2,1) backwards; animation-delay:calc(var(--k,0) * 45ms); }
+@keyframes uaRowIn{ from{ opacity:0; transform:translateY(10px) scale(.98); } }
+.ua-rk.you{ animation:uaRowIn .42s cubic-bezier(.2,.8,.2,1) backwards, uaYouGlow 2.6s ease-in-out .8s 2; animation-delay:calc(var(--k,0) * 45ms), .8s; }
+@keyframes uaYouGlow{ 50%{ box-shadow:0 0 0 4px rgba(201,162,75,.22); } }
+.ua-rk-pos.p1{ animation:uaMedal 3.2s ease-in-out infinite; } @keyframes uaMedal{ 0%,100%{ filter:none; } 50%{ filter:brightness(1.25) drop-shadow(0 0 6px rgba(243,215,126,.7)); } }
+
+/* ---- motion: cards rise in, everything tappable answers the finger ---- */
+@keyframes uaRise{ from{ opacity:0; transform:translateY(18px) scale(.985); } to{ opacity:1; transform:none; } }
+.ua-gh, .ua-hc{ animation:uaRise .55s cubic-bezier(.2,.8,.2,1) backwards; animation-delay:calc(var(--i,0) * 70ms); }
+.ua-gh::before{ content:''; position:absolute; inset:0; pointer-events:none; z-index:0; background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%); background-size:250% 100%; animation:uaSheen 6s ease-in-out 1.2s infinite; }
+@keyframes uaSheen{ 0%{ background-position:150% 0; } 55%,100%{ background-position:-60% 0; } }
+.ua-hchip, .ua-tbtn, .ua-tsw, .ua-dayb, .ua-tk, .ua-rk, .ua-hc-go, .ua-gh-lesson, .ua-goal2, .ua-att-pair div{ transition:transform .18s cubic-bezier(.3,1.6,.5,1), background .2s, box-shadow .2s, border-color .2s; -webkit-tap-highlight-color:transparent; }
+.ua-hchip:active, .ua-tbtn:active, .ua-dayb:active, .ua-tk:active, .ua-hc-go:active{ transform:scale(.92); }
+.ua-gh-lesson:active, .ua-goal2:active, .ua-rk:active{ transform:scale(.975); }
+.ua-hc-go:hover, .ua-tk:hover{ background:color-mix(in srgb, var(--gold) 14%, var(--bg-3)); }
+.ua-dayb.sel{ animation:uaPop .4s cubic-bezier(.3,1.7,.5,1); box-shadow:0 8px 18px -8px rgba(201,162,75,.8); } @keyframes uaPop{ 0%{ transform:scale(.88); } 100%{ transform:none; } }
+.ua-dayb i.on{ animation:uaBlip 2s ease-in-out infinite; } @keyframes uaBlip{ 50%{ transform:scale(1.6); opacity:.7; } }
+.ua-day-box.on{ animation:uaRise .35s cubic-bezier(.2,.8,.2,1) backwards; }
+.ua-att-segs i{ transform-origin:bottom; animation:uaSegIn .5s cubic-bezier(.3,1.5,.5,1) backwards; } .ua-att-segs i:nth-child(n){ animation-delay:calc(.2s + var(--j,0) * 40ms); }
+@keyframes uaSegIn{ from{ transform:scaleY(0); opacity:0; } }
+.ua-att-n{ animation:uaPop .6s cubic-bezier(.3,1.5,.5,1) backwards .15s; }
+.ua-tk.od .ua-tk-ic{ animation:uaShake 2.8s ease-in-out infinite; } @keyframes uaShake{ 0%,88%,100%{ transform:none; } 90%{ transform:rotate(-12deg); } 94%{ transform:rotate(10deg); } 97%{ transform:rotate(-6deg); } }
+
+/* top bar: bell rings while there is something unread, flame breathes, day/night knob spins on switch */
+.ua-tbtn.ring svg{ transform-origin:50% 12%; animation:uaRing 3.4s ease-in-out infinite; } @keyframes uaRing{ 0%,80%,100%{ transform:none; } 84%{ transform:rotate(16deg); } 88%{ transform:rotate(-14deg); } 92%{ transform:rotate(9deg); } 96%{ transform:rotate(-5deg); } }
+.ua-hchip.fire svg{ animation:uaFlame 1.8s ease-in-out infinite; }
+.ua-tsw i svg{ animation:uaSpinIn .55s cubic-bezier(.3,1.5,.5,1); } @keyframes uaSpinIn{ from{ transform:rotate(-140deg) scale(.4); opacity:0; } }
+.ua-tsw:hover i{ box-shadow:0 0 0 4px rgba(201,162,75,.2); }
+
+/* bottom tab bar: icons answer a tap, the selected one is filled and pops */
+.ua-tab:active .ua-tab-ic{ transform:scale(.84); } .ua-tab:active .ua-tab-l{ opacity:.7; }
+.ua-tab.on:not(.center) .ua-tab-ic svg{ color:var(--gold-bright); fill:color-mix(in srgb, var(--gold) 26%, transparent); animation:uaTabPop .5s cubic-bezier(.3,1.7,.5,1); }
+.ua-tab.on:not(.center) .ua-tab-l{ color:var(--gold-bright); font-weight:800; }
+@keyframes uaTabPop{ 0%{ transform:translateY(5px) scale(.7); } 60%{ transform:translateY(-4px) scale(1.18); } 100%{ transform:none; } }
+.ua-tab.center .ua-tab-ic{ animation:uaAiBreath 3.4s ease-in-out infinite; } @keyframes uaAiBreath{ 50%{ box-shadow:0 12px 30px -4px rgba(201,162,75,1), 0 0 0 5px color-mix(in srgb, var(--bg) 90%, transparent); } }
+
+/* the floating tab bar no longer cuts text in half: content fades out just above it (phone layout only) */
+@media (max-width:999px){
+  .ua-scroll{ -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 118px),transparent calc(100% - 82px)); mask-image:linear-gradient(to bottom,#000 calc(100% - 118px),transparent calc(100% - 82px)); }
+}
+body.ua-chat-open .ua-scroll{ -webkit-mask-image:none; mask-image:none; }
+
+@media (prefers-reduced-motion:reduce){
+  .ua-gh, .ua-hc, .ua-gh::before, .ua-rk, .ua-rk-bar u, .ua-rk-pos.p1, .ua-dayb.sel, .ua-dayb i.on, .ua-day-box.on, .ua-att-segs i, .ua-att-n, .ua-tk.od .ua-tk-ic, .ua-tbtn.ring svg, .ua-hchip.fire svg, .ua-tsw i svg, .ua-tab.on .ua-tab-ic svg, .ua-tab.center .ua-tab-ic{ animation:none !important; }
+}

@@ -105,7 +105,7 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
         <span className="ua-brand"><Logo size={30} /><b>Ufuq</b></span>
         <span className="ua-brand-act">
           {isPaid && (
-            <button type="button" className="ua-tbtn" onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
+            <button type="button" className={'ua-tbtn' + (notifs.unread > 0 ? ' ring' : '')} onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
               <Ico n="bell" size={20} />{notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
             </button>
           )}
