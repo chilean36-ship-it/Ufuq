@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCabinetI18n } from '../context/CabinetI18nContext';
 import { useDashboardData } from '../context/DashboardDataContext';
-import { getExamHistory } from '../pages/Dashboard/Exam/examData';
+import { getAllExamHistory } from '../pages/Dashboard/Exam/examData';
 import useLiveRefresh from '../hooks/useLiveRefresh';
 import PageStyle from '../components/PageStyle';
 import ProgressLine, { LINE_CSS } from '../components/ProgressLine';
@@ -19,14 +19,14 @@ export default function ProgressScreen() {
   const userId = user && user.id;
   const [history, setHistory] = useState(null);
 
-  const load = useCallback(async () => { const h = await getExamHistory(groupCode, userId); setHistory(h); }, [groupCode, userId]);
+  const load = useCallback(async () => { const h = await getAllExamHistory(userId); setHistory(h.map((x) => (x.title === '—' ? { ...x, title: t('Exam') } : x))); }, [userId, t]);
   useEffect(() => {
     if (!groupReady || !joined) return undefined;
     let cancelled = false;
     setHistory(null);
-    (async () => { const h = await getExamHistory(groupCode, userId); if (!cancelled) setHistory(h); })();
+    (async () => { const h = await getAllExamHistory(userId); if (!cancelled) setHistory(h.map((x) => (x.title === '—' ? { ...x, title: t('Exam') } : x))); })();
     return () => { cancelled = true; };
-  }, [groupReady, joined, groupCode, userId]);
+  }, [groupReady, joined, userId, t]);
   useLiveRefresh(load, [{ table: 'written_exam_submissions', filter: userId ? 'user_id=eq.' + userId : undefined }], { enabled: joined && !!userId });
 
   const last = history && history.length ? history[history.length - 1] : null;

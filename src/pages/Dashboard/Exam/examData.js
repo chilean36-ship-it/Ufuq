@@ -28,6 +28,25 @@ export async function getExamHistory(groupCode, userId) {
     .sort((a, b) => new Date(a.at) - new Date(b.at));
 }
 
+/** Every graded paper of the student, whichever level group it was taken in (a student moves up through groups, so the history is not tied to the current one). */
+export async function getAllExamHistory(userId) {
+  if (!userId) return [];
+  const { data, error } = await supabase.from('written_exam_submissions')
+    .select('id, exam_id, total_score, submitted_at, started_at').eq('user_id', userId).eq('status', 'graded').not('total_score', 'is', null);
+  if (error) { console.error('Natijalarni olishda xatolik:', error.message); return []; }
+  const rows = data || [];
+  if (!rows.length) return [];
+  const ids = [...new Set(rows.map((r) => r.exam_id))];
+  const { data: exams } = await supabase.from('written_exams').select('id, title').in('id', ids);
+  const titles = {}; (exams || []).forEach((x) => { titles[x.id] = x.title; });
+  return rows
+    .map((r) => ({
+      id: r.id, title: titles[r.exam_id] || '—', level: null, kind: 'written',
+      score: r.total_score, total: 100, pct: Math.max(0, Math.min(100, Math.round(r.total_score))), at: r.submitted_at || r.started_at,
+    }))
+    .sort((a, b) => new Date(a.at) - new Date(b.at));
+}
+
 /** Class ranking by average written-exam score. Returns null if the RPC isn't installed yet. */
 export async function fetchGroupRanking(groupCode) {
   const { data, error } = await supabase.rpc('group_written_ranking', { p_group_code: groupCode });

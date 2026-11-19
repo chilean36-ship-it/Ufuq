@@ -272,6 +272,35 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
   };
   const hasText = input.trim().length > 0;
 
+  /* Telegram-style swipe right on a message to reply (touch only; vertical scrolling is never blocked) */
+  const swipeRef = useRef(null);
+  const onTouchStart = (e) => {
+    const row = e.target.closest && e.target.closest('.gc-msg-row');
+    if (!row || e.touches.length !== 1) { swipeRef.current = null; return; }
+    swipeRef.current = { row, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, lock: null };
+  };
+  const onTouchMove = (e) => {
+    const s = swipeRef.current; if (!s) return;
+    const dx = e.touches[0].clientX - s.x; const dy = e.touches[0].clientY - s.y;
+    if (s.lock === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) s.lock = (dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4) ? 'x' : 'y';
+    if (s.lock !== 'x') return;
+    s.dx = Math.min(dx, 90);
+    const col = s.row.querySelector('.gc-msg-col');
+    s.row.classList.add('swipe-reply'); s.row.style.setProperty('--sw', String(Math.min(1, s.dx / 60)));
+    if (col) col.style.transform = 'translateX(' + (s.dx * 0.6) + 'px)';
+  };
+  const onTouchEnd = () => {
+    const s = swipeRef.current; swipeRef.current = null;
+    if (!s || s.lock !== 'x') return;
+    const col = s.row.querySelector('.gc-msg-col'); if (col) col.style.transform = '';
+    s.row.classList.remove('swipe-reply'); s.row.style.removeProperty('--sw');
+    if (s.dx >= 60) {
+      const id = s.row.getAttribute('data-msg-id');
+      const m = messages.find((x) => String(x.id) === id);
+      if (m && !String(m.id).startsWith('temp-')) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* ignore */ } startReply(m); }
+    }
+  };
+
   const pinned = messages.find((m) => m.is_pinned);
 
   /* ---------- message list ---------- */
@@ -432,7 +461,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
         )}
 
         <div className="gc-body-wrap">
-          <div className="group-chat-body" id="groupChatBody" ref={bodyRef} onScroll={onBodyScroll}>
+          <div className="group-chat-body" id="groupChatBody" ref={bodyRef} onScroll={onBodyScroll} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
             {messages.length === 0
               ? (
                 <div className="group-chat-empty" id="groupChatEmpty">
