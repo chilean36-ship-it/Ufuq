@@ -12,7 +12,7 @@ import pageCss from '../pages/Dashboard/dashboard.css?inline';
 import profileViewCss from '../pages/Profile/profile-view.css?inline';
 import cabinetDict from '../pages/Dashboard/cabinetDict';
 import { useApp } from './AppContext';
-import { Ico } from './ui';
+import { Ico, Logo } from './ui';
 import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
 import MeScreen from './MeScreen';
@@ -24,6 +24,7 @@ import { AppUiCtx, GroupSheet } from './AppUi';
 import { useMemo } from 'react';
 import hostCss from './app-host.css?inline';
 import nativeCss from './app-native.css?inline';
+import desktopCss from './app-desktop.css?inline';
 
 const AiChat = lazy(() => import('../pages/Dashboard/AiChat/AiChat'));
 const LevelResultModal = lazy(() => import('../pages/Dashboard/LevelResult/LevelResultModal'));
@@ -51,6 +52,7 @@ function TabBar() {
   const idx = Math.max(0, ['', 'learn', 'ai', 'group', 'me'].indexOf(seg));
   return (
     <nav className="ua-tabbar" aria-label="Main" style={{ '--idx': idx }}>
+      <div className="ua-rail-brand" aria-hidden="true"><Logo size={32} /><b>Ufuq</b></div>
       <span className={'ua-tab-pill' + (idx === 2 ? ' ai' : '')} aria-hidden="true" />
       {tabs.map((x) => (
         <NavLink key={x.to} to={x.to} end={x.end} onClick={() => haptic(6)} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
@@ -120,6 +122,7 @@ function Inner() {
       <PageStyle css={profileViewCss} />
       <PageStyle css={hostCss} />
       <PageStyle css={nativeCss} />
+      <PageStyle css={desktopCss} />
       <OfflineBar />
       <div className="ua-scroll" id="uaScroll">
         <div className="ua-route" key={(pathname.split('/')[2] || 'home') + ':' + switchNonce}>
