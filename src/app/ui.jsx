@@ -61,3 +61,36 @@ export function Ring({ value = 0, size = 96, stroke = 9, children, color = 'url(
     </span>
   );
 }
+
+/** Bottom-bar icons: a soft duotone body (.d) under crisp rounded strokes, so the selected tab can light up and move. */
+const TI = {
+  home: (<>
+    <path className="d" d="M4.5 10.6L12 4l7.5 6.6V19a2 2 0 01-2 2h-11a2 2 0 01-2-2z" />
+    <path d="M3 11.4L12 3.4l9 8" /><path d="M5 9.6V19a2 2 0 002 2h10a2 2 0 002-2V9.6" />
+    <path className="mv" d="M10 21v-4.4a2 2 0 014 0V21" />
+  </>),
+  learn: (<>
+    <path className="d" d="M12 6.6c1.5-1.3 3.8-1.9 7.5-1.9v12.8c-3.7 0-6 .6-7.5 1.9z" />
+    <path d="M12 6.6C10.5 5.3 8.2 4.7 4.5 4.7v12.8c3.7 0 6 .6 7.5 1.9 1.5-1.3 3.8-1.9 7.5-1.9V4.7c-3.7 0-6 .6-7.5 1.9z" />
+    <path className="mv" d="M12 6.6v12.8" /><path d="M7 8.6c1.1.1 2.1.3 3 .7M7 11.6c1.1.1 2.1.3 3 .7" />
+  </>),
+  ai: (<>
+    <path className="solid" d="M11 2.6c.6 4.3 2.6 6.3 6.9 6.9-4.3.6-6.3 2.6-6.9 6.9-.6-4.3-2.6-6.3-6.9-6.9 4.3-.6 6.3-2.6 6.9-6.9z" />
+    <path className="solid tw" d="M18.2 14.2c.25 1.9 1.1 2.75 3 3-1.9.25-2.75 1.1-3 3-.25-1.9-1.1-2.75-3-3 1.9-.25 2.75-1.1 3-3z" />
+    <path className="solid tw2" d="M5.6 16.6c.17 1.2.7 1.73 1.9 1.9-1.2.17-1.73.7-1.9 1.9-.17-1.2-.7-1.73-1.9-1.9 1.2-.17 1.73-.7 1.9-1.9z" />
+  </>),
+  group: (<>
+    <circle className="d" cx="9.2" cy="8.6" r="3.4" /><path className="d" d="M3 19.6c0-3.2 2.6-5.1 6.2-5.1s6.2 1.9 6.2 5.1z" />
+    <circle cx="9.2" cy="8.6" r="3.4" /><path d="M3 19.6c0-3.2 2.6-5.1 6.2-5.1s6.2 1.9 6.2 5.1" />
+    <path className="mv" d="M15.6 5.4a3 3 0 010 6M18 14.9c1.9.6 3 2 3 4.2" />
+  </>),
+  me: (<>
+    <circle className="d" cx="12" cy="8" r="3.9" /><path className="d" d="M4.4 20.6c.6-3.8 3.7-5.8 7.6-5.8s7 2 7.6 5.8z" />
+    <circle cx="12" cy="8" r="3.9" /><path className="mv" d="M4.4 20.6c.6-3.8 3.7-5.8 7.6-5.8s7 2 7.6 5.8" />
+  </>),
+};
+export function TabIcon({ n, size = 24 }) {
+  return (
+    <svg className={'ua-ti ua-ti-' + n} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{TI[n] || null}</svg>
+  );
+}

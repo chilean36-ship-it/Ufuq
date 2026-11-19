@@ -277,7 +277,7 @@
 
 /* bottom tab bar: icons answer a tap, the selected one is filled and pops */
 .ua-tab:active .ua-tab-ic{ transform:scale(.84); } .ua-tab:active .ua-tab-l{ opacity:.7; }
-.ua-tab.on:not(.center) .ua-tab-ic svg{ color:var(--gold-bright); fill:color-mix(in srgb, var(--gold) 26%, transparent); animation:uaTabPop .5s cubic-bezier(.3,1.7,.5,1); }
+.ua-tab.on:not(.center) .ua-tab-ic svg{ color:var(--gold-bright); animation:uaTabPop .5s cubic-bezier(.3,1.7,.5,1); }
 .ua-tab.on:not(.center) .ua-tab-l{ color:var(--gold-bright); font-weight:800; }
 @keyframes uaTabPop{ 0%{ transform:translateY(5px) scale(.7); } 60%{ transform:translateY(-4px) scale(1.18); } 100%{ transform:none; } }
 .ua-tab.center .ua-tab-ic{ animation:uaAiBreath 3.4s ease-in-out infinite; } @keyframes uaAiBreath{ 50%{ box-shadow:0 12px 30px -4px rgba(201,162,75,1), 0 0 0 5px color-mix(in srgb, var(--bg) 90%, transparent); } }
@@ -291,3 +291,19 @@ body.ua-chat-open .ua-scroll{ -webkit-mask-image:none; mask-image:none; }
 @media (prefers-reduced-motion:reduce){
   .ua-gh, .ua-hc, .ua-gh::before, .ua-rk, .ua-rk-bar u, .ua-rk-pos.p1, .ua-dayb.sel, .ua-dayb i.on, .ua-day-box.on, .ua-att-segs i, .ua-att-n, .ua-tk.od .ua-tk-ic, .ua-tbtn.ring svg, .ua-hchip.fire svg, .ua-tsw i svg, .ua-tab.on .ua-tab-ic svg, .ua-tab.center .ua-tab-ic{ animation:none !important; }
 }
+
+/* tab icons: duotone body that fills in on the selected tab, plus a small signature motion per icon */
+.ua-ti .d{ fill:currentColor; fill-opacity:.1; stroke:none; transition:fill-opacity .3s; }
+.ua-ti .solid{ fill:currentColor; stroke:none; }
+.ua-ti .mv{ transition:transform .4s cubic-bezier(.3,1.5,.5,1); transform-box:fill-box; transform-origin:center; }
+.ua-tab.on .ua-ti .d{ fill-opacity:.34; }
+.ua-tab:not(.center) .ua-ti{ filter:drop-shadow(0 0 0 transparent); transition:filter .3s; } .ua-tab.on:not(.center) .ua-ti{ filter:drop-shadow(0 3px 8px rgba(201,162,75,.55)); }
+.ua-tab.on .ua-ti-home .mv{ animation:uaDoor .7s cubic-bezier(.3,1.4,.5,1); } @keyframes uaDoor{ 0%{ transform:scaleY(.3); } 100%{ transform:none; } }
+.ua-tab.on .ua-ti-learn .mv{ animation:uaPage .6s cubic-bezier(.3,1.4,.5,1); } @keyframes uaPage{ 0%{ transform:scaleX(.2); } 100%{ transform:none; } }
+.ua-tab.on .ua-ti-group .mv{ animation:uaSlideIn .55s cubic-bezier(.3,1.4,.5,1); } @keyframes uaSlideIn{ 0%{ transform:translateX(-5px); opacity:0; } 100%{ transform:none; opacity:1; } }
+.ua-tab.on .ua-ti-me circle{ animation:uaBob .6s cubic-bezier(.3,1.6,.5,1); } @keyframes uaBob{ 0%{ transform:translateY(3px) scale(.85); } 100%{ transform:none; } }
+.ua-ti-me circle{ transform-box:fill-box; transform-origin:center; }
+.ua-ti-ai .tw{ transform-box:fill-box; transform-origin:center; animation:uaTwinkle 2.6s ease-in-out infinite; } .ua-ti-ai .tw2{ transform-box:fill-box; transform-origin:center; animation:uaTwinkle 2.6s ease-in-out .9s infinite; }
+@keyframes uaTwinkle{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(.45); opacity:.55; } }
+@media (prefers-reduced-motion:reduce){ .ua-ti *{ animation:none !important; } }
+.ua-rk-note{ margin:-2px 2px 0; font-size:12px; color:var(--text-muted); }

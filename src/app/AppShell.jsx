@@ -12,7 +12,7 @@ import pageCss from '../pages/Dashboard/dashboard.css?inline';
 import profileViewCss from '../pages/Profile/profile-view.css?inline';
 import cabinetDict from '../pages/Dashboard/cabinetDict';
 import { useApp } from './AppContext';
-import { Ico, Logo } from './ui';
+import { Logo, TabIcon } from './ui';
 import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
 import MeScreen from './MeScreen';
@@ -56,7 +56,7 @@ function TabBar() {
       <span className={'ua-tab-pill' + (idx === 2 ? ' ai' : '')} aria-hidden="true" />
       {tabs.map((x) => (
         <NavLink key={x.to} to={x.to} end={x.end} onClick={() => haptic(6)} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
-          <span className="ua-tab-ic"><Ico n={x.icon} size={x.center ? 25 : 23} sw={x.center ? 1.9 : 1.8} /></span>
+          <span className="ua-tab-ic"><TabIcon n={x.icon} size={x.center ? 28 : 25} /></span>
           <span className="ua-tab-l">{t(x.label)}</span>
         </NavLink>
       ))}

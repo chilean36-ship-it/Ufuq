@@ -111,24 +111,43 @@ export function RankingCard({ title, onOpen }) {
   const tabs = hasAct ? TABS : ['exam'];
   const active = tabs.includes(tab) ? tab : tabs[0];
 
+  // Overall counts only what really has data in this group (exams taken / attendance marked / tasks given), so an empty
+  // category never pads the score: with exams only, Overall equals the exam result.
+  const counted = useMemo(() => {
+    const c = { exam: false, att: false, tasks: false };
+    if (!data) return c;
+    data.members.forEach((m) => {
+      const e = m.user_id && data.exam[m.user_id]; const a = m.user_id && data.act && data.act[m.user_id];
+      if (e && e.taken) c.exam = true;
+      if (a && a.att_marked > 0) c.att = true;
+      if (a && a.tasks_total > 0) c.tasks = true;
+    });
+    return c;
+  }, [data]);
+
   const rows = useMemo(() => {
     if (!data) return [];
     const list = data.members.map((m) => {
       const e = m.user_id && data.exam[m.user_id];
       const a = m.user_id && data.act && data.act[m.user_id];
-      const ex = e && e.taken ? e.avg : 0;
-      const at = a ? a.att_pct : 0;
-      const tk = a ? (a.tasks_total ? Math.round((100 * a.tasks_done) / a.tasks_total) : 100) : 0;
-      let score; let label;
-      if (active === 'exam') { score = ex; label = e && e.taken ? ex + '%' : ''; }
-      else if (active === 'att') { score = at; label = a && a.att_marked ? at + '%' : ''; }
-      else if (active === 'tasks') { score = tk; label = a ? a.tasks_done + '/' + a.tasks_total : ''; }
-      else { score = Math.round((ex + at + tk) / 3); label = score + '%'; }
+      const hasEx = !!(e && e.taken); const hasAt = !!(a && a.att_marked > 0); const hasTk = !!(a && a.tasks_total > 0);
+      const ex = hasEx ? e.avg : 0;
+      const at = hasAt ? a.att_pct : 0;
+      const tk = hasTk ? Math.round((100 * a.tasks_done) / a.tasks_total) : 0;
+      let score = 0; let label = '';
+      if (active === 'exam') { score = ex; label = hasEx ? ex + '%' : ''; }
+      else if (active === 'att') { score = at; label = hasAt ? at + '%' : ''; }
+      else if (active === 'tasks') { score = tk; label = hasTk ? a.tasks_done + '/' + a.tasks_total : ''; }
+      else {
+        const parts = [counted.exam && ex, counted.att && at, counted.tasks && tk].filter((v) => v !== false);
+        score = parts.length ? Math.round(parts.reduce((x, y) => x + y, 0) / parts.length) : 0;
+        label = parts.length ? score + '%' : '';
+      }
       return { ...m, score, label };
     });
     list.sort((x, y) => y.score - x.score || String(x.name).localeCompare(String(y.name)));
     return list;
-  }, [data, active]);
+  }, [data, active, counted]);
 
   const listRef = useRef(null);
   useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [active, data]);
@@ -144,6 +163,9 @@ export function RankingCard({ title, onOpen }) {
             <button type="button" role="tab" aria-selected={k === active} key={k} className={k === active ? 'on' : ''} onClick={() => { haptic(6); setTab(k); }}>{t(TAB_KEY[k])}</button>
           ))}
         </div>
+      )}
+      {active === 'all' && (
+        <p className="ua-rk-note">{[counted.exam && t('rkExam'), counted.att && t('rkAtt'), counted.tasks && t('rkTasks')].filter(Boolean).join(' · ') ? t('rkCounted') + ': ' + [counted.exam && t('rkExam'), counted.att && t('rkAtt'), counted.tasks && t('rkTasks')].filter(Boolean).join(' · ') : t('rkNone')}</p>
       )}
       <div className="ua-rank" ref={listRef} key={active}>
         {rows.map((m, i) => {
