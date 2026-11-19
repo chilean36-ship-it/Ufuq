@@ -166,3 +166,57 @@
 .ua-staff-card .ua-row-t{ flex:1; } .ua-staff-card.gold{ border-color:var(--gold); background:linear-gradient(135deg,var(--gold-dim),var(--bg-2)); }
 .ua-staffbar{ display:flex; align-items:center; gap:10px; margin:0 16px; padding:12px 14px; border-radius:18px; border:1px solid var(--gold); background:var(--gold-dim); color:var(--gold-bright); font-weight:700; font-size:14.5px; text-decoration:none; } .ua-staffbar span{ flex:1; }
 .ua-brand-act .ua-gpill.in-bar{ max-width:none; flex:none; height:34px; margin:0; padding:0 10px; gap:5px; }
+
+/* ---- Home (Fath-inspired structure: greeting hero, icon-tile cards) in the Ufuq gold look ---- */
+.ua-gh{ position:relative; overflow:hidden; margin:0 16px !important; padding:20px; border-radius:30px; color:#fff; background:linear-gradient(150deg,#D4AE57 0%,#9a7022 52%,#4d3711 100%); box-shadow:0 18px 40px -18px rgba(201,162,75,.55); display:flex; flex-direction:column; gap:14px; }
+.ua-gh.live{ background:linear-gradient(150deg,#27c58a 0%,#0f7a57 55%,#073d2c 100%); box-shadow:0 18px 40px -18px rgba(31,174,120,.5); }
+.ua-gh-bg{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(260px 180px at 100% 0%,rgba(255,255,255,.3),transparent 70%), radial-gradient(220px 160px at 0% 110%,rgba(0,0,0,.32),transparent 70%); }
+.ua-gh::after{ content:'أُفُق'; position:absolute; inset-inline-end:-4px; top:34px; font:700 110px/1 'Amiri',serif; color:rgba(255,255,255,.07); pointer-events:none; }
+.ua-gh > *{ position:relative; z-index:1; } .ua-gh > .ua-gh-bg{ position:absolute; z-index:0; }
+.ua-gh-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ua-gh-t{ min-width:0; } .ua-gh-t p{ margin:0 0 2px; font-size:14px; opacity:.85; } .ua-gh-t h1{ margin:0; font:700 28px/1.12 'Fraunces',serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ua-gh .ua-avatar{ flex:none; border:2px solid rgba(255,255,255,.55); box-shadow:0 6px 16px rgba(0,0,0,.25); }
+.ua-gh-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.ua-hchip{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 13px; border-radius:99px; border:0; background:rgba(255,255,255,.18); color:#fff; font:700 13.5px 'Inter',sans-serif; cursor:pointer; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.ua-hchip.warn{ background:rgba(228,84,76,.42); }
+.ua-gh-lesson{ padding:15px 16px; border-radius:22px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.26); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); display:flex; flex-direction:column; gap:4px; cursor:pointer; }
+.ua-gh-lesson .ua-k{ margin:0; color:rgba(255,255,255,.86); } .ua-gh-lesson h3{ margin:0; font:700 19px/1.25 'Fraunces',serif; }
+.ua-gh-lesson .ua-count{ font:700 34px/1.05 'Fraunces',serif; letter-spacing:.01em; }
+.ua-gh-s{ margin:0; font-size:14px; opacity:.9; }
+.ua-gh-go{ display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-weight:800; font-size:14px; color:#fff3c9; }
+
+.ua-hc{ display:flex !important; flex-direction:column; gap:12px; } .ua-hc-h{ display:flex; align-items:center; gap:11px; }
+.ua-hc-h h3{ flex:1; margin:0; font:700 18px 'Fraunces',serif; min-width:0; } .ua-hc-side{ font-size:13.5px; color:var(--text-muted); font-weight:600; text-transform:capitalize; }
+.ua-hc-go{ flex:none; width:34px; height:34px; display:grid; place-items:center; border-radius:12px; border:0; background:var(--bg-3); color:var(--text-muted); cursor:pointer; }
+.ua-ctile{ flex:none; width:40px; height:40px; display:grid; place-items:center; border-radius:13px; }
+.ua-ctile.rose{ background:rgba(238,122,174,.16); color:#EE7AAE; } .ua-ctile.teal{ background:rgba(45,200,170,.16); color:#2DC8AA; }
+.ua-ctile.violet{ background:rgba(140,112,240,.18); color:#9B82F2; } .ua-ctile.amber{ background:rgba(240,170,60,.17); color:#F0AA3C; }
+
+.ua-tk-list{ display:flex; flex-direction:column; gap:8px; }
+.ua-tk{ display:flex; align-items:center; gap:12px; width:100%; padding:11px 12px; border-radius:16px; border:0; background:var(--bg-3); color:var(--text); text-align:start; cursor:pointer; }
+.ua-tk-ic{ flex:none; width:36px; height:36px; display:grid; place-items:center; border-radius:11px; background:rgba(201,162,75,.15); color:var(--gold-bright); }
+.ua-tk.od .ua-tk-ic{ background:rgba(228,84,76,.15); color:#E4544C; }
+.ua-tk-t{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; } .ua-tk-t b{ font-size:15.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ua-tk-t small{ font-size:12.5px; color:var(--text-muted); }
+.ua-tk-st{ font-size:12.5px; font-weight:800; color:var(--text-muted); } .ua-tk.od .ua-tk-st{ color:#E4544C; }
+
+.ua-dayrow{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.ua-dayb{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 0 7px; border-radius:15px; border:1px solid transparent; background:var(--bg-3); color:var(--text-muted); cursor:pointer; }
+.ua-dayb span{ font-size:11.5px; font-weight:600; } .ua-dayb b{ font-size:16.5px; color:var(--text); } .ua-dayb i{ width:5px; height:5px; border-radius:50%; background:transparent; } .ua-dayb i.on{ background:var(--gold-bright); }
+.ua-dayb.today{ border-color:rgba(201,162,75,.5); } .ua-dayb.sel{ background:linear-gradient(160deg,var(--gold-bright),var(--gold)); color:#2a1d05; } .ua-dayb.sel b, .ua-dayb.sel span{ color:#2a1d05; } .ua-dayb.sel i.on{ background:#2a1d05; }
+.ua-day-t{ margin:2px 0 0; font-weight:700; font-size:15px; text-transform:capitalize; }
+.ua-day-box{ display:flex; align-items:center; gap:9px; padding:13px 14px; border-radius:16px; background:var(--bg-3); color:var(--text-muted); justify-content:center; }
+.ua-day-box.on{ justify-content:flex-start; background:rgba(201,162,75,.13); color:var(--text); } .ua-day-box.on svg{ color:var(--gold-bright); } .ua-day-box small{ margin-inline-start:auto; color:var(--text-muted); font-size:12.5px; }
+
+.ua-goal2{ flex-direction:row !important; align-items:center; gap:16px !important; cursor:pointer; } .ua-goal2-t{ min-width:0; display:flex; flex-direction:column; gap:3px; } .ua-goal2-t p{ margin:0; } .ua-goal2-t h3{ margin:0; font:700 18px/1.2 'Fraunces',serif; } .ua-goal2-t small{ color:var(--text-muted); font-size:13px; }
+
+.ua-att-n{ font:800 52px/1 'Fraunces',serif; text-align:center; padding-top:2px; } .ua-att-n small{ font-size:22px; margin-inline-start:2px; }
+.ua-att-segs{ display:flex; gap:5px; } .ua-att-segs i{ flex:1; height:7px; border-radius:99px; background:var(--bg-3); } .ua-att-segs i.p{ background:#4CAF7A; } .ua-att-segs i.a{ background:#E4544C; }
+.ua-att-pair{ display:grid; grid-template-columns:1fr 1fr; gap:10px; } .ua-att-pair div{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 8px; border-radius:16px; background:var(--bg-3); } .ua-att-pair b{ font:800 24px 'Fraunces',serif; } .ua-att-pair span{ font-size:13px; color:var(--text-muted); }
+
+.ua-rank{ display:flex; flex-direction:column; gap:7px; max-height:318px; overflow-y:auto; padding-inline-end:2px; scrollbar-width:thin; }
+.ua-rk{ display:flex; align-items:center; gap:10px; padding:9px 11px; border-radius:15px; background:var(--bg-3); border:1px solid transparent; flex:none; }
+.ua-rk.you{ border-color:rgba(201,162,75,.55); background:rgba(201,162,75,.12); }
+.ua-rk-pos{ flex:none; width:26px; height:26px; display:grid; place-items:center; border-radius:9px; font:800 13px 'Inter',sans-serif; color:var(--text-muted); }
+.ua-rk-pos.p1{ background:linear-gradient(160deg,#F3D77E,#C9A24B); color:#2a1d05; } .ua-rk-pos.p2{ background:linear-gradient(160deg,#E4E6EA,#A9AFB8); color:#22262c; } .ua-rk-pos.p3{ background:linear-gradient(160deg,#E9A872,#B26A33); color:#2a1405; }
+.ua-rk-av{ flex:none; width:34px; height:34px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:rgba(201,162,75,.2); color:var(--gold-bright); font-weight:800; } .ua-rk-av img{ width:100%; height:100%; object-fit:cover; }
+.ua-rk-name{ flex:1; min-width:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ua-rk-you{ font-style:normal; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:99px; background:var(--gold-dim); color:var(--gold-bright); } .ua-rk-sc{ font-weight:800; font-size:14px; }
