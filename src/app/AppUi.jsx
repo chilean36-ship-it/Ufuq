@@ -41,3 +41,16 @@ export function GroupSheet({ open, onClose, onPick }) {
     </Sheet>
   );
 }
+
+/** Top-bar icon version of the group switch: a badge shows how many groups the student has; nothing for a single group. */
+export function GroupIconBtn() {
+  const { groups } = useDashboardData();
+  const { t } = useApp();
+  const { openGroups } = useAppUi();
+  if (!groups || groups.length < 2) return null;
+  return (
+    <button type="button" className="ua-tbtn" onClick={() => { haptic(); openGroups(); }} aria-label={t('groupSwitch')}>
+      <Ico n="group" size={20} /><i className="ua-dot">{groups.length}</i>
+    </button>
+  );
+}

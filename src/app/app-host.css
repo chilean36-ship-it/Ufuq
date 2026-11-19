@@ -219,3 +219,7 @@ html[data-theme="light"] .ua-app .ua-host .group-chat-card .gc-msg-row.is-mine .
 /* the "next exam" card already shows that exam: do not repeat it in the list below (website keeps both) */
 .ua-host .ex2-row.is-next{ display:none; }
 .ua-host .ex2-list:not(:has(.ex2-row:not(.is-next))){ display:none; }
+
+/* Classmates: one search box (the host input style must not add a second frame inside the label) and a fixed-height scrolling list */
+.ua-host .cm-search input{ border:0 !important; background:transparent !important; box-shadow:none !important; height:auto !important; min-height:0 !important; padding:0 !important; border-radius:0 !important; }
+.ua-host .gp2 .cm-list{ max-height:320px; overflow-y:auto; }
