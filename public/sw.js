@@ -13,7 +13,8 @@
 // v3: eski keshlarda (vercel rewrite tufayli) JS o'rniga index.html saqlanib qolgan bo'lishi mumkin edi -> oppoq ekran.
 // v2: eski 'ufuq-media-v1' keshi (ichida Drive'dan kelgan buzuq/xato javoblar
 // qolib ketgan edi) activate paytida butunlay o'chiriladi.
-const SHELL_CACHE = 'ufuq-shell-v3';
+// v4: the app's own static pictures (logo, icons) are kept too, so the app looks complete without internet.
+const SHELL_CACHE = 'ufuq-shell-v4';
 
 // Faqat SPA qobig'ining o'zi oldindan keshga olinadi — client-side router
 // istalgan marshrutni (/dashboard, /teacher, ...) shu bitta index.html'dan ishga tushiradi.
@@ -69,6 +70,25 @@ self.addEventListener('fetch', (event) => {
 
   // Zoom sahifasi (Client View) — servis-vorker aralashmaydi, qobiq keshini buzmasin.
   if (url.pathname === '/zoom-meeting.html') return;
+
+  // The site's OWN small static pictures (logo, app icons): stale-while-revalidate, same origin only, healthy 200 answers only.
+  // (User media — audio / video / board photos — stays untouched, see below; saved lessons live in lib/offlineMedia.js.)
+  if (url.origin === self.location.origin && !req.headers.has('range') &&
+      (url.pathname.startsWith('/assets/images/') || url.pathname.startsWith('/app/') || /^\/(favicon|apple-touch-icon)[^/]*\.(png|ico|svg)$/.test(url.pathname)) &&
+      /\.(png|jpe?g|svg|webp|ico)$/i.test(url.pathname)) {
+    event.respondWith(
+      caches.open(SHELL_CACHE).then(async (cache) => {
+        const cached = await cache.match(req);
+        const fresh = fetch(req).then((res) => {
+          const ct = (res && res.headers && res.headers.get('content-type')) || '';
+          if (res && res.ok && res.status === 200 && /^image\//i.test(ct)) cache.put(req, res.clone());
+          return res;
+        }).catch(() => cached);
+        return cached || fresh;
+      })
+    );
+    return;
+  }
 
   // Audio / video / rasmlarga HECH QACHON aralashmaymiz. Avval bu yerda media
   // so'rovlari ushlanib, "Range" olib tashlanib butun fayl (katta darslar

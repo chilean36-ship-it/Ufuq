@@ -1,6 +1,7 @@
 // Extra texts for the redesigned app screens (merged into APP_DICT by strings.js).
 const EN = {
   lockApp: 'Hide app (back to dictionary)',
+  offlineBar: 'No internet — showing what is saved on this device',
   adminPanel: 'Admin panel', teacherPanel: 'Teacher panel', studentApp: 'Student app', staffHint: 'Choose where to go',
   bestWord: 'Best', avgWord: 'Average',
   groupSwitch: 'Switch group', groupsTitle: 'Your groups', groupOne: 'Group',
@@ -24,6 +25,7 @@ const EN = {
 };
 const UZ = {
   lockApp: 'Ilovani yashirish (lug‘atga qaytish)',
+  offlineBar: 'Internet yo‘q — qurilmada saqlangan ma’lumotlar ko‘rsatilmoqda',
   adminPanel: 'Admin paneli', teacherPanel: 'O‘qituvchi paneli', studentApp: 'Talaba ilovasi', staffHint: 'Qayerga o‘tishni tanlang',
   bestWord: 'Eng yaxshi', avgWord: 'O‘rtacha',
   groupSwitch: 'Guruhni almashtirish', groupsTitle: 'Guruhlaringiz', groupOne: 'Guruh',
@@ -47,6 +49,7 @@ const UZ = {
 };
 const RU = {
   lockApp: 'Скрыть приложение (вернуться к словарю)',
+  offlineBar: 'Нет интернета — показаны данные, сохранённые на устройстве',
   adminPanel: 'Панель администратора', teacherPanel: 'Панель учителя', studentApp: 'Приложение студента', staffHint: 'Выберите, куда перейти',
   bestWord: 'Лучший', avgWord: 'Среднее',
   groupSwitch: 'Сменить группу', groupsTitle: 'Ваши группы', groupOne: 'Группа',
@@ -70,6 +73,7 @@ const RU = {
 };
 const AR = {
   lockApp: 'إخفاء التطبيق (العودة إلى القاموس)',
+  offlineBar: 'لا يوجد إنترنت — تُعرض البيانات المحفوظة على الجهاز',
   adminPanel: 'لوحة المشرف', teacherPanel: 'لوحة المعلّم', studentApp: 'تطبيق الطالب', staffHint: 'اختر وجهتك',
   bestWord: 'الأفضل', avgWord: 'المتوسط',
   groupSwitch: 'تبديل المجموعة', groupsTitle: 'مجموعاتك', groupOne: 'المجموعة',
