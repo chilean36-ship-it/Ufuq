@@ -48,6 +48,10 @@ export async function savedCount() {
  * Downloads `url` into the device. Resolves { ok:true } or { ok:false, reason:'cors'|'network'|'space'|'unsupported'|'aborted'|'bad' }.
  * onProgress(0..1) is called while the file arrives.
  */
+// Public R2 audio addresses do not allow reading from the browser (no CORS): the site's own /api/media streams them instead.
+const R2_PUBLIC = /^https:\/\/pub-[0-9a-f]{32}\.r2\.dev\//i;
+const viaSite = (url) => (R2_PUBLIC.test(url) ? '/api/media?u=' + encodeURIComponent(url) : null);
+
 export async function saveMedia(url, onProgress, signal) {
   if (!hasCaches() || !url) return { ok: false, reason: 'unsupported' };
   let res;
@@ -55,8 +59,15 @@ export async function saveMedia(url, onProgress, signal) {
     res = await fetch(url, { mode: 'cors', credentials: 'omit', signal });
   } catch (e) {
     if (e && e.name === 'AbortError') return { ok: false, reason: 'aborted' };
-    // a blocked cross-origin answer and a missing network look the same here
-    return { ok: false, reason: typeof navigator !== 'undefined' && navigator.onLine === false ? 'network' : 'cors' };
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return { ok: false, reason: 'network' };
+    // the file host does not allow us (CORS): go through the site's own address
+    const alt = viaSite(url);
+    if (!alt) return { ok: false, reason: 'cors' };
+    try {
+      res = await fetch(alt, { credentials: 'omit', signal });
+    } catch (e2) {
+      return e2 && e2.name === 'AbortError' ? { ok: false, reason: 'aborted' } : { ok: false, reason: 'network' };
+    }
   }
   if (!res.ok) return { ok: false, reason: 'bad' };
   const total = parseInt(res.headers.get('content-length') || '0', 10) || 0;
