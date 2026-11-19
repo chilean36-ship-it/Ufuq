@@ -105,6 +105,7 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
       <div className="ua-brandrow" style={{ '--i': 0 }}>
         <span className="ua-brand"><Logo size={30} /><b>Ufuq</b></span>
         <span className="ua-brand-act">
+          <GroupPill className="in-bar" />
           <button type="button" className={'ua-chip2 flame' + (activity.streak > 0 ? ' on' : '')} onClick={() => { haptic(); toast(`${t('streak')}: ${activity.streak} ${t(activity.streak === 1 ? 'dayWord' : 'daysWord')}`); }} aria-label={t('streak')}>
             <Ico n="flame" size={18} fill={activity.streak > 0} sw={1.6} /><b>{activity.streak}</b>
           </button>
@@ -122,7 +123,6 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
         <div className="ua-top2-t"><p className="ua-hint">{t('hello2')}</p><h1>{first || t('tabMe')}</h1></div>
       </header>
 
-      <div className="ua-gwrap" style={{ '--i': 1 }}><GroupPill /></div>
       {(role === 'admin' || role === 'teacher') && (
         <a className="ua-staffbar" style={{ '--i': 1 }} href={role === 'admin' ? '/app/admin' : '/app/teacher'} onClick={markFromApp}><Ico n="settings" size={18} /><span>{role === 'admin' ? ta('adminPanel') : ta('teacherPanel')}</span><Ico n="chev" size={16} /></a>
       )}

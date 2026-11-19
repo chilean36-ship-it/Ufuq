@@ -5,8 +5,6 @@ import { useDashboardData, LEVEL_NAMES } from '../context/DashboardDataContext';
 import { useTheme } from '../hooks/useTheme';
 import { ufuqSignOut } from '../lib/auth';
 import { supabase } from '../lib/supabaseClient';
-import InstallAppButton from '../components/InstallAppButton';
-import { isStandalone } from '../lib/pwaInstall';
 import { useApp, readPrefs, writePrefs } from './AppContext';
 import { APP_LANGS } from './strings';
 import { haptic, useCountUp, useToast } from './hooks';
@@ -99,7 +97,6 @@ export default function MeScreen({ onNavigate, role, activity }) {
       </div>
 
       <div className="ua-rows2" style={{ '--i': 5 }}>
-        {!isStandalone() && <div className="ua-row ua-install"><InstallAppButton variant="side" force /></div>}
         <Row icon="help" tone="sky" label={t('helpChat')} href="https://t.me/ufuq_support" />
         <Row icon="eye" tone="violet" label={t('lockApp')} onClick={() => { lockApp(); window.location.replace('/app'); }} />
         <Row icon="out" danger label={t('signOut')} onClick={() => setSheet('out')} />

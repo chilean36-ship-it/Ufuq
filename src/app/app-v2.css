@@ -165,3 +165,4 @@
 .ua-staff-card{ display:flex; align-items:center; gap:14px; width:100%; min-height:64px; padding:12px 16px; border-radius:20px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); font:600 16px 'Inter',sans-serif; text-decoration:none; text-align:start; cursor:pointer; }
 .ua-staff-card .ua-row-t{ flex:1; } .ua-staff-card.gold{ border-color:var(--gold); background:linear-gradient(135deg,var(--gold-dim),var(--bg-2)); }
 .ua-staffbar{ display:flex; align-items:center; gap:10px; margin:0 16px; padding:12px 14px; border-radius:18px; border:1px solid var(--gold); background:var(--gold-dim); color:var(--gold-bright); font-weight:700; font-size:14.5px; text-decoration:none; } .ua-staffbar span{ flex:1; }
+.ua-brand-act .ua-gpill.in-bar{ max-width:none; flex:none; height:34px; margin:0; padding:0 10px; gap:5px; }
