@@ -107,3 +107,62 @@ body.ua-panel .chip, body.ua-panel .u-pill, body.ua-panel .tpl-chip{ border-radi
   body.ua-panel .page-head{ margin-bottom:10px; } body.ua-panel .page-head h2{ font:700 22px/1.2 'Fraunces',serif; }
   body.ua-panel .content{ padding-inline:14px; }
 }
+
+/* ---- skin, part 2: the admin / teacher overviews in the student app's look (html body → wins over the panels' own sheets) ---- */
+html body.ua-panel .panel-head h3{ text-transform:none; letter-spacing:0; font-size:18px; display:flex; align-items:center; gap:10px; }
+html body.ua-panel .panel-head-bar{ width:4px; height:18px; border-radius:4px; background:linear-gradient(180deg,#F3D77E,#B98B3E); flex:none; }
+html body.ua-panel .panel-sub{ font-size:12.5px; }
+
+/* greeting hero (admin) */
+html body.ua-panel .a-hero{ position:relative; overflow:hidden; border:0; border-radius:28px; color:#fff; background:linear-gradient(150deg,#D4AE57 0%,#9a7022 55%,#4d3711 100%); box-shadow:0 20px 40px -22px rgba(201,162,75,.7); animation:ptbRise .55s cubic-bezier(.2,.8,.2,1) both; }
+html body.ua-panel .a-hero::after{ content:'أُفُق'; position:absolute; inset-inline-end:-4px; bottom:-26px; font:700 96px/1 'Amiri',serif; color:rgba(255,255,255,.09); pointer-events:none; }
+html body.ua-panel .a-hero h1{ color:#fff; font-family:'Fraunces',serif; }
+html body.ua-panel .a-hero .a-pill{ background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.28); color:#fff; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+html body.ua-panel .a-hero .a-live{ background:#7dffc4; box-shadow:0 0 0 4px rgba(125,255,196,.3); }
+
+/* stat cards: two per row on a phone, bigger coloured icon tile, press feedback */
+@media (max-width:860px){
+  html body.ua-panel .a-stats{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  html body.ua-panel .a-stat{ padding:14px 14px 12px; }
+  html body.ua-panel .a-stat-num{ font-size:30px; margin-top:10px; }
+}
+html body.ua-panel .a-stat{ border-radius:22px; animation:ptbRise .5s cubic-bezier(.2,.8,.2,1) backwards; transition:transform .2s cubic-bezier(.3,1.6,.5,1), border-color .2s; }
+html body.ua-panel .a-stat:nth-child(2){ animation-delay:.06s; } html body.ua-panel .a-stat:nth-child(3){ animation-delay:.12s; } html body.ua-panel .a-stat:nth-child(4){ animation-delay:.18s; }
+html body.ua-panel button.a-stat:active{ transform:scale(.96); }
+html body.ua-panel .a-stat-ico{ width:40px; height:40px; border-radius:14px; box-shadow:0 8px 16px -10px rgba(0,0,0,.7); }
+
+/* quick actions become colourful tiles */
+@media (max-width:860px){
+  html body.ua-panel .qa-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  html body.ua-panel .qa{ flex-direction:column; align-items:flex-start; gap:10px; padding:14px; min-height:104px; text-align:start; }
+  html body.ua-panel .qa small{ display:block; margin-top:2px; font-size:11.5px; color:var(--text-muted); font-weight:500; }
+}
+html body.ua-panel .qa{ border-radius:20px; border:1px solid var(--line); background:var(--bg-3); }
+html body.ua-panel .qa-ico{ width:42px; height:42px; border-radius:14px; display:grid; place-items:center; color:#fff; box-shadow:0 10px 18px -10px rgba(0,0,0,.7); background:linear-gradient(145deg,#E5C878,#B98B3E); }
+html body.ua-panel .qa:nth-child(6n+1) .qa-ico{ background:linear-gradient(145deg,#E5C878,#B98B3E); color:#1a1405; }
+html body.ua-panel .qa:nth-child(6n+2) .qa-ico{ background:linear-gradient(145deg,#9B82F2,#6a4fd0); }
+html body.ua-panel .qa:nth-child(6n+3) .qa-ico{ background:linear-gradient(145deg,#2fd1ac,#0e9a7b); }
+html body.ua-panel .qa:nth-child(6n+4) .qa-ico{ background:linear-gradient(145deg,#f07aa6,#d4436f); }
+html body.ua-panel .qa:nth-child(6n+5) .qa-ico{ background:linear-gradient(145deg,#58a8f4,#2f6fd0); }
+html body.ua-panel .qa:nth-child(6n+6) .qa-ico{ background:linear-gradient(145deg,#f6b44c,#d9801c); }
+
+/* teacher overview: the "ready to teach" hero and the KPI tiles */
+html body.ua-panel .ready-hero{ border-radius:28px; box-shadow:0 20px 40px -22px rgba(201,162,75,.6); animation:ptbRise .55s cubic-bezier(.2,.8,.2,1) both; }
+html body.ua-panel .kpi{ border-radius:20px; animation:ptbRise .5s cubic-bezier(.2,.8,.2,1) backwards; }
+html body.ua-panel .kpi:nth-child(2){ animation-delay:.06s; } html body.ua-panel .kpi:nth-child(3){ animation-delay:.12s; }
+html body.ua-panel .btn-join{ border-radius:99px; }
+
+/* the AI button no longer hides the last rows: it sits lower-right and the page leaves room */
+@media (max-width:860px){ html body.ua-panel .uai-fab{ opacity:.96; box-shadow:0 12px 26px -10px rgba(201,162,75,.8); } }
+@media (prefers-reduced-motion:reduce){ html body.ua-panel .a-hero, html body.ua-panel .a-stat, html body.ua-panel .kpi, html body.ua-panel .ready-hero{ animation:none !important; } }
+
+/* the page title already sits in the top bar: no second big heading on a phone (a header that only had a title disappears) */
+@media (max-width:860px){
+  html body.ua-panel .page-head h2{ display:none; }
+  html body.ua-panel .page-head:not(:has(button, .btn, a, input, select)){ display:none; }
+  html body.ua-panel .page-head{ margin-bottom:10px; }
+}
+
+/* teacher overview greeting */
+html body.ua-panel .greet h1, html body.ua-panel .greet h2{ font:700 26px/1.15 'Fraunces',serif; letter-spacing:-.01em; }
+html body.ua-panel .greet{ padding:4px 2px 2px; animation:ptbRise .5s cubic-bezier(.2,.8,.2,1) both; }
