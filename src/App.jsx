@@ -20,6 +20,7 @@ const ProfileRoute = lazy(() => import('./pages/Profile/ProfileRoute'));
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const Admin = lazy(() => import('./pages/Admin/Admin'));
 const Teacher = lazy(() => import('./pages/Teacher/Teacher'));
+const VerifyCertificate = lazy(() => import('./pages/Verify/VerifyCertificate'));
 const LegalPage = lazy(() => import('./pages/Legal/LegalPage'));
 const PanelHost = lazy(() => import('./app/PanelHost')); // admin / teacher panels inside the app (/app/admin, /app/teacher)
 const AppRoot = lazy(() => import('./app/AppRoot')); // the installable Ufuq app (onboarding, sign-in, bottom-tab student app)
@@ -44,6 +45,9 @@ export default function App() {
             <Route key={p} path={`/${p}`} element={<LandingPage />} />
           ))}
           <Route path="/about-author" element={<AboutAuthor />} />
+          {/* public certificate check (the QR code on a certificate opens /verify/<serial>) - no sign-in */}
+          <Route path="/verify" element={<VerifyCertificate />} />
+          <Route path="/verify/:serial" element={<VerifyCertificate />} />
           {['terms', 'privacy', 'cookies', 'refund'].map((d) => (
             <Route key={d} path={`/${d}`} element={<LegalPage doc={d} />} />
           ))}

@@ -16,7 +16,7 @@
 .cf-meta small{ color:var(--text-muted); font-size:12.5px; }
 .cf-place{ justify-self:start; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 10px; border-radius:99px; }
 .cf-place.p1{ background:linear-gradient(180deg,#F3DC93,#C9A24B); color:#3A2A08; }
-.cf-place.p2{ background:linear-gradient(180deg,#F1F3F6,#B6BEC9); color:#262C36; }
+.cf-place.p2{ background:linear-gradient(180deg,#F3DC93,#C9A24B); color:#3A2A08; }
 @keyframes cfIn{ from{ opacity:0; transform:translateY(10px) scale(.985); } to{ opacity:1; transform:none; } }
 
 .cf-empty{ text-align:center; padding:56px 20px; border-radius:18px; border:1px dashed var(--line); display:grid; justify-items:center; gap:6px; color:var(--text-muted); }
