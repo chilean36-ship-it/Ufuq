@@ -1,8 +1,8 @@
 {
   "id": "/app",
-  "name": "Dictionary",
-  "short_name": "Dictionary",
-  "description": "English–Uzbek dictionary: the most useful English words with meanings, pronunciation and favourites.",
+  "name": "Ufuq — Arabic Learning",
+  "short_name": "Ufuq",
+  "description": "Learn Arabic with Ustaz Ali: live lessons, homework, audio library and an AI practice partner.",
   "lang": "uz",
   "start_url": "/app?source=pwa",
   "scope": "/app",
@@ -15,8 +15,7 @@
   "background_color": "#121212",
   "theme_color": "#121212",
   "categories": [
-    "education",
-    "reference"
+    "education"
   ],
   "icons": [
     {
@@ -40,8 +39,18 @@
   ],
   "shortcuts": [
     {
-      "name": "Dictionary",
+      "name": "Home",
       "url": "/app",
+      "icons": [
+        {
+          "src": "/app/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ufuq AI",
+      "url": "/app/ai",
       "icons": [
         {
           "src": "/app/icon-192.png",

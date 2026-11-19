@@ -114,13 +114,13 @@ export default function AppRoot() {
   const [open, setOpen] = useState(isUnlocked);
   useEffect(() => { try { if (window.__hideBoot) window.__hideBoot(); } catch (e) { /* ignore */ } }, []);
   const unlock = useCallback(() => { unlockApp(); setOpen(true); }, []);
-  // The app presents itself as a dictionary: tab title, theme colour, "add to home screen" name and icon (restored when leaving /app).
+  // The app's own identity while it is open: tab title, theme colour, "add to home screen" name and icon (restored when leaving /app).
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'Dictionary';
+    document.title = 'Ufuq';
     const setMeta = (sel, attr, val) => { const el = document.querySelector(sel); if (!el) return () => {}; const was = el.getAttribute(attr); el.setAttribute(attr, val); return () => { if (was != null) el.setAttribute(attr, was); }; };
     const undo = [
-      setMeta('meta[name="apple-mobile-web-app-title"]', 'content', 'Dictionary'),
+      setMeta('meta[name="apple-mobile-web-app-title"]', 'content', 'Ufuq'),
       setMeta('link[rel="apple-touch-icon"]', 'href', '/app/apple-touch-icon.png'),
       setMeta('meta[name="theme-color"]', 'content', '#121212'),
     ];
