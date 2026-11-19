@@ -93,7 +93,7 @@ function Inner() {
   const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
 
   useEffect(() => { setAiSuppress(pathname.startsWith('/app/me/billing')); }, [pathname]);
-  useEffect(() => { document.title = 'Dictionary'; }, []);
+  useEffect(() => { document.title = 'Ufuq'; }, []);
   // every tab opens at its top, not where the previous tab was scrolled to
   const tabSeg = pathname.split('/').slice(0, 4).join('/');
   useEffect(() => { const el = document.getElementById('uaScroll'); if (el) el.scrollTop = 0; }, [tabSeg]);
