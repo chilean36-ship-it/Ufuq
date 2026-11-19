@@ -220,3 +220,15 @@
 .ua-rk-pos.p1{ background:linear-gradient(160deg,#F3D77E,#C9A24B); color:#2a1d05; } .ua-rk-pos.p2{ background:linear-gradient(160deg,#E4E6EA,#A9AFB8); color:#22262c; } .ua-rk-pos.p3{ background:linear-gradient(160deg,#E9A872,#B26A33); color:#2a1405; }
 .ua-rk-av{ flex:none; width:34px; height:34px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:rgba(201,162,75,.2); color:var(--gold-bright); font-weight:800; } .ua-rk-av img{ width:100%; height:100%; object-fit:cover; }
 .ua-rk-name{ flex:1; min-width:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ua-rk-you{ font-style:normal; font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:99px; background:var(--gold-dim); color:var(--gold-bright); } .ua-rk-sc{ font-weight:800; font-size:14px; }
+
+/* Home top bar: icon buttons, day/night switch, avatar */
+.ua-brand-act{ display:inline-flex; align-items:center; gap:8px; }
+.ua-tbtn{ position:relative; flex:none; width:38px; height:38px; display:grid; place-items:center; border-radius:13px; border:1px solid var(--line); background:var(--bg-2); color:var(--text); cursor:pointer; }
+.ua-tbtn .ua-dot{ top:-6px; inset-inline-end:-6px; min-width:17px; height:17px; font-size:10.5px; line-height:17px; background:var(--gold); color:#2a1d05; }
+.ua-tbtn:has(svg path[d^="M18 8a6"]) .ua-dot{ background:#E5484D; color:#fff; }
+.ua-tsw{ position:relative; flex:none; width:56px; height:32px; padding:0; border-radius:99px; border:1px solid var(--line); background:var(--bg-3); cursor:pointer; transition:background .25s, border-color .25s; }
+.ua-tsw i{ position:absolute; top:3px; inset-inline-start:3px; width:24px; height:24px; display:grid; place-items:center; border-radius:50%; background:#2b2b2b; color:var(--gold-bright); transition:transform .28s cubic-bezier(.3,1.4,.5,1), background .25s; }
+.ua-tsw.light{ background:linear-gradient(90deg,#f7e3a6,#eacb7a); border-color:rgba(201,162,75,.6); } .ua-tsw.light i{ background:#fff; color:#b8841f; transform:translateX(24px); }
+[dir="rtl"] .ua-tsw.light i{ transform:translateX(-24px); }
+.ua-tav{ width:38px !important; height:38px !important; flex:none; }
+.ua-hchip.fire{ background:rgba(255,159,67,.3); }

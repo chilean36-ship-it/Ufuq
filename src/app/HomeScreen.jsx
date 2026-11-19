@@ -10,7 +10,8 @@ import { useApp } from './AppContext';
 import { haptic, readRecents, useCountUp, usePullRefresh, useToast } from './hooks';
 import { AttendanceCard, CardHead, RankingCard } from './HomeCards';
 import { Ico, Logo, Ring } from './ui';
-import { GroupPill } from './AppUi';
+import { GroupIconBtn } from './AppUi';
+import { useTheme } from '../hooks/useTheme';
 
 const LOCALE = { UZ: 'uz', RU: 'ru', AR: 'ar', EN: 'en' };
 const TILES = [
@@ -45,6 +46,7 @@ function clock(ms) {
 export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
   const { t, lang, t: ta } = useApp();
   const toast = useToast();
+  const [theme, toggleTheme] = useTheme();
   const { t: tc } = useCabinetI18n();
   const { user, name, level, avatarUrl, groupCode, groupData, groupReady, locked, lockReason, isPaid, refreshGroup, role } = useDashboardData();
   const now = useNow(1000);
@@ -102,15 +104,18 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
       <div className="ua-brandrow" style={{ '--i': 0 }}>
         <span className="ua-brand"><Logo size={30} /><b>Ufuq</b></span>
         <span className="ua-brand-act">
-          <GroupPill className="in-bar" />
-          <button type="button" className={'ua-chip2 flame' + (activity.streak > 0 ? ' on' : '')} onClick={() => { haptic(); toast(`${t('streak')}: ${activity.streak} ${t(activity.streak === 1 ? 'dayWord' : 'daysWord')}`); }} aria-label={t('streak')}>
-            <Ico n="flame" size={18} fill={activity.streak > 0} sw={1.6} /><b>{activity.streak}</b>
-          </button>
           {isPaid && (
-            <button type="button" className="ua-icon-btn ua-bell" onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
-              <Ico n="bell" size={22} />{notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
+            <button type="button" className="ua-tbtn" onClick={() => { setNotifOpen(true); notifs.refresh(); }} aria-label="Notifications">
+              <Ico n="bell" size={20} />{notifs.unread > 0 && <i className="ua-dot">{notifs.unread > 9 ? '9+' : notifs.unread}</i>}
             </button>
           )}
+          <GroupIconBtn />
+          <button type="button" role="switch" aria-checked={theme === 'dark'} className={'ua-tsw ' + theme} onClick={() => { haptic(6); toggleTheme(); }} aria-label={t(theme === 'dark' ? 'light' : 'dark')}>
+            <i><Ico n={theme === 'dark' ? 'moon' : 'sun'} size={15} sw={2} /></i>
+          </button>
+          <button type="button" className="ua-avatar ua-tav" onClick={() => { haptic(); onNavigate('me'); }} aria-label={t('tabMe')}>
+            {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{(first || '?').charAt(0).toUpperCase()}</span>}
+          </button>
         </span>
       </div>
       {(role === 'admin' || role === 'teacher') && (
@@ -122,11 +127,9 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
         <span className="ua-gh-bg" aria-hidden="true" />
         <div className="ua-gh-top">
           <div className="ua-gh-t"><p>{t('hello2')}</p><h1>{first || t('tabMe')}</h1></div>
-          <button type="button" className="ua-avatar" onClick={() => { haptic(); onNavigate('me'); }} aria-label={t('tabMe')}>
-            {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{(first || '?').charAt(0).toUpperCase()}</span>}
-          </button>
         </div>
         <div className="ua-gh-chips">
+          <button type="button" className={'ua-hchip' + (activity.streak > 0 ? ' fire' : '')} onClick={() => { haptic(); toast(`${t('streak')}: ${activity.streak} ${t(activity.streak === 1 ? 'dayWord' : 'daysWord')}`); }} aria-label={t('streak')}><Ico n="flame" size={15} fill={activity.streak > 0} sw={1.6} /> {activity.streak}</button>
           {joined && <button type="button" className={'ua-hchip' + (overdueN ? ' warn' : '')} onClick={() => onNavigate('tasks')}><Ico n="task" size={15} /> {pending.length} {t('hwPending')}</button>}
           <button type="button" className="ua-hchip" onClick={() => onNavigate('progress')}><Ico n="chart" size={15} /> {t('level')} {levelN}</button>
         </div>
