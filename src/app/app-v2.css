@@ -459,3 +459,10 @@ html[data-theme="light"] .uai-voice .uai-cap-bot{ background:linear-gradient(180
 /* library: no ghost numeral, no tiny waveform strip, no keyboard hints */
 .ua-host .lax .lx-index, .ua-host .lax .lx-wave{ display:none !important; }
 .ua-host .lax-search kbd, .ua-host .lax kbd, .ua-host .apx-hint{ display:none !important; }
+
+/* ---- Ufuq AI opens as a circle growing out of its tab-bar button and covering the screen (and shrinks back into it) ---- */
+.ua-body .uai-panel{ opacity:1; transform:none; visibility:hidden; clip-path:circle(0px at var(--rv-x,50%) var(--rv-y,calc(100% - 64px))); transition:clip-path .68s cubic-bezier(.65,0,.25,1), visibility 0s linear .68s; }
+.ua-body .uai-panel.open{ visibility:visible; clip-path:circle(160vmax at var(--rv-x,50%) var(--rv-y,calc(100% - 64px))); transition:clip-path .68s cubic-bezier(.65,0,.25,1), visibility 0s; }
+.ua-body .uai-panel > *{ opacity:0; transition:opacity .25s ease; }
+.ua-body .uai-panel.open > *{ opacity:1; transition:opacity .4s ease .3s; }
+@media (prefers-reduced-motion:reduce){ .ua-body .uai-panel, .ua-body .uai-panel.open{ clip-path:none; transition:none; } .ua-body .uai-panel > *{ opacity:1; transition:none; } }
