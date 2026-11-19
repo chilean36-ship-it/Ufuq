@@ -1,9 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markFromApp } from '../components/BackToApp';
 import DictionaryGate from './DictionaryGate';
 import { isUnlocked, unlockApp } from './dictLock';
 import { supabase } from '../lib/supabaseClient';
-import { getSessionAndRole, hasStoredSession, isOAuthCallback, ufuqSignOut } from '../lib/auth';
+import { getSessionAndRole, hasStoredSession, homeRoute, isOAuthCallback, ufuqSignOut } from '../lib/auth';
 import BlockedNotice from '../components/BlockedNotice';
 import { applyUiPrefs } from '../lib/uiPrefs';
 import tokensCss from '../styles/tokens.css?inline';
@@ -28,6 +28,9 @@ function Splash({ label }) {
     </div>
   );
 }
+
+/** A real computer: wide window, a mouse. Phones and tablets (touch, no hover) stay in the app. */
+const isComputer = () => { try { return window.matchMedia('(min-width: 1000px) and (hover: hover) and (pointer: fine)').matches; } catch (e) { return false; } };
 
 function StaffScreen({ auth, onStudent }) {
   const { t } = useApp();
@@ -83,6 +86,13 @@ function Root() {
     if (oauth) window.history.replaceState(null, '', '/app');
   }, []);
 
+  // On a computer (wide window + mouse) the app IS the website: after the dictionary and sign-in the person lands in the same cabinet /
+  // panel as on ufuqtaleem.com. Phones and tablets keep the app. (A blocked student still sees the notice below.)
+  const computer = useMemo(isComputer, []);
+  const goSite = phase === 'in' && !!auth && computer && !(auth.role === 'student' && auth.status === 'blocked');
+  const siteTarget = auth && auth.role !== 'student' ? homeRoute(auth.role, auth.tier) : '/dashboard';
+  useEffect(() => { if (goSite) window.location.replace(siteTarget); }, [goSite, siteTarget]);
+
   useEffect(() => {
     alive.current = true;
     if (phase === 'checking') check();
@@ -92,6 +102,7 @@ function Root() {
     return () => { alive.current = false; sub.subscription.unsubscribe(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (goSite) return <Splash />;
   if (failed) {
     return (
       <div className="ua-screen ua-splash"><Logo size={72} /><p className="ua-hint center">{t('errNet')}</p>
