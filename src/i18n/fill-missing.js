@@ -603,6 +603,8 @@ const fill = {
   "Memorise": "حفظ",
   "Read": "قراءة",
   "Auto-turn": "قلب تلقائي",
+  "Full screen": "ملء الشاشة",
+  "Exit full screen": "إنهاء ملء الشاشة",
   "Turn to the next page by itself when the last word is recited": "الانتقال إلى الصفحة التالية تلقائيًا عند تلاوة آخر كلمة",
   "Send to group": "إرسال إلى مجموعة",
   "A separate copy of this exam is created for each selected group.": "تُنشأ نسخة منفصلة من هذا الاختبار لكل مجموعة محددة.",

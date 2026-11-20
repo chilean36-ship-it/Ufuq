@@ -301,3 +301,20 @@
 .hd-note-h{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; } .hd-note-h b{ font:700 20px 'Amiri',serif; } .hd-note-h small{ color:var(--text-muted); margin-inline-start:auto; font-size:12px; }
 .hd-rule{ padding:2px 10px; border-radius:99px; background:var(--gold-dim); color:var(--gold-bright); font-weight:700; font-size:12px; text-transform:lowercase; }
 .hd-note p{ margin:6px 0 0; font-size:14px; line-height:1.45; }
+
+/* ===== Phone full-screen mode: the whole mushaf page on one screen (font size is fitted by JS → --hl-px) ===== */
+body.hl-full-open{ overflow:hidden; }
+.hl-wrap.hl-full{ position:fixed; inset:0; z-index:2147481000; max-width:none; margin:0; gap:0; padding:env(safe-area-inset-top) 0 0; background:var(--bg); overflow:hidden; }
+.hl-full .hl-bar{ position:relative; top:0; flex:none; border-radius:0; border-width:0 0 1px; padding:6px 8px; }
+.hl-full .hl-progress{ flex:none; }
+.hl-full .hl-tip, .hl-full .hl-skel{ display:none; }
+.hl-full .hl-mushaf{ flex:1 1 0; min-height:0; margin:6px 6px calc(0px + env(safe-area-inset-bottom)); padding:4px 0 92px; border-radius:18px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; }
+.hl-full .hl-mushaf-head{ padding:6px 14px 0; font-size:11px; }
+.hl-full .hl-text{ font-size:var(--hl-px,22px); line-height:1.95; padding:0 10px; }
+.hl-full .hl-surah{ margin:2px 12px 0; }
+.hl-full .hl-surah-name{ padding:3px 12px; font-size:15px; }
+.hl-full .hl-basmala{ font-size:calc(var(--hl-px,22px) * .95); line-height:1.7; }
+.hl-full .hl-folio{ padding-top:0; } .hl-full .hl-folio span{ min-width:26px; height:26px; font-size:13px; }
+.hl-full .hl-corner{ display:none; }
+.hl-full .hl-dock{ position:absolute; left:0; right:0; bottom:calc(8px + env(safe-area-inset-bottom)); margin:0; width:auto; }
+.hl-full .hl-result{ max-height:46vh; overflow:auto; }

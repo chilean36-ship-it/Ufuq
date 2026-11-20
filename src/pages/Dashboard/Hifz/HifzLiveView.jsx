@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { surahLabel, SURAH_NAMES } from '../../../lib/surahNames';
@@ -46,8 +46,8 @@ function readPrefs() {
     const p = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     let page = +p.page;
     if (!(page >= 1 && page <= PAGE_COUNT)) page = +p.surah >= 1 && +p.surah <= 114 ? pageOf(+p.surah, 1) : PAGE_COUNT; // older saved choice: surah → its first page
-    return { page: Math.floor(page), hide: p.hide !== false, auto: p.auto !== false, fs: Math.min(1.4, Math.max(0.8, +p.fs || 1)) };
-  } catch (e) { return { page: PAGE_COUNT, hide: true, auto: true, fs: 1 }; }
+    return { page: Math.floor(page), hide: p.hide !== false, auto: p.auto !== false, fs: Math.min(1.4, Math.max(0.8, +p.fs || 1)), full: p.full !== false };
+  } catch (e) { return { page: PAGE_COUNT, hide: true, auto: true, fs: 1, full: true }; }
 }
 const arDigits = (n) => { try { return Number(n).toLocaleString('ar-EG', { useGrouping: false }); } catch (e) { return String(n); } };
 
@@ -69,6 +69,8 @@ const Marker = memo(function Marker({ surah, ayah, label }) {
 });
 const IcEye = () => <Ic><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></Ic>;
 const IcEyeOff = () => <Ic><path d="M3 3l18 18M10.6 5.1A9.7 9.7 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.5 6.6A17 17 0 002 12s3.6 7 10 7a9.6 9.6 0 004.2-1" /><path d="M9.9 9.9a3 3 0 004.2 4.2" /></Ic>;
+const IcExpand = () => <Ic><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></Ic>;
+const IcShrink = () => <Ic><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></Ic>;
 const IcGear = () => <Ic><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></Ic>;
 const IcChev = () => <Ic size={16}><path d="M6 9l6 6 6-6" /></Ic>;
 const IcSearch = () => <Ic size={18}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Ic>;
@@ -101,6 +103,8 @@ export default function HifzLiveView() {
   const [turnDir, setTurnDir] = useState(0); // 1 = forward, -1 = back: direction of the page-turn animation
   const [sheet, setSheet] = useState(null); // 'where' | 'settings' | 'ai' | null
   const [fs, setFs] = useState(prefs0.fs); // text size factor
+  const [full, setFull] = useState(prefs0.full); // phone: the page fills the whole screen (Tarteel-style)
+  const [isPhone, setIsPhone] = useState(() => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(max-width: 700px)').matches);
   const [sumOpen, setSumOpen] = useState(true); // the result card above the dock
   const touchRef = useRef(null);
   const [peek, setPeek] = useState(null); // { said, expected } — tapped mistake
@@ -158,7 +162,43 @@ export default function HifzLiveView() {
   const selAyah = target ? target.ayah : pageAyah;
   const juz = juzOf(pageNo);
 
-  useEffect(() => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ page: pageNo, hide, auto, fs })); } catch (e) { /* storage blocked */ } }, [pageNo, hide, auto, fs]);
+  useEffect(() => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ page: pageNo, hide, auto, fs, full })); } catch (e) { /* storage blocked */ } }, [pageNo, hide, auto, fs, full]);
+
+  // ---- phone full-screen mode: the whole mushaf page on one screen, no scrolling ----
+  const fullMode = isPhone && full;
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const mq = window.matchMedia('(max-width: 700px)');
+    const on = () => setIsPhone(mq.matches);
+    if (mq.addEventListener) mq.addEventListener('change', on); else mq.addListener(on);
+    return () => { if (mq.removeEventListener) mq.removeEventListener('change', on); else mq.removeListener(on); };
+  }, []);
+  useEffect(() => {
+    if (!fullMode) return undefined;
+    document.body.classList.add('hl-full-open');
+    return () => document.body.classList.remove('hl-full-open');
+  }, [fullMode]);
+  // Largest font size at which the whole page still fits the screen (binary search on the real layout, so it also copes with long pages,
+  // surah headers, different phones and rotation).
+  useLayoutEffect(() => {
+    if (!fullMode || !flat) return undefined;
+    const root = rootRef.current;
+    let raf = 0;
+    const fit = () => {
+      const art = root && root.querySelector('.hl-mushaf');
+      if (!art) return;
+      const fits = (px) => { root.style.setProperty('--hl-px', `${px}px`); return art.scrollHeight <= art.clientHeight + 1; };
+      let lo = 10, hi = 38;
+      if (fits(hi)) return;
+      while (hi - lo > 0.4) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
+      root.style.setProperty('--hl-px', `${lo}px`);
+    };
+    fit();
+    const again = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
+    window.addEventListener('resize', again);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(again).catch(() => {});
+    return () => { window.removeEventListener('resize', again); cancelAnimationFrame(raf); };
+  }, [fullMode, flat, pageNo, hide]);
 
   // ---- session control ----
   const stopRec = useCallback((hard) => {
@@ -241,7 +281,7 @@ export default function HifzLiveView() {
   // keep the word being recited in view on long pages
   const nextIdx = snap ? snap.nextIdx : -1;
   useEffect(() => {
-    if (phase !== 'listening' || !rootRef.current) return;
+    if (fullMode || phase !== 'listening' || !rootRef.current) return;
     const el = rootRef.current.querySelector('.hl-next');
     if (!el) return;
     const r = el.getBoundingClientRect();
@@ -396,7 +436,7 @@ export default function HifzLiveView() {
   flush();
 
   return (
-    <div className="hl-wrap" ref={rootRef} style={{ '--hl-top': `${barH}px`, '--hl-fs': fs }}>
+    <div className={'hl-wrap' + (fullMode ? ' hl-full' : '')} ref={rootRef} style={{ '--hl-top': `${barH}px`, '--hl-fs': fs }}>
       {/* ---- header: where am I (tap to change), memorise / read, settings ---- */}
       <header className="hl-bar">
         <button type="button" className="hl-title" onClick={() => setSheet('where')} aria-haspopup="dialog">
@@ -409,6 +449,12 @@ export default function HifzLiveView() {
                 aria-label={hide ? t('Show text (reading)') : t('Hide text (memorisation)')} title={hide ? t('Show text (reading)') : t('Hide text (memorisation)')}>
           {hide ? <IcEyeOff /> : <IcEye />}
         </button>
+        {isPhone && (
+          <button type="button" className="hl-ic" onClick={() => setFull((v) => !v)} aria-pressed={full}
+                  aria-label={full ? t('Exit full screen') : t('Full screen')} title={full ? t('Exit full screen') : t('Full screen')}>
+            {full ? <IcShrink /> : <IcExpand />}
+          </button>
+        )}
         <button type="button" className="hl-ic" onClick={() => setSheet('settings')} aria-label={t('Settings')} title={t('Settings')}><IcGear /></button>
       </header>
       <div className="hl-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{ width: `${progress}%` }} /></div>

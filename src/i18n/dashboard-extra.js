@@ -78,6 +78,8 @@ const uz = {
   'Memorise': 'Yodlash',
   'Read': 'O‘qish',
   'Auto-turn': 'Avto-varaq',
+  'Full screen': 'To‘liq ekran',
+  'Exit full screen': 'Ekrandan chiqish',
   'Turn to the next page by itself when the last word is recited': 'Oxirgi so‘z o‘qilganda keyingi sahifaga o‘zi o‘tadi',
   // --- Several groups per student ---
   'Group': 'Guruh',
@@ -156,6 +158,8 @@ const ru = {
   'Memorise': 'Заучивание',
   'Read': 'Чтение',
   'Auto-turn': 'Автолистание',
+  'Full screen': 'Полный экран',
+  'Exit full screen': 'Выйти из полного экрана',
   'Turn to the next page by itself when the last word is recited': 'Сама листает на следующую страницу после последнего слова',
   // --- Several groups per student ---
   'Group': 'Группа',
