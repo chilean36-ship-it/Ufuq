@@ -80,9 +80,10 @@ function readLang() {
   const n = ((navigator.language || 'en') + '').slice(0, 2).toUpperCase();
   return TXT[n] ? n : 'EN';
 }
-function suppressed() {
+// canInstall = the browser itself offers the install dialog, which proves the app is NOT installed (so an old 'installed' flag is stale).
+function suppressed(canInstall) {
   try {
-    if (localStorage.getItem('ufuq-pwa-installed')) return true;
+    if (!canInstall && localStorage.getItem('ufuq-pwa-installed')) return true;
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (!s || !s.t) return false;
     const days = COOLDOWN_DAYS[Math.min((s.n || 1) - 1, COOLDOWN_DAYS.length - 1)];
@@ -114,8 +115,8 @@ export default function InstallNudge() {
     return () => { clearTimeout(t); clearInterval(poll); off(); };
   }, []);
 
-  if (phase === 'gone' || !ready || isStandalone() || suppressed()) return null;
   const canInstall = canPromptInstall();
+  if (phase === 'gone' || !ready || isStandalone() || suppressed(canInstall)) return null;
   if (!canInstall && !ios && !android) return null; // e.g. Firefox / Safari on desktop: no install support
   if (busy()) return null;
 
