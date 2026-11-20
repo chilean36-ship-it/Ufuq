@@ -15,6 +15,7 @@ import { useApp } from './AppContext';
 import { Logo, TabIcon } from './ui';
 import { aiOpenCover, centerOf } from './reveal';
 import WhatsNew from './WhatsNew';
+import Reminders from './Reminders';
 import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
 import MeScreen from './MeScreen';
@@ -148,6 +149,7 @@ function Inner() {
       </Suspense>
       <ResultModals refreshGroup={refreshGroup} switchGroup={switchGroup} onNavigate={onNavigate} />
       {role === 'student' && <WhatsNew userId={user && user.id} onNavigate={onNavigate} />}
+      {role === 'student' && <Reminders onNavigate={onNavigate} />}
     </div>
     </AppUiCtx.Provider>
   );
