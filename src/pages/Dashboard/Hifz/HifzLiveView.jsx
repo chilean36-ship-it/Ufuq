@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { surahLabel, SURAH_NAMES } from '../../../lib/surahNames';
 import { startLiveStt, liveSttSupported } from '../../../lib/liveStt';
+import { serverListen } from '../../../lib/serverStt';
+import { supabase } from '../../../lib/supabaseClient';
 import { flattenPage, createLiveSession, splitWords } from '../../../lib/hifzLive';
 import { PAGE_COUNT, PAGE_STARTS, SURAH_AYAHS, JUZ_STARTS, pageOf, pageSegments, juzOf } from '../../../lib/mushafPages';
 import './hifz.css';
@@ -71,6 +73,7 @@ const IcGear = () => <Ic><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1
 const IcChev = () => <Ic size={16}><path d="M6 9l6 6 6-6" /></Ic>;
 const IcSearch = () => <Ic size={18}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Ic>;
 const IcX = () => <Ic size={18}><path d="M6 6l12 12M18 6L6 18" /></Ic>;
+const IcSpark = () => <Ic><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" /></Ic>;
 const IcCheck = () => <Ic size={18}><path d="M5 12.5l4.5 4.5L19 7.5" /></Ic>;
 
 /**
@@ -81,7 +84,7 @@ const IcCheck = () => <Ic size={18}><path d="M5 12.5l4.5 4.5L19 7.5" /></Ic>;
  * No backend: the Qur'an text is /quran/{n}.json and recognition is the browser's own (see src/lib/liveStt.js).
  */
 export default function HifzLiveView() {
-  const { t } = useCabinetI18n();
+  const { t, lang } = useCabinetI18n();
   const prefs0 = useRef(readPrefs()).current;
   const rootRef = useRef(null);
   const [pageNo, setPageNo] = useState(prefs0.page); // 1..604, the printed mushaf page
@@ -96,7 +99,7 @@ export default function HifzLiveView() {
   const [err, setErr] = useState('');
   const [toast, setToast] = useState(null); // { page, score } — shown briefly when a page is finished
   const [turnDir, setTurnDir] = useState(0); // 1 = forward, -1 = back: direction of the page-turn animation
-  const [sheet, setSheet] = useState(null); // 'where' | 'settings' | null
+  const [sheet, setSheet] = useState(null); // 'where' | 'settings' | 'ai' | null
   const [fs, setFs] = useState(prefs0.fs); // text size factor
   const [sumOpen, setSumOpen] = useState(true); // the result card above the dock
   const touchRef = useRef(null);
@@ -401,6 +404,7 @@ export default function HifzLiveView() {
           <small>{t('Juz')} {juz} · {t('Page')} {pageNo} · {hide ? t('Memorise') : t('Read')}</small>
           <IcChev />
         </button>
+        <button type="button" className="hl-ic hl-ai" onClick={() => { stopRec(true); setSheet('ai'); }} aria-label={t('AI check')} title={t('AI check')}><IcSpark /></button>
         <button type="button" className={'hl-ic' + (hide ? ' on' : '')} onClick={() => setHide((h) => !h)} aria-pressed={hide}
                 aria-label={hide ? t('Show text (reading)') : t('Hide text (memorisation)')} title={hide ? t('Show text (reading)') : t('Hide text (memorisation)')}>
           {hide ? <IcEyeOff /> : <IcEye />}
@@ -487,6 +491,7 @@ export default function HifzLiveView() {
 
       <WhereSheet open={sheet === 'where'} onClose={() => setSheet(null)} t={t} selSurah={selSurah} selAyah={selAyah} pageNo={pageNo}
                   onJump={(su, ay) => { setSheet(null); jumpTo(su, ay); }} onPage={(p) => { setSheet(null); goPage(p); }} />
+      <DeepSheet open={sheet === 'ai'} onClose={() => setSheet(null)} t={t} lang={lang} segments={segments} selSurah={selSurah} selAyah={selAyah} />
       <SettingsSheet open={sheet === 'settings'} onClose={() => setSheet(null)} t={t} auto={auto} setAuto={setAuto} fs={fs} setFs={setFs} hide={hide} setHide={setHide} />
     </div>
   );
@@ -605,5 +610,199 @@ function SettingsSheet({ open, onClose, t, auto, setAuto, fs, setFs, hide, setHi
         </div>
       </div>
     </SheetShell>
+  );
+}
+
+/* ------------------------------------------------------------------ AI check (server): word-by-word + tajweed review ---- */
+const DEEP_MAX_AYAHS = 15;
+
+/**
+ * Record a whole passage, send it to the server (Quran-tuned speech model if connected, otherwise Gemini), and show the word-by-word
+ * result plus an advisory tajweed / pronunciation review. Nothing is stored; the live page above stays the daily practice tool.
+ */
+function DeepSheet({ open, onClose, t, lang, segments, selSurah, selAyah }) {
+  const [step, setStep] = useState('setup');   // setup | rec | busy | result | error
+  const [surah, setSurah] = useState(selSurah);
+  const [from, setFrom] = useState(1);
+  const [to, setTo] = useState(1);
+  const [tajweed, setTajweed] = useState(true);
+  const [secs, setSecs] = useState(0);
+  const [res, setRes] = useState(null);
+  const [errKey, setErrKey] = useState('');
+  const recRef = useRef(null);
+  const tick = useRef(null);
+  const lvlRef = useRef(null);
+
+  const segOf = useCallback((su) => segments.find((sg) => sg.surah === su) || segments[0], [segments]);
+  useEffect(() => {
+    if (!open) return;
+    const seg = segments.find((sg) => sg.surah === selSurah) || segments[0];
+    const f = selSurah === seg.surah && selAyah >= seg.from && selAyah <= seg.to ? selAyah : seg.from;
+    setSurah(seg.surah); setFrom(f); setTo(Math.min(seg.to, f + 9));
+    setStep('setup'); setRes(null); setErrKey(''); setSecs(0);
+  }, [open, segments, selSurah, selAyah]);
+  useEffect(() => () => { clearInterval(tick.current); if (recRef.current) recRef.current.abort(); }, []);
+  useEffect(() => { if (!open && recRef.current) { recRef.current.abort(); recRef.current = null; clearInterval(tick.current); } }, [open]);
+
+  const maxAyah = SURAH_AYAHS[surah] || 1;
+  const toMax = Math.min(maxAyah, from + DEEP_MAX_AYAHS - 1);
+
+  function begin() {
+    setErrKey(''); setSecs(0); setStep('rec');
+    tick.current = setInterval(() => setSecs((x) => x + 1), 1000);
+    recRef.current = serverListen({
+      lang: 'ar', raw: true, maxMs: 95000, noSpeechMs: 12000, endSilenceMs: 3500,
+      onLevel: (lv) => { if (lvlRef.current) lvlRef.current.style.setProperty('--lvl', Math.min(1, lv * 1.4).toFixed(2)); },
+      onError: (code) => { if (code === 'not-allowed' || code === 'audio-capture') setErrKey('mic'); else if (code === 'no-speech') setErrKey('silent'); },
+      onDone: (audio) => {
+        clearInterval(tick.current); recRef.current = null;
+        if (!audio) { setStep('error'); setErrKey((k) => k || 'silent'); return; }
+        send(audio);
+      },
+    });
+  }
+  async function send(audio) {
+    setStep('busy');
+    try {
+      const { data, error } = await supabase.functions.invoke('ufuq-hifz-check', { body: { mode: 'practice', surah, from_ayah: from, to_ayah: to, audio, tajweed, lang: String(lang || 'EN').toLowerCase() } });
+      if (error) {
+        let code = '';
+        try { const j = await error.context.json(); code = (j && j.error) || ''; } catch (e) { /* not json */ }
+        setErrKey(code === 'no-speech' ? 'silent' : code === 'slow-down' ? 'slow' : code === 'PAYMENT_REQUIRED' ? 'pay' : 'server');
+        setStep('error'); return;
+      }
+      if (!data || !data.ok) { setErrKey('server'); setStep('error'); return; }
+      setRes(data); setStep('result');
+    } catch (e) { setErrKey('server'); setStep('error'); }
+  }
+  const stopRec = () => { if (recRef.current) recRef.current.stop(); };
+  const mmss = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  const ERR = {
+    mic: t('Microphone access is blocked. Allow it in the browser settings.'),
+    silent: t('Nothing was heard. Move closer to the microphone and try again.'),
+    slow: t('Too many checks in a minute. Wait a moment and try again.'),
+    pay: t('Your access has ended. Open Plans to continue.'),
+    server: t('The AI check is busy right now. Please try again in a moment.'),
+  };
+
+  return (
+    <SheetShell open={open} onClose={() => { if (step !== 'rec') onClose(); }} title={t('AI check')}>
+      {step === 'setup' && (
+        <div className="hd-setup">
+          <p className="hifz-sub" style={{ margin: '0 2px 12px' }}>{t('Recite the passage below from memory. The AI listens to the whole recitation, checks every word and reviews your tajweed.')}</p>
+          <div className="hd-range">
+            {segments.length > 1 && (
+              <label><small>{t('Surah')}</small>
+                <select value={surah} onChange={(e) => { const sg = segOf(+e.target.value); setSurah(sg.surah); setFrom(sg.from); setTo(Math.min(sg.to, sg.from + 9)); }}>
+                  {segments.map((sg) => <option key={sg.surah} value={sg.surah}>{SURAH_NAMES[sg.surah - 1]}</option>)}
+                </select></label>
+            )}
+            <label><small>{t('From ayah')}</small>
+              <select value={from} onChange={(e) => { const f = +e.target.value; setFrom(f); setTo((x) => Math.min(Math.max(x, f), Math.min(maxAyah, f + DEEP_MAX_AYAHS - 1))); }}>
+                {Array.from({ length: maxAyah }, (_, i) => i + 1).map((a) => <option key={a} value={a}>{a}</option>)}
+              </select></label>
+            <label><small>{t('To ayah')}</small>
+              <select value={to} onChange={(e) => setTo(+e.target.value)}>
+                {Array.from({ length: toMax - from + 1 }, (_, i) => from + i).map((a) => <option key={a} value={a}>{a}</option>)}
+              </select></label>
+          </div>
+          <div className="hl-set-row" style={{ borderBottom: 0 }}>
+            <div><b>{t('Tajweed review')}</b><small>{t('The AI also points out madd, ghunna, qalqala and letter pronunciation. It is advice, not a grade.')}</small></div>
+            <button type="button" role="switch" aria-checked={tajweed} className={'hl-switch' + (tajweed ? ' on' : '')} onClick={() => setTajweed((x) => !x)}><i /></button>
+          </div>
+          <button type="button" className="hl-btn wide" onClick={begin}>{t('Start recording')}</button>
+        </div>
+      )}
+      {step === 'rec' && (
+        <div className="hd-rec">
+          <div className="hd-orb" ref={lvlRef}><span /><span /><IcMic /></div>
+          <b className="hd-time">{mmss}</b>
+          <p className="hifz-sub">{t('Listening… recite now')}</p>
+          <button type="button" className="hl-btn wide" onClick={stopRec}>{t('Stop and check')}</button>
+        </div>
+      )}
+      {step === 'busy' && (
+        <div className="hd-busy" aria-busy="true">
+          <div className="hl-wave big" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
+          <b>{t('The AI is checking your recitation…')}</b>
+          <p className="hifz-sub">{t('This can take up to half a minute.')}</p>
+        </div>
+      )}
+      {step === 'error' && (
+        <div className="hd-busy">
+          <p className="hl-err">{ERR[errKey] || ERR.server}</p>
+          <button type="button" className="hl-btn wide" onClick={() => setStep('setup')}>{t('Try again')}</button>
+        </div>
+      )}
+      {step === 'result' && res && <DeepResult res={res} t={t} onClose={onClose} onAgain={() => { setRes(null); setStep('setup'); }} />}
+    </SheetShell>
+  );
+}
+
+export function DeepResult({ res, t, onClose, onAgain }) {
+  const [peek, setPeek] = useState(null);
+  const byAyah = useMemo(() => {
+    if (!res) return [];
+    const m = new Map();
+    res.words.forEach((w, k) => { if (!m.has(w.ayah)) m.set(w.ayah, []); m.get(w.ayah).push({ ...w, k }); });
+    return [...m.entries()];
+  }, [res]);
+  const bad = res ? res.words.filter((w) => w.status === 'wrong' || w.status === 'near') : [];
+  const missing = res ? res.words.filter((w) => w.status === 'missing') : [];
+  const STATUS = { correct: t('Correct'), near: t('Doubtful'), wrong: t('Wrong'), missing: t('Missed') };
+
+  return (
+        <div className="hd-res">
+          <div className="hd-top">
+            <div className="hl-ring" style={{ '--p': res.score }}>
+              <svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" className="bg" /><circle cx="40" cy="40" r="34" className="fg" pathLength="100" /></svg>
+              <b>{Math.round(res.score)}<small>%</small></b>
+            </div>
+            <div className="hd-top-t">
+              <strong>{t('Words')}</strong>
+              <div className="hl-chips">
+                <span className="hl-key hl-key-correct" title={STATUS.correct}>{res.counts.correct}</span>
+                <span className="hl-key hl-key-near" title={STATUS.near}>{res.counts.near}</span>
+                <span className="hl-key hl-key-wrong" title={STATUS.wrong}>{res.counts.wrong}</span>
+                <span className="hl-key hl-key-missing" title={STATUS.missing}>{res.counts.missing}</span>
+              </div>
+              <small>{STATUS.correct} · {STATUS.near} · {STATUS.wrong} · {STATUS.missing}</small>
+            </div>
+            {res.tajweed && (
+              <div className="hd-taj-score" title={t('Tajweed')}><b>{res.tajweed.overall}</b><small>{t('Tajweed')}</small></div>
+            )}
+          </div>
+          <div className="hd-text" dir="rtl" lang="ar">
+            {byAyah.map(([ay, ws]) => (
+              <span key={ay} className="hd-ayah">
+                {ws.map((w) => (
+                  <span key={w.k} className={'hl-w hl-' + w.status} onClick={() => setPeek(w.status === 'correct' ? null : { expected: w.text, said: w.heard, st: w.status })}>{w.text}{' '}</span>
+                ))}
+                <span className="hl-marker">{'﴿'}{arDigits(ay)}{'﴾'}</span>{' '}
+              </span>
+            ))}
+          </div>
+          {peek && (
+            <div className={'hl-peek ' + peek.st} style={{ width: '100%', boxShadow: 'none' }} onClick={() => setPeek(null)}>
+              <span><small>{t('Correct')}</small><b dir="rtl" lang="ar">{peek.expected}</b></span>
+              <span><small>{t('You said')}</small><b dir="rtl" lang="ar">{peek.said || '—'}</b></span>
+            </div>
+          )}
+          {(bad.length > 0 || missing.length > 0) && !peek && <p className="hl-tip" style={{ margin: '2px 0 0' }}>{t('Tap a coloured word to see what was heard.')}</p>}
+          <h4 className="hd-h">{t('Tajweed')}</h4>
+          {!res.tajweed && <p className="hifz-sub">{t('Tajweed review is not available now.')}</p>}
+          {res.tajweed && res.tajweed.notes.length === 0 && <p className="hd-clean">{t('No clear tajweed mistakes were heard. Mashallah!')}</p>}
+          {res.tajweed && res.tajweed.notes.map((n, i) => (
+            <div key={i} className={'hd-note ' + n.level} style={{ animationDelay: (i * 60) + 'ms' }}>
+              <div className="hd-note-h"><span className="hd-rule">{n.rule}</span>{n.word && <b dir="rtl" lang="ar">{n.word}</b>}{n.ayah ? <small>{t('Ayah')} {n.ayah}</small> : null}</div>
+              <p>{n.tip}</p>
+            </div>
+          ))}
+          <p className="hl-note">{t('The AI can be wrong, especially with tajweed. Your teacher gives the final grade.')}</p>
+          <div className="hl-result-act" style={{ marginTop: 8 }}>
+            <button type="button" className="hl-btn ghost" onClick={onClose}>{t('Close')}</button>
+            <button type="button" className="hl-btn" onClick={onAgain}>{t('Try again')}</button>
+          </div>
+        </div>
   );
 }
