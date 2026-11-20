@@ -65,7 +65,7 @@ const RATE_LIMIT_MAX = 80;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const hits = new Map<string, number[]>();
 // At most this many characters are spoken per student per day (live voice turns are also limited in ai-chat); best effort per instance.
-const DAILY_CHARS = 9000;
+const DAILY_CHARS = 30000;
 const dailyChars = new Map<string, { day: string; n: number }>();
 
 function json(req: Request, body: unknown, status = 200) {
