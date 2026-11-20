@@ -155,17 +155,6 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
   }
 
   /** Gives the student 10 more minutes on a running paper (e.g. after a call or a lost connection). */
-  async function restoreTime(sub) {
-    const note = window.prompt(t('Reason for the extra time (required):'), '');
-    if (!note || !note.trim()) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.rpc('staff_restore_written_time', { p_submission_id: sub.id, p_minutes: 10, p_note: note.trim() });
-      if (error) throw error;
-      toast(t('10 minutes added.'), 'ok');
-      refresh(true);
-    } catch (e) { toast(e.message || String(e), 'err'); } finally { setBusy(false); }
-  }
 
   /** Reopens a handed-in paper for a retake. The student keeps the answers already written; grades are cleared. */
   async function reopen(sub) {
@@ -257,7 +246,6 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
                       {r.handedIn && (
                         <button type="button" className={'btn btn-sm ' + (r.st === 'pending' ? 'btn-gold' : 'btn-ghost')} onClick={() => onGrade(s.id, m.name || '')}>{r.st === 'pending' ? t('Approve') : r.st === 'graded' ? t('Review') : t('Check')}</button>
                       )}
-                      {r.st === 'running' && <button type="button" className="btn btn-ghost btn-sm" disabled={busy} title={t('Give the student 10 more minutes')} onClick={() => restoreTime(s)}>{t('+10 min')}</button>}
                       <RowMenu label={t('More')} disabled={busy} items={[
                         r.handedIn && { key: 'retake', label: t('Allow retake of this paper'), title: t('Allow the student to take the paper again'), onClick: () => reopen(s) },
                       ]} />

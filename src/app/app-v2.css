@@ -405,8 +405,8 @@ html[data-theme="light"] .uai-voice .uai-cap-bot{ background:linear-gradient(180
 /* ---- Ufuq AI opens as a circle growing out of its tab-bar button and covering the screen (and shrinks back into it) ---- */
 .ua-body .uai-panel{ opacity:0; transform:none; visibility:hidden; clip-path:none; transition:none; }
 .ua-body .uai-panel.open{ opacity:1; visibility:visible; transition:none; }
-.ua-body .uai-panel > *{ opacity:0; }
-.ua-body .uai-panel.open > *{ opacity:1; transition:opacity .5s ease .12s; }
+.ua-body .uai-panel > *:not(.uai-side-scrim){ opacity:0; }
+.ua-body .uai-panel.open > *:not(.uai-side-scrim){ opacity:1; transition:opacity .5s ease .12s; }
 @media (prefers-reduced-motion:reduce){ .ua-body .uai-panel > *{ opacity:1; transition:none; } }
 
 /* ---- welcome screen: language picker, like the website's ---- */
@@ -418,3 +418,10 @@ html[data-theme="light"] .uai-voice .uai-cap-bot{ background:linear-gradient(180
 @keyframes uaMenuIn{ from{ opacity:0; transform:translateY(-6px) scale(.94); } }
 .ua-wl-menu button{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; height:44px; padding:0 12px; border:0; border-radius:12px; background:transparent; color:var(--text); font:600 15px 'Inter',sans-serif; cursor:pointer; text-align:start; }
 .ua-wl-menu button:active, .ua-wl-menu button:hover{ background:var(--bg-3); } .ua-wl-menu button.on{ color:var(--gold-bright); background:var(--gold-dim); }
+
+/* the chat covers the whole screen (student, teacher and admin alike) and leaves nothing of the panel bar or tab bar on top */
+@media (max-width:999px){
+  .ua-body .uai-panel, .ua-body .uai-panel.full{ position:fixed; left:0; right:0; bottom:auto; top:var(--ua-vt,0px); width:100vw; max-width:100vw; height:var(--ua-vh,100dvh); max-height:var(--ua-vh,100dvh); border:0; border-radius:0; z-index:2147482500; }
+  body.ua-ai-open .ptb, body.ua-ai-open .pms, body.ua-ai-open .topbar, body.ua-ai-open .ua-tabbar{ visibility:hidden; }
+}
+.ua-body .uai-side-scrim:not(.show){ opacity:0; pointer-events:none; }

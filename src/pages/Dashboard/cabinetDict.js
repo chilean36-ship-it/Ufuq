@@ -8,8 +8,9 @@ import profileDict from '../../i18n/cabinet-profile';
 import fillMissing from '../../i18n/fill-missing';
 import billingDict from '../../i18n/billing-cabinet';
 import myGroupDict from '../../i18n/my-group';
+import round8 from '../../i18n/ufuq-round8';
 
 const cabinetDict = Object.fromEntries(
-  Object.keys(dashboardDict).map((lang) => [lang, { ...(examLevelsDict[lang] || {}), ...(fillMissing[lang] || {}), ...(profileDict[lang] || {}), ...dashboardDict[lang], ...(dashboardExtra[lang] || {}), ...(examModeDict[lang] || {}), ...(billingDict[lang] || {}), ...(myGroupDict[lang] || {}) }])
+  Object.keys(dashboardDict).map((lang) => [lang, { ...(examLevelsDict[lang] || {}), ...(fillMissing[lang] || {}), ...(profileDict[lang] || {}), ...dashboardDict[lang], ...(dashboardExtra[lang] || {}), ...(round8[lang] || {}), ...(examModeDict[lang] || {}), ...(billingDict[lang] || {}), ...(myGroupDict[lang] || {}) }])
 );
 export default cabinetDict;

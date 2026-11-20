@@ -45,7 +45,7 @@ export default function AttendanceScreen() {
   const monthsBack = (now.getFullYear() - cursor.y) * 12 + (now.getMonth() - cursor.m);
   const step = (d) => { haptic(); setCursor((c) => { const dt = new Date(c.y, c.m + d, 1); return { y: dt.getFullYear(), m: dt.getMonth() }; }); };
   const color = stats ? LEVEL_COLORS[stats.level] : 'var(--gold)';
-  const rateN = useCountUp(stats && stats.marked ? Math.round(stats.rate) : 0, 800);
+  const rateN = useCountUp(stats ? Math.round(stats.rate) : 0, 800);
   const fmtDay = (s) => fmtDate(s.date + 'T00:00:00', lang, { weekday: 'short', month: 'short', day: 'numeric' });
 
   if (!joined) {
@@ -66,8 +66,8 @@ export default function AttendanceScreen() {
 
       <section className={'ua-hero2 lvl-' + (stats ? stats.level : 'good')} style={{ '--i': 1, '--lv': color }}>
         <div className="ua-hero2-ring">
-          <Ring value={stats && stats.marked ? stats.rate / 100 : 0} size={132} stroke={12} color={color}>
-            <b className="ua-ring-n big">{stats && stats.marked ? rateN + '%' : '—'}</b><small>{t('Attendance rate')}</small>
+          <Ring value={stats ? stats.rate / 100 : 0} size={132} stroke={12} color={color}>
+            <b className="ua-ring-n big">{stats ? (Number.isInteger(stats.rate) ? rateN : fmtPct(stats.rate)) + '%' : '—'}</b><small>{t('Attendance rate')}</small>
           </Ring>
         </div>
         <p className="ua-hero2-msg" role="status">{stats ? statusMessage(t, stats) : t('Loading…')}</p>

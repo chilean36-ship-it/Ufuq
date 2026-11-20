@@ -105,7 +105,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
   const [kind, setKind] = useState('');         // '' = other exam (100 points) | 'midterm' (25) | 'final' (50) | 'pop1' (25) | 'pop2' (50)
   const [deadline, setDeadline] = useState('');   // 'YYYY-MM-DDTHH:mm' in the teacher's local time ('' = no deadline)
   const [openAt, setOpenAt] = useState('');       // when students may START ('' = as soon as it is published); also the exam DAY: that day's lesson is replaced by the exam
-  const [dur, setDur] = useState('');           // time limit in minutes ('' = no limit)
+  const [dur, setDur] = useState('120');       // time limit in minutes (120 = standard; '' = no limit)
   const [targets, setTargets] = useState([]);   // group codes a NEW exam is sent to (default: the group selected at the top)
   const [secs, setSecs] = useState([]);
   const [originalIds, setOriginalIds] = useState([]);
@@ -127,7 +127,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     let cancelled = false;
     setReady(false); setBaseSig(null); setAttempted(false); setLoadError(''); setClosed({}); setPartOpen({}); setPasteFor(null); setPasteText(''); setAsk(null);
     setTitle(state.exam ? state.exam.title : '');
-    setDur(state.exam && state.exam.duration_minutes ? String(state.exam.duration_minutes) : '');
+    setDur(state.exam && state.exam.duration_minutes ? String(state.exam.duration_minutes) : '120');   // standard time limit: 120 minutes (change it by hand when needed)
     setDeadline(state.exam && state.exam.deadline_at ? toLocalInput(state.exam.deadline_at) : '');
     setOpenAt(state.exam && state.exam.open_at ? toLocalInput(state.exam.open_at) : '');
     setLevel(state.exam ? (state.exam.level ? String(state.exam.level) : '') : (state.level ? String(state.level) : ''));

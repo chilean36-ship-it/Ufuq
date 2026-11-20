@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { askUfuqAi } from './aiClient';
 import {
-  VOICE_LANGS, getVoiceProvider, readSavedVoiceLang, saveVoiceLang, stripForSpeech, voiceBcp, voiceLabel,
+  getVoiceProvider, readSavedVoiceLang, stripForSpeech, voiceBcp, voiceLabel,
 } from './voiceAdapter';
 import { I } from './icons';
 import { releaseMic } from '../../../lib/serverStt';
@@ -25,7 +25,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const [muted, setMuted] = useState(false);
   const [problem, setProblem] = useState(null); // unsupported | denied | network | lang
   const [notice, setNotice] = useState('');
-  const [vlang, setVlang] = useState(() => readSavedVoiceLang(uiLang));
+  const [vlang] = useState(() => readSavedVoiceLang(uiLang));
 
   const phaseRef = useRef('idle');
   const aliveRef = useRef(true);
@@ -43,6 +43,8 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const levelRef = useRef(0);      // live loudness of what the person says (0..1), drives the orb
   const deniedRef = useRef(false); // the microphone is blocked: do not keep re-asking after typed turns
   const orbRef = useRef(null);
+  const userTextRef = useRef('');
+  const orbMicRef = useRef(null);   // stops the loudness meter's own microphone stream
   const endBtnRef = useRef(null);
   const api = useRef({});
 
@@ -70,14 +72,16 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     setProblem(null);
     setNotice('');
     setUserText('');
+    userTextRef.current = '';
     errRef.current = null;
     setPhaseBoth('listening');
     const token = tokenRef.current;
     listenRef.current = prov.listen({
-      lang: voiceBcp(vlangRef.current),
+      lang: voiceBcp(vlangRef.current),   // only the fallback recogniser needs it
+      auto: true,                         // the server recogniser works out the spoken language by itself
       endSilenceMs: 650,                         // quick turn-taking, like a call
       preheard: !!(opts && opts.bargeIn),        // the person interrupted: they are already talking
-      onInterim: (txt) => { if (token === tokenRef.current) { bumpRef.current = 1; setUserText(txt); } },
+      onInterim: (txt) => { if (token === tokenRef.current) { bumpRef.current = 1; userTextRef.current = txt; setUserText(txt); } },
       onLevel: (lv) => { if (token === tokenRef.current) { levelRef.current = Math.max(levelRef.current, lv); if (lv > 0.15) bumpRef.current = 1; } },
       onError: (code) => { if (token === tokenRef.current) errRef.current = code; },
       onDone: (text) => {
@@ -175,24 +179,24 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     mutedRef.current = next;
     setMuted(next);
     if (next) {
-      killListen();
+      // what was already said is still delivered (the answer comes), but nothing new is listened to and the microphone is released
+      if (phaseRef.current === 'listening' && listenRef.current && userTextRef.current) {
+        const h = listenRef.current; listenRef.current = null;
+        const tk = tokenRef.current;
+        try { h.stop(); } catch (e) { /* ignore */ }
+        tokenRef.current = tk;   // keep the token: onDone of this clip must still reach handleUser
+      } else {
+        killListen();
+        if (phaseRef.current === 'listening') setPhaseBoth('idle');
+      }
       if (watchRef.current) { watchRef.current.stop(); watchRef.current = null; }
-      if (phaseRef.current === 'listening') setPhaseBoth('idle');
+      releaseMic();
+      if (orbMicRef.current) { orbMicRef.current(); }
     } else {
       silenceRef.current = 0;
       if (limitRef.current) return;
       if (phaseRef.current === 'idle' || phaseRef.current === 'listening') api.current.startListening();   // speaking / thinking: it listens when the answer ends
     }
-  };
-
-  const changeLang = (id) => {
-    if (id === vlangRef.current) return;
-    vlangRef.current = id;
-    setVlang(id);
-    saveVoiceLang(id);
-    setNotice('');
-    setProblem(null);
-    if (phaseRef.current === 'listening') api.current.startListening(); // restart the recogniser in the new language
   };
 
   // Start / tear down.
@@ -243,6 +247,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
         analyser.fftSize = 256;
         src.connect(analyser);
         data = new Uint8Array(analyser.fftSize);
+        orbMicRef.current = () => { analyser = null; if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } };
       } catch (e) { /* the recogniser reports a blocked mic itself */ }
     })();
     const t0 = performance.now();
@@ -328,11 +333,6 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       </div>
 
       <div className="uai-voice-foot">
-        <div className="uai-vlangs" role="group" aria-label={tr('vLang')}>
-          {VOICE_LANGS.map((l) => (
-            <button type="button" key={l.id} className={'uai-vlang' + (vlang === l.id ? ' on' : '')} aria-pressed={vlang === l.id} onClick={() => changeLang(l.id)}>{l.label}</button>
-          ))}
-        </div>
         <div className="uai-vctrl">
           <button type="button" className={'uai-vbtn' + (muted ? ' off' : '')} onClick={toggleMute} aria-pressed={muted} aria-label={muted ? tr('unmute') : tr('mute')} title={muted ? tr('unmute') : tr('mute')}>
             {muted ? I.micOff : I.mic}

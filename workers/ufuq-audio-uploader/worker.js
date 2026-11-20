@@ -1,6 +1,6 @@
 // ufuq-audio-uploader (HARDENED) — same API as before (POST /upload?group=a..g, GET /list?group=a..g),
 // but now: needs a teacher/admin Supabase session, CORS limited to ALLOWED_ORIGINS, audio-only whitelist, 200 MB cap.
-const VALID_GROUPS = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];   // old lettered groups
+const VALID_GROUPS = 'abcdefghijklmnopqrstuvwxyz'.split('');   // old lettered groups
 // lvl01..lvl14 keys are only kept for files uploaded while groups were named "Level-N"; new uploads use the group letter.
 const LEVEL_KEY = /^lvl(0[1-9]|1[0-4])$/;
 const validKey = (k) => VALID_GROUPS.includes(k) || LEVEL_KEY.test(k);

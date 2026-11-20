@@ -219,7 +219,8 @@ function createNeuralProvider() {
     listen(opts) {
       if (!serverSttSupported()) return base.listen(opts);
       const id = String((opts && opts.lang) || 'en').slice(0, 2).toLowerCase();
-      return serverListen({ ...opts, lang: ['uz', 'ru', 'en', 'ar'].includes(id) ? id : 'en' });
+      // auto: the server works out which of uz / ru / en / ar was spoken
+      return serverListen({ ...opts, lang: opts && opts.auto ? 'auto' : (['uz', 'ru', 'en', 'ar'].includes(id) ? id : 'en') });
     },
     // The server voice (or its browser fallback) is always attempted, so never show "no voice" up front.
     hasVoice() { return true; },
