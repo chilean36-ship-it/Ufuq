@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 /* Teacher "Media" uploads → Cloudflare R2 bucket "ufuq-media" through the `ufuq-media` Worker (workers/ufuq-media).
    Big videos are cut into 10 MB parts (3 in flight, each retried), so there is no single-request size limit
    and the progress bar is real. */
-export const MEDIA_WORKER_URL = 'https://ufuq-media.ufuq-edu.workers.dev';
+export const MEDIA_WORKER_URL = 'https://ufuq-media.khalilovgayratjon6.workers.dev';
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession(); // refreshes an expired token for us
