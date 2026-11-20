@@ -147,7 +147,7 @@ export function RankingCard({ title, onOpen }) {
         const exP = Number(p.exam_points) || 0; const tkP = Number(p.task_points) || 0; const atM = Number(p.att_marked) || 0;
         let score = 0; let label = '';
         if (active === 'exam') { score = Number(p.exam_pct) || 0; label = exP > 0 ? score + '%' : ''; }
-        else if (active === 'att') { score = atM > 0 ? Number(p.att_pct) || 0 : 0; label = atM > 0 ? score + '%' : ''; }
+        else if (active === 'att') { score = p.att_pct == null ? 100 : Number(p.att_pct); label = score + '%'; }   // everybody starts at 100%; each missed lesson takes its share off
         else if (active === 'tasks') { score = tkP; label = tkP > 0 ? fmtPts(tkP) + ' ' + t('rkPt') : ''; }
         else { score = exP + tkP; label = score > 0 ? fmtPts(score) + ' ' + t('rkPt') : ''; }
         return { ...m, score, label };
