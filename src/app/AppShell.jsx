@@ -13,7 +13,7 @@ import profileViewCss from '../pages/Profile/profile-view.css?inline';
 import cabinetDict from '../pages/Dashboard/cabinetDict';
 import { useApp } from './AppContext';
 import { Logo, TabIcon } from './ui';
-import { aiCloseCover, aiOpenCover, centerOf } from './reveal';
+import { aiOpenCover, centerOf } from './reveal';
 import WhatsNew from './WhatsNew';
 import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
@@ -94,13 +94,6 @@ function Inner() {
 
   // The cabinet language provider and the app share one storage key; keep the app in step if a reused view changes it.
   useEffect(() => { setLang(lang, { sync: false }); }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // closing the chat: gold covers it at once and shrinks back into the AI button
-  useEffect(() => {
-    const onClosed = () => { const p = centerOf(document.querySelector('.ua-tab.center .ua-tab-ic')); aiCloseCover(p.x, p.y); };
-    window.addEventListener('ufuq-ai-closed', onClosed);
-    return () => window.removeEventListener('ufuq-ai-closed', onClosed);
-  }, []);
 
   const onNavigate = useCallback((view) => { navigate(VIEW_ROUTE[view] || '/app'); }, [navigate]);
   const openUpgrade = useCallback(() => setUpgradeOpen(true), []);

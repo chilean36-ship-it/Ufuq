@@ -186,12 +186,12 @@ export const AUDIO_WORKER_URL = 'https://ufuq-audio-uploader.ufuq-edu.workers.de
 
 export function groupLetterFor(g) {
   if (!g) return null;
-  if (g.letter && /^[A-Ga-g]$/.test(g.letter)) return g.letter.toLowerCase();
+  if (g.letter && /^[A-Za-z]$/.test(g.letter)) return g.letter.toLowerCase();
   if (!g.name) return null;
   const m = g.name.trim().match(/^(?:group|guruh)[ _-]*([A-Za-z])\d*$/i) || g.name.trim().match(/([A-Za-z])\s*$/);
   if (!m) return null;
   const letter = m[1].toLowerCase();
-  return /^[a-g]$/.test(letter) ? letter : null;
+  return /^[a-z]$/.test(letter) ? letter : null;
 }
 
 export async function uploadToAudioWorker(groupLetter, file) {

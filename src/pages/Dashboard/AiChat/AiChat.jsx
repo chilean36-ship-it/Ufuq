@@ -1,3 +1,4 @@
+import { aiCloseCover, centerOf } from '../../../app/reveal';
 import { lockScroll, unlockScroll } from '../../../lib/scrollLock';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import PageStyle from '../../../components/PageStyle';
@@ -193,7 +194,13 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
     setSideOpen(false);
     setOpen(false);
     setFull(false);
-    try { window.dispatchEvent(new Event('ufuq-ai-closed')); } catch (e) { /* ignore */ }
+    try {
+      if (document.body.classList.contains('ua-body')) {   // in the app: gold covers the chat and shrinks back to where it came from
+        const p = centerOf(document.querySelector('.ua-tab.center .ua-tab-ic'));
+        aiCloseCover(p.x, p.y);
+      }
+      window.dispatchEvent(new Event('ufuq-ai-closed'));
+    } catch (e) { /* ignore */ }
   }, [stopSpeaking, stopDictation]);
 
   useEffect(() => { if (suppress && open) closeChat(); }, [suppress, open, closeChat]);
@@ -302,6 +309,7 @@ export default function AiChat({ hideLauncher = false, suppress = false, mode = 
   const newChat = useCallback(() => { resetChat(); setSideOpen(false); focusInput(); }, [resetChat, focusInput]);
 
   const openChat = useCallback(() => { resetChat(); setOpen(true); focusInput(); }, [resetChat, focusInput]);
+  useEffect(() => { document.body.classList.toggle('ua-ai-open', !!open); return () => document.body.classList.remove('ua-ai-open'); }, [open]);
 
   // Other parts of the page (e.g. the teacher/admin top bar) can open the chat with window.dispatchEvent(new Event('ufuq-ai-open')).
   useEffect(() => {

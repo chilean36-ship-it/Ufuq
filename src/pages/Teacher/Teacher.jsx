@@ -6,6 +6,7 @@ import useHashView, { readHashView } from '../../hooks/useHashView';
 import Loader from '../../components/Loader';
 import PageStyle from '../../components/PageStyle';
 import CabinetLangSelect from '../../components/CabinetLangSelect';
+import ThemeToggle from '../../components/panel/ThemeToggle';
 import PillSelect, { GROUP_ICON } from '../../components/PillSelect';
 import pageCss from './teacher.css?inline';
 import pageCssV2 from './teacher-v2.css?inline';
@@ -267,6 +268,7 @@ function TeacherInner() {
             <button type="button" className="top-search" onClick={() => setCmdOpen(true)} aria-label={t('Search pages…')}>
               <svg {...svg}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><span>{t('Search pages…')}</span><kbd>Ctrl K</kbd>
             </button>
+            <ThemeToggle />
             <CabinetLangSelect />
             <PillSelect icon={GROUP_ICON} ariaLabel={t('Group')} value={currentGroupCode || ''}
                         disabled={!groupsLoaded || myGroups.length === 0}

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCabinetI18n } from '../../context/CabinetI18nContext';
 import { ufuqSignOut } from '../../lib/auth';
 import { outRoute } from '../../lib/panelAccess';
+import { aiOpenCover } from '../../app/reveal';
 
 const s = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
 const TONES = ['gold', 'violet', 'teal', 'rose', 'sky', 'amber'];
@@ -44,7 +45,11 @@ export default function PanelMoreSheet({ open, onClose, nav, page, onNavigate, o
 
   const signOut = async () => { onClose(); await ufuqSignOut(); navigate(outRoute('/index'), { replace: true }); };
   const go = (p) => { onNavigate(p); onClose(); };
-  const openAi = () => { onClose(); setTimeout(() => window.dispatchEvent(new Event('ufuq-ai-open')), 260); };
+  const openAi = () => {
+    onClose();
+    aiOpenCover(window.innerWidth / 2, window.innerHeight - 56);   // the same gold-cover opening as the student's AI tab
+    setTimeout(() => window.dispatchEvent(new Event('ufuq-ai-open')), 600);
+  };
 
   return createPortal(
     <div className={'pms' + (open ? ' open' : '')} aria-hidden={open ? 'false' : 'true'}>

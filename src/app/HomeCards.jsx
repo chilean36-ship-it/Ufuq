@@ -47,7 +47,8 @@ export function AttendanceCard({ locale, title, onOpen }) {
     [records, groupData] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const rateN = useCountUp(stats ? Math.round(stats.rate) : 0, 900);
-  if (!joined || !stats) return null;
+  if (!joined) return null;
+  if (!stats) return <section className="ua-card2 ua-hc" style={{ '--i': 5 }} aria-busy="true"><div className="ua-skel" style={{ height: 150 }} /></section>;
   const month = new Intl.DateTimeFormat(locale, { month: 'long' }).format(now);
   const color = LEVEL_COLORS[stats.level] || LEVEL_COLORS.good;
   const segs = Math.min(Math.max(stats.total, 0), 16);
@@ -180,7 +181,9 @@ export function RankingCard({ title, onOpen }) {
 
   const listRef = useRef(null);
   useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [active, data]);
-  if (!joined || !data || rows.length === 0) return null;
+  if (!joined) return null;
+  if (!data) return <section className="ua-card2 ua-hc" style={{ '--i': 6 }} aria-busy="true"><div className="ua-skel" style={{ height: 220 }} /></section>;
+  if (rows.length === 0) return null;
   const idx = Math.max(0, tabs.indexOf(active));
   return (
     <section className="ua-card2 ua-hc" style={{ '--i': 6 }}>

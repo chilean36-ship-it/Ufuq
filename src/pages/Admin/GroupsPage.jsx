@@ -14,13 +14,13 @@ import { closedReason, levelErrorText } from '../../lib/levelErrors';
 const TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 // At most 7 class-group series: the letter is the permanent identity (audio names are tied to it), the level changes.
-const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+const GROUP_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const hasRun = (g) => g.is_active !== false || !!(g.reopened_at || g.deadline_closed_at || g.moved_on_at);
-const letterOfGroup = (g) => (g && g.letter) || ((String(g && g.name || '').match(/^(?:group|guruh)[ _-]*([A-G])/i) || [])[1] || '').toUpperCase() || null;
+const letterOfGroup = (g) => (g && g.letter) || ((String(g && g.name || '').match(/^(?:group|guruh)[ _-]*([A-Za-z])/i) || [])[1] || '').toUpperCase() || null;
 function groupErrorText(t, err) {
   const m = (err && err.message) || String(err || '');
   if (/GROUP_LETTER_TAKEN/.test(m)) return t('This letter is already used by another group. Choose a free letter.');
-  if (/GROUP_LETTER_REQUIRED/.test(m)) return t('Choose the group letter (A–G).');
+  if (/GROUP_LETTER_REQUIRED/.test(m)) return t('Choose the group letter (A–Z).');
   if (/GROUP_LEVEL_REQUIRED/.test(m)) return t('Choose a level') + ' (1–' + MAX_LEVEL + ').';
   if (/NOT_ALLOWED/.test(m)) return t('Only the main admin can create groups.');
   if (/groups_letter_level_uidx|23505/.test(m + (err && err.code || ''))) return t('This letter already has a group on that level.');
@@ -346,7 +346,7 @@ function GroupModal({ open, group: g, onClose }) {
     if (!/^https?:\/\//i.test(zoom_link) || !safeHttpUrl(zoom_link)) { setError(t('The Zoom link must start with https://')); return; }
     const levelNum = type === 'class' && f.level ? Math.round(Number(f.level)) : null;
     if (type === 'class' && !(levelNum >= 1 && levelNum <= MAX_LEVEL)) { setError(t('Choose a level') + ' (1–' + MAX_LEVEL + ').'); return; }
-    if (type === 'class' && !g && !GROUP_LETTERS.includes(f.letter)) { setError(t('Choose the group letter (A–G).')); return; }
+    if (type === 'class' && !g && !GROUP_LETTERS.includes(f.letter)) { setError(t('Choose the group letter (A–Z).')); return; }
     if (type === 'individual' && !name) { setError(t('Please enter the group name.')); return; }
     if (type === 'class' && !schedule) { setError(t('Please fill in the schedule text for students.')); return; }
     for (let i = 0; i < days.length; i++) {
@@ -426,7 +426,7 @@ function GroupModal({ open, group: g, onClose }) {
                   ))}
                 </div>
               )}
-              <p className="hint">{g ? t('The letter never changes: chat, audio names and history stay tied to it.') : (freeLetters.length ? t('Letters that are already in use are greyed out.') : t('All 7 letters (A–G) are already used, so no new group can be created.'))}</p>
+              <p className="hint">{g ? t('The letter never changes: chat, audio names and history stay tied to it.') : (freeLetters.length ? t('Letters that are already in use are greyed out.') : t('All letters (A–Z) are already used, so no new group can be created.'))}</p>
             </div>
             <div className="field">
               <label>{t('Level')}</label>

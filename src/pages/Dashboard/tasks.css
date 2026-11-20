@@ -122,3 +122,6 @@ button.tk2-pic:hover{ border-color:var(--gold); }
 .tk2-add svg{ width:24px; height:24px; color:var(--gold); }
 .tk2-add:hover{ border-color:var(--gold); background:var(--gold-dim); color:var(--text); }
 .tk2-cnt{ font-size:12.5px; color:var(--text-muted); }
+
+.tk2-closed{ display:flex; align-items:center; gap:10px; margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--bg-3); border:1px dashed var(--line); color:var(--text-muted); font-size:13.5px; line-height:1.45; }
+.tk2-closed svg{ width:18px; height:18px; flex:none; }

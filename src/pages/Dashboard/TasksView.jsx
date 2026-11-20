@@ -124,8 +124,9 @@ function TaskCard({ task, submission, onSubmitted, t, toast, max }) {
   const urls = useSignedUrls(files.map((x) => x.path), !!submission && !removed);
   const viewable = files.filter((fl) => urls[fl.path] && drawable(fl.name) && !badSigned[fl.path]).map((fl) => ({ path: fl.path, url: urls[fl.path], name: fl.name }));
   const late = !!submission && !!task.due && new Date(submission.submittedAt) > new Date(task.due + 'T23:59:59');
-  const canChange = !!submission && !submission.gradedAt;
-  const showPicker = !submission || replacing;
+  const closed = st !== 'graded' && daysUntil(task.due) !== null && daysUntil(task.due) < 0;   // the teacher's deadline has passed: nothing can be uploaded or replaced any more
+  const canChange = !!submission && !submission.gradedAt && !closed;
+  const showPicker = !closed && (!submission || replacing);
 
   // free the preview links of removed / replaced photos
   const itemsRef = useRef([]);
@@ -209,6 +210,10 @@ function TaskCard({ task, submission, onSubmitted, t, toast, max }) {
           )}
           {canChange && <button type="button" className="tk2-link" onClick={() => setReplacing(true)}>{max > 1 ? t('Replace the photos') : t('Replace the file')}</button>}
         </div>
+      )}
+
+      {closed && !submission && (
+        <div className="tk2-closed" role="status">{IC.clock || IC.file}<span>{t('The deadline has passed. Uploads for this task are closed.')}</span></div>
       )}
 
       {showPicker && (

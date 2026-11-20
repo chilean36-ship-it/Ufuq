@@ -6,6 +6,7 @@ import useHashView, { readHashView } from '../../hooks/useHashView';
 import Loader from '../../components/Loader';
 import PageStyle from '../../components/PageStyle';
 import CabinetLangSelect from '../../components/CabinetLangSelect';
+import ThemeToggle from '../../components/panel/ThemeToggle';
 import PillSelect, { GROUP_ICON } from '../../components/PillSelect';
 import pageCss from './admin.css?inline';
 import uiCss from './admin-ui.css?inline';
@@ -308,6 +309,7 @@ function AdminInner() {
             <button type="button" className="top-search" onClick={() => setCmdOpen(true)} aria-label={t('Search pages…')}>
               <svg {...svg}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><span>{t('Search pages…')}</span><kbd>Ctrl K</kbd>
             </button>
+            <ThemeToggle />
             <CabinetLangSelect />
             <PillSelect id="groupSelect" icon={GROUP_ICON} ariaLabel={t('Group')} value={currentGroupCode || ''}
                         disabled={!groupsLoaded || myGroups.length === 0}

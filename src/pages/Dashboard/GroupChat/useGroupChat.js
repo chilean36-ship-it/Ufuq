@@ -169,7 +169,18 @@ export function useGroupChat({ groupCode, user, myName, t }) {
         if (profRes.error) throw profRes.error;
         if (tgRes.error) throw tgRes.error;
         const isAdminRole = !!(profRes.data && profRes.data.role === 'admin');
-        if (!cancelled) setCanModerate(isAdminRole || !!tgRes.data);
+        let linked = !!tgRes.data;
+        // a teacher linked to another level group of the same letter ("Group D9" for "Group D10") works with this chat too
+        if (!linked && !isAdminRole && profRes.data && profRes.data.role === 'teacher') {
+          const gr = await supabase.from('groups').select('letter').eq('code', groupCode).maybeSingle();
+          const letter = gr.data && gr.data.letter;
+          if (letter) {
+            const sib = await supabase.from('groups').select('code').eq('letter', letter);
+            const codes = (sib.data || []).map((x) => x.code);
+            if (codes.length) { const tg2 = await supabase.from('teacher_groups').select('teacher_id').eq('teacher_id', userId).in('group_code', codes).limit(1); linked = !!(tg2.data && tg2.data.length); }
+          }
+        }
+        if (!cancelled) setCanModerate(isAdminRole || linked);
       } catch (err) {
         console.error('Ruxsatlarni tekshirishda xatolik:', err.message);
         if (!cancelled) setCanModerate(false);

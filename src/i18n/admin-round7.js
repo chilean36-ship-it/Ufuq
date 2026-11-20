@@ -1,5 +1,6 @@
 // Strings added in the admin-panel round 7 (new-students chart, group tabs, pop-up video, certificates, deadlines, founder). Key = English text.
 const uz = {
+  'Choose the group letter (A–Z).': 'Guruh harfini tanlang (A–Z).', 'All letters (A–Z) are already used, so no new group can be created.': 'Barcha harflar (A–Z) band, yangi guruh ochib bo‘lmaydi.',
   'Chart': 'Grafik', 'Statistics': 'Statistika', 'Joined in 30 days': '30 kunda qo‘shilgan', 'Compared with the 15 days before': 'Oldingi 15 kunga nisbatan',
   'Average per day': 'Kuniga o‘rtacha', 'Best day': 'Eng yaxshi kun', 'Week': 'Hafta', 'Founder': 'Asoschi',
   'Only the level groups that have been created are listed. Open a letter to switch its levels on or off.': 'Faqat yaratilgan level guruhlari ko‘rsatiladi. Harfni ochib, levellarni yoqish yoki o‘chirish mumkin.',
@@ -17,6 +18,7 @@ const uz = {
   'Unpaid order stays open (hours)': 'To‘lanmagan buyurtma ochiq turadi (soat)',
 };
 const ru = {
+  'Choose the group letter (A–Z).': 'Выберите букву группы (A–Z).', 'All letters (A–Z) are already used, so no new group can be created.': 'Все буквы (A–Z) заняты, новую группу создать нельзя.',
   'Chart': 'График', 'Statistics': 'Статистика', 'Joined in 30 days': 'Пришло за 30 дней', 'Compared with the 15 days before': 'По сравнению с прошлыми 15 днями',
   'Average per day': 'В среднем в день', 'Best day': 'Лучший день', 'Week': 'Неделя', 'Founder': 'Основатель',
   'Only the level groups that have been created are listed. Open a letter to switch its levels on or off.': 'Показаны только созданные группы уровней. Откройте букву, чтобы включить или выключить уровни.',
@@ -34,6 +36,7 @@ const ru = {
   'Unpaid order stays open (hours)': 'Неоплаченный заказ открыт (часов)',
 };
 const ar = {
+  'Choose the group letter (A–Z).': 'اختر حرف المجموعة (A–Z).', 'All letters (A–Z) are already used, so no new group can be created.': 'جميع الحروف (A–Z) مستخدمة، لا يمكن إنشاء مجموعة جديدة.',
   'Chart': 'مخطط', 'Statistics': 'إحصائيات', 'Joined in 30 days': 'انضموا خلال 30 يومًا', 'Compared with the 15 days before': 'مقارنة بالـ 15 يومًا السابقة',
   'Average per day': 'المعدل اليومي', 'Best day': 'أفضل يوم', 'Week': 'أسبوع', 'Founder': 'المؤسس',
   'Only the level groups that have been created are listed. Open a letter to switch its levels on or off.': 'تُعرض مجموعات المستويات التي أُنشئت فقط. افتح الحرف لتشغيل المستويات أو إيقافها.',
