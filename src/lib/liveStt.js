@@ -26,7 +26,8 @@ export function startLiveStt({ lang = 'ar-SA', onText, onState, onError, idleMs 
   let committed = '';       // text of engine sessions that already ended
   let rec = null;
   let timer = null;
-  let quickRestarts = 0;    // guards against a restart loop when the engine fails immediately
+  let netFails = 0;         // consecutive 'network' errors from the engine
+  let quickRestarts = 0;   // guards against a restart loop when the engine fails immediately
   let lastStart = 0;
   let lastActivity = Date.now(); // the microphone stays on through long pauses; it stops by itself only after `idleMs` with nothing said
   let idleTimer = setInterval(() => {
@@ -64,6 +65,7 @@ export function startLiveStt({ lang = 'ar-SA', onText, onState, onError, idleMs 
       parts.forEach((x) => { if (!x.fin) interim += x.tx + ' '; });
       live = parts.map((x) => x.tx).join(' ').trim();
       lastActivity = Date.now();
+      netFails = 0;
       emit(live, interim.trim());
     };
     rec.onerror = (e) => {
@@ -72,7 +74,12 @@ export function startLiveStt({ lang = 'ar-SA', onText, onState, onError, idleMs 
       if (code === 'not-allowed' || code === 'service-not-allowed' || code === 'audio-capture' || code === 'language-not-supported') {
         active = false; if (onError) onError(code === 'language-not-supported' ? 'unsupported' : code); return;
       }
-      if (code === 'network') { active = false; if (onError) onError('network'); }
+      if (code === 'network') {
+        // Chrome's speech service drops the connection now and then (mobile data, Wi-Fi hiccup, Google busy). One hiccup must not
+        // end the whole recitation: keep the transcript and reconnect with a growing pause; give up only after several in a row.
+        netFails++;
+        if (netFails > 6) { active = false; if (onError) onError('network'); }
+      }
     };
     rec.onend = () => {
       committed = (committed + ' ' + live).trim();
@@ -80,7 +87,7 @@ export function startLiveStt({ lang = 'ar-SA', onText, onState, onError, idleMs 
       if (!active) { clearInterval(idleTimer); if (onState) onState('idle'); return; }
       quickRestarts = Date.now() - lastStart < 1500 ? quickRestarts + 1 : 0;
       if (quickRestarts > 25) { active = false; clearInterval(idleTimer); if (onError) onError('network'); if (onState) onState('idle'); return; }
-      timer = setTimeout(run, 40 + Math.min(quickRestarts, 10) * 60); // restart at once (words said while the engine is down are lost); back off only if it keeps failing
+      timer = setTimeout(run, netFails ? 300 * netFails : 40 + Math.min(quickRestarts, 10) * 60); // restart at once (words said while the engine is down are lost); back off only if it keeps failing
     };
     try { rec.start(); } catch (err) { /* start() throws if already started; onend will retry */ }
   }
