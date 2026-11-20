@@ -6,7 +6,7 @@ import {
 } from './voiceAdapter';
 import { I } from './icons';
 import { holdMic, muteMic, releaseMic } from '../../../lib/serverStt';
-import { stopSpeaking } from '../../../lib/speak';
+import { primeAudio, stopSpeaking } from '../../../lib/speak';
 
 const MAX_SILENT_ROUNDS = 3; // after this many empty listening rounds we wait for a tap instead of looping forever
 
@@ -196,7 +196,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       muteMic(false);
       silenceRef.current = 0;
       if (limitRef.current) return;
-      if (phaseRef.current === 'idle' || phaseRef.current === 'listening') api.current.startListening();   // speaking / thinking: it listens when the answer ends
+      if (!speakRef.current && (phaseRef.current === 'idle' || phaseRef.current === 'listening')) api.current.startListening();   // speaking / thinking: it listens when the answer ends (never cut an answer short)
     }
   };
 
@@ -204,6 +204,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   useEffect(() => {
     aliveRef.current = true;
     holdMic(true);   // the microphone stays open for the whole call
+    primeAudio();    // the answers are played through Web Audio, woken by this tap
     let usedToday = false;
     try { usedToday = localStorage.getItem(LIMIT_KEY) === new Date().toISOString().slice(0, 10); } catch (e) { /* ignore */ }
     if (usedToday) { limitRef.current = true; setProblem('limit'); }   // already ended earlier today (the server also enforces it)
