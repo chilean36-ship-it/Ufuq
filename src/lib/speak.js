@@ -127,10 +127,21 @@ function toSpeechSegments(text, defaultLang) {
 // ---------- Ijro ----------
 let currentAudio = null;
 let currentUrl = null;
+let currentSource = null;   // Web Audio source of the clip being played
+let playCtx = null;
+
+/** Call from a tap (the Live screen opening): creates / wakes the audio context the answers are played through. */
+export function primeAudio() {
+  try {
+    if (!playCtx || playCtx.state === 'closed') playCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (playCtx.state === 'suspended') playCtx.resume().catch(() => {});
+  } catch (e) { /* ignore */ }
+}
 let requestId = 0;
 
 export function stopSpeaking() {
   requestId++;
+  if (currentSource) { try { currentSource.onended = null; currentSource.stop(); } catch (e) { /* ignore */ } currentSource = null; }
   if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
   if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
   if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -192,7 +203,29 @@ async function fetchSegment(seg) {
   return new Blob([buf], { type: sniffType(buf) });
 }
 
-function playBlob(blob, onTick) {
+/** Plays through Web Audio: unlike an <audio> element it is not paused by the phone when the microphone starts, stops or is muted. Falls back to the element. */
+async function playBlob(blob, onTick) {
+  try {
+    primeAudio();
+    if (playCtx && playCtx.state === 'suspended') { try { await playCtx.resume(); } catch (e) { /* ignore */ } }
+    if (playCtx && playCtx.state === 'running') {
+      const buf = await playCtx.decodeAudioData(await blob.arrayBuffer());
+      const src = playCtx.createBufferSource();
+      src.buffer = buf;
+      src.connect(playCtx.destination);
+      currentSource = src;
+      await new Promise((resolve) => {
+        const tick = onTick ? setInterval(onTick, 180) : null;
+        src.onended = () => { if (tick) clearInterval(tick); if (currentSource === src) currentSource = null; resolve(); };
+        src.start();
+      });
+      return;
+    }
+  } catch (e) { /* decoding or the context failed: use the element below */ }
+  await playElement(blob, onTick);
+}
+
+function playElement(blob, onTick) {
   currentUrl = URL.createObjectURL(blob);
   const audio = new Audio();
   audio.preload = 'auto';
