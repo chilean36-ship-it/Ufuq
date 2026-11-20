@@ -13,7 +13,8 @@ const SLIDES = [{ ic: 'video', tone: 'amber', ar: 'ا' }, { ic: 'ai', tone: 'vio
 const LETTERS = ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ر', 'س', 'ع', 'م', 'ن', 'ه', 'و', 'ي'];
 
 function Welcome({ onStart, onHaveAccount }) {
-  const { t } = useApp();
+  const { t, lang, setLang } = useApp();
+  const [langOpen, setLangOpen] = useState(false);
   const [i, setI] = useState(0);
   const track = useRef(null);
   const paused = useRef(false);
@@ -28,7 +29,28 @@ function Welcome({ onStart, onHaveAccount }) {
   return (
     <div className="ua-screen ua-welcome2">
       <div className="ua-letters" aria-hidden="true">{LETTERS.map((l, n) => <span key={n} style={{ '--n': n }}>{l}</span>)}</div>
-      <header className="ua-w-brand"><Logo size={34} /><b>Ufuq</b></header>
+      <header className="ua-w-brand">
+        <Logo size={34} /><b>Ufuq</b>
+        <div className="ua-wl">
+          <button type="button" className={'ua-wl-btn' + (langOpen ? ' open' : '')} aria-haspopup="listbox" aria-expanded={langOpen} onClick={() => { haptic(6); setLangOpen((o) => !o); }}>
+            <Ico n="globe" size={17} /><span>{lang}</span><Ico n="chev" size={14} sw={2.4} />
+          </button>
+          {langOpen && (
+            <>
+              <div className="ua-wl-scrim" onClick={() => setLangOpen(false)} />
+              <ul className="ua-wl-menu" role="listbox">
+                {APP_LANGS.map((l) => (
+                  <li key={l.code}>
+                    <button type="button" role="option" aria-selected={lang === l.code} className={lang === l.code ? 'on' : ''} onClick={() => { haptic(); setLang(l.code, { sync: false }); setLangOpen(false); }}>
+                      <span>{l.label}</span>{lang === l.code && <Ico n="check" size={17} sw={2.6} />}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      </header>
       <div className="ua-slides" ref={track} onScroll={onScroll} onPointerDown={() => { paused.current = true; }} onPointerUp={() => { setTimeout(() => { paused.current = false; }, 6000); }}>
         {SLIDES.map((s, n) => (
           <div className="ua-slide" key={n}>

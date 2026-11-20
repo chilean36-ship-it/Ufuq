@@ -45,10 +45,12 @@ import adminExtra from '../../i18n/admin-extra';
 import adminRedesign from '../../i18n/admin-redesign';
 import adminStaff from '../../i18n/admin-staff';
 import adminPopup from '../../i18n/admin-popup';
+import panelAttendance from '../../i18n/panel-attendance';
+import panelUpload from '../../i18n/panel-upload';
 
 // Admin shares several pages with the teacher panel, so its dictionary = teacher + new strings + admin (admin wins).
 import examModeDict from '../../i18n/exam-mode';
-const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}), ...(adminPopup[k] || {}) }; return acc; }, {});
+const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}), ...(adminPopup[k] || {}), ...(panelAttendance[k] || {}), ...(panelUpload[k] || {}) }; return acc; }, {});
 const COLLAPSE_KEY = 'ufuq-panel-collapsed';
 import { supabase } from '../../lib/supabaseClient';
 import { getFreshUser, resolveFullName, useLiveName } from '../../lib/profileName';

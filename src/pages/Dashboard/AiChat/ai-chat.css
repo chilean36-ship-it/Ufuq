@@ -291,12 +291,9 @@ html body .uai-panel .uai-box textarea.uai-input:focus{
 
 /* ---------- Live voice mode ---------- */
 .uai-voice{
-  position:fixed; inset:0; z-index:900; display:flex; flex-direction:column; align-items:center; color:var(--text);
-  background:
-    radial-gradient(900px 620px at 50% 36%, rgba(201,162,75,.16), transparent 62%),
-    radial-gradient(760px 520px at 12% 100%, rgba(229,200,120,.12), transparent 60%),
-    radial-gradient(700px 480px at 96% 0%, rgba(201,162,75,.10), transparent 60%),
-    var(--bg);
+  position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh; height:100dvh; z-index:2147482000; display:flex; flex-direction:column; align-items:center;
+  color:#f3eee4; background:#000;
+  padding-bottom:env(safe-area-inset-bottom);
   animation:uaiFade .28s ease both;
 }
 .uai-voice-top{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:max(14px, env(safe-area-inset-top)) 18px 0 22px; }
@@ -436,3 +433,11 @@ html body.adm .uai-panel .uai-box:focus-within{ border-color:rgba(201,162,75,.65
 @media (max-width:640px){
   html body.adm-shell .uai-panel .uai-box textarea.uai-input{ font-size:16px; }
 }
+
+/* Live voice, final look: plain black screen, the orb shows only its own colour (no glow around it), no rings, no extra field */
+.uai-voice::before, .uai-voice::after, .uai-orb::before, .uai-orb::after{ display:none !important; }
+.uai-orb-glow{ display:none !important; }
+.uai-orb-core{ box-shadow:none !important; }
+.uai-orb-blob{ filter:blur(8px); }
+.uai-voice .uai-vtype{ display:none !important; }
+html[data-theme="light"] .uai-voice{ background:#000 !important; color:#f3eee4; }

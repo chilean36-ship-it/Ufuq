@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabaseClient';
 import useLiveRefresh from '../../lib/liveRefresh';
 import { usePanel } from '../../components/panel/PanelContext';
 import { Modal } from '../../components/panel/ui';
-import { fmtDate, groupLetterFor, todayStr, uploadToAudioWorker } from '../../lib/panelUtils';
+import FilePicker from '../../components/panel/FilePicker';
+import { detectDurationFromFile, fmtDate, groupLetterFor, todayStr, uploadToAudioWorker } from '../../lib/panelUtils';
 
 /** Uploads into <bucket>/<group_code>/<file> and returns its public URL — used for board photos
  *  (audio still goes through the R2 worker via uploadToAudioWorker). */
@@ -157,7 +158,7 @@ function AudioModal({ state, onClose, onSaved, restricted }) {
   const { t, currentGroup, myGroups } = usePanel();
   const g = currentGroup || (myGroups || []).find((x) => x.is_active) || (myGroups || [])[0] || null;
   const fileRef = useRef(null);
-  const [f, setF] = useState({ title: '', desc: '', url: '', minutes: 0, scope: 'group' });
+  const [f, setF] = useState({ title: '', desc: '', url: '', seconds: 0, scope: 'group' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const item = state.item;
@@ -166,7 +167,7 @@ function AudioModal({ state, onClose, onSaved, restricted }) {
     if (!state.open) return;
     setF({
       title: item ? item.title : '', desc: item ? (item.description || '') : '', url: item ? (item.drive_url || '') : '',
-      minutes: item ? Math.round((item.duration_seconds || 0) / 60) : 0, scope: !restricted && item && !item.group_code ? 'global' : 'group',
+      seconds: item ? (item.duration_seconds || 0) : 0, scope: !restricted && item && !item.group_code ? 'global' : 'group',
     });
     setError('');
     if (fileRef.current) fileRef.current.value = '';
@@ -187,9 +188,9 @@ function AudioModal({ state, onClose, onSaved, restricted }) {
       url = up.url;
       setError('');
     }
-    if (!url) { setError(t('Pick a file or paste a link.')); setSaving(false); return; }
+    if (!url) { setError(t('Pick a file first.')); setSaving(false); return; }
     const global = !restricted && f.scope === 'global';
-    const payload = { group_code: global ? null : g.code, title: f.title.trim(), description: f.desc.trim(), drive_url: url, duration_seconds: (parseInt(f.minutes, 10) || 0) * 60 };
+    const payload = { group_code: global ? null : g.code, title: f.title.trim(), description: f.desc.trim(), drive_url: url, duration_seconds: Math.max(0, parseInt(f.seconds, 10) || 0) };
     const result = item ? await supabase.from('audio_lessons').update(payload).eq('id', item.id) : await supabase.from('audio_lessons').insert(payload);
     setSaving(false);
     if (result.error) { setError(global ? t('Only an admin can publish to all students.') + ' ' + result.error.message : result.error.message); return; }
@@ -203,17 +204,10 @@ function AudioModal({ state, onClose, onSaved, restricted }) {
         <div className="field"><label>{t('Title')}</label><input type="text" required value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
         <div className="field"><label>{t('Description')}</label><textarea rows={2} value={f.desc} onChange={(e) => setF({ ...f, desc: e.target.value })}></textarea></div>
         <div className="field">
-          <label>{t('Audio file')}</label>
-          <input type="file" accept="audio/*" className="file-input" ref={fileRef} />
-          <p className="hint">{t('Pick a file from your phone or computer \u2014 it is uploaded and linked automatically.')}</p>
-        </div>
-        <div className="field">
-          <label>{t('\u2026or paste a link')}</label>
-          <input type="text" placeholder="https://drive.google.com/file/d/..." value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
-          <p className="hint">{t('Share the file as \u201cAnyone with the link\u201d.')}</p>
+          <FilePicker inputRef={fileRef} accept="audio/*" label={t('Choose audio file')} current={!!f.url} resetKey={state.open + ':' + (item ? item.id : 'new')}
+                      onFile={async (file) => { if (file) { const sec = await detectDurationFromFile(file); setF((x) => ({ ...x, seconds: sec })); } }} />
         </div>
         <div className="field-row">
-          <div className="field"><label>{t('Duration (minutes)')}</label><input type="number" min="0" max="600" value={f.minutes} onChange={(e) => setF({ ...f, minutes: e.target.value })} /></div>
           <div className="field">
             <label>{t('Visibility')}</label>
             <select value={f.scope} onChange={(e) => setF({ ...f, scope: e.target.value })}>
@@ -328,7 +322,7 @@ function BoardModal({ state, onClose, onSaved }) {
       url = up.url;
       setError('');
     }
-    if (!url) { setError(t('Pick a file or paste a link.')); setSaving(false); return; }
+    if (!url) { setError(t('Pick a file first.')); setSaving(false); return; }
     const payload = { group_code: g.code, caption: f.caption.trim(), storage_path: url, taken_at: f.date };
     const result = item ? await supabase.from('board_photos').update(payload).eq('id', item.id) : await supabase.from('board_photos').insert(payload);
     setSaving(false);
@@ -342,14 +336,7 @@ function BoardModal({ state, onClose, onSaved }) {
       <form onSubmit={submit}>
         <div className="field"><label>{t('Caption')}</label><input type="text" value={f.caption} onChange={(e) => setF({ ...f, caption: e.target.value })} /></div>
         <div className="field">
-          <label>{t('Image file')}</label>
-          <input type="file" accept="image/*" className="file-input" ref={fileRef} />
-          <p className="hint">{t('Pick a file from your phone or computer \u2014 it is uploaded and linked automatically.')}</p>
-        </div>
-        <div className="field">
-          <label>{t('\u2026or paste a link')}</label>
-          <input type="text" placeholder="https://drive.google.com/file/d/..." value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
-          <p className="hint">{t('Share the file as \u201cAnyone with the link\u201d.')}</p>
+          <FilePicker inputRef={fileRef} accept="image/*" label={t('Choose image')} current={!!f.url} preview resetKey={state.open + ':' + (item ? item.id : 'new')} />
         </div>
         <div className="field"><label>{t('Lesson date')}</label><input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></div>
         <p className="hint" style={{ display: error ? 'block' : 'none', color: 'var(--danger-bright)' }}>{error}</p>

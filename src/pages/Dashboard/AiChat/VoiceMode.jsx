@@ -42,7 +42,6 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   const bumpRef = useRef(0);
   const levelRef = useRef(0);      // live loudness of what the person says (0..1), drives the orb
   const deniedRef = useRef(false); // the microphone is blocked: do not keep re-asking after typed turns
-  const [typed, setTyped] = useState('');
   const orbRef = useRef(null);
   const endBtnRef = useRef(null);
   const api = useRef({});
@@ -168,16 +167,6 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     api.current.startListening();
   };
 
-  // Typed message: the assistant works without any microphone
-  const sendTyped = (e) => {
-    e.preventDefault();
-    const text = typed.trim();
-    if (!text || limitRef.current) return;
-    setTyped('');
-    killListen(); killSpeech(); killRequest();
-    setProblem(null); setNotice('');
-    api.current.handleUser(text);
-  };
 
   // Mute = only MY microphone is off. The assistant keeps thinking / speaking and finishes its answer (like a call);
   // it just does not start listening again until the microphone is back on.
@@ -339,10 +328,6 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       </div>
 
       <div className="uai-voice-foot">
-        <form className="uai-vtype" onSubmit={sendTyped}>
-          <input type="text" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={tr('vType')} dir="auto" aria-label={tr('vType')} enterKeyHint="send" />
-          <button type="submit" disabled={!typed.trim()} aria-label={tr('send')}>{I.send}</button>
-        </form>
         <div className="uai-vlangs" role="group" aria-label={tr('vLang')}>
           {VOICE_LANGS.map((l) => (
             <button type="button" key={l.id} className={'uai-vlang' + (vlang === l.id ? ' on' : '')} aria-pressed={vlang === l.id} onClick={() => changeLang(l.id)}>{l.label}</button>

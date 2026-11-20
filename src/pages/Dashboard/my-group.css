@@ -498,5 +498,3 @@ html[data-theme="light"] .gp2 .gm-confirm-ico{color:#B8433A;}
   .gp2 .group-chat-send, .gp2 .group-chat-back-btn, .gp2 .gc-jump-btn{transition:none;}
 }
 
-/* app-only countdown ring + tiles of the lesson card: hidden wherever the app's skin (app-v2.css) is not loaded (website, teacher panel) */
-.gp2 .lh-ring, .gp2 .lh-units{ display:none; }

@@ -30,6 +30,8 @@ import { clearCachedRole, ufuqGetSession } from '../../lib/auth';
 import { fetchPanelProfile, inApp, isSuperAdmin, outRoute, panelRoute, verifySuperAdmin } from '../../lib/panelAccess';
 import PanelTabBar from '../../components/panel/PanelTabBar';
 import PanelMoreSheet from '../../components/panel/PanelMoreSheet';
+import panelAttendance from '../../i18n/panel-attendance';
+import panelUpload from '../../i18n/panel-upload';
 import panelSwitchDict from '../../i18n/panel-switch';
 import teacherClassDict from '../../i18n/teacher-class';
 import examLevelsDict from '../../i18n/exam-levels';
@@ -50,7 +52,7 @@ import AnnouncementsPage from './AnnouncementsPage';
 import PanelPending from './PanelPending';
 
 // New strings of the redesigned panel, merged over the base dictionary (EN falls back to the key itself).
-const teacherDict = Object.keys({ ...teacherDictBase, ...teacherExtra }).reduce((acc, k) => { acc[k] = { ...(examLevelsDict[k] || {}), ...(teacherClassDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(examModeDict[k] || {}) }; return acc; }, {});
+const teacherDict = Object.keys({ ...teacherDictBase, ...teacherExtra }).reduce((acc, k) => { acc[k] = { ...(examLevelsDict[k] || {}), ...(teacherClassDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(examModeDict[k] || {}), ...(panelAttendance[k] || {}), ...(panelUpload[k] || {}) }; return acc; }, {});
 const COLLAPSE_KEY = 'ufuq-panel-collapsed';
 
 const GROUP_KEY = 'ufuq-admin-group'; // same key the legacy admin/teacher panels shared

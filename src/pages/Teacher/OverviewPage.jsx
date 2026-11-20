@@ -1,3 +1,4 @@
+import { fmtDate as fmtDateL, currentLang } from '../../lib/dateLocale';
 import { openSafe } from '../../lib/safeUrl';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
@@ -138,9 +139,13 @@ export default function OverviewPage() {
 
   return (
     <section className="page active" id="page-overview">
-      <div className="greet">
-        <div>
-          <h1>{hello}{first ? ', ' + first : ''}</h1>
+      <div className="greet a-hero">
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h1>{hello}{first ? ', ' + first : ''} {'👋'}</h1>
+        </div>
+        <div className="a-hero-meta">
+          <span className="a-pill"><i className="a-live" />{t('Live')}</span>
+          <span className="a-pill">{clockIcon}{fmtDateL(new Date(), currentLang(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>
         </div>
       </div>
       <div className="kpi-row">

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { DAY_NAME_BY_JS, formatLocalTime } from './weekUtils';
+import './lesson-horizon.css';
 
 /**
  * "Lesson horizon" — the hero of My Group.

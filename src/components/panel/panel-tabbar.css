@@ -192,3 +192,70 @@ html body.ua-panel .greet{ padding:4px 2px 2px; animation:ptbRise .5s cubic-bezi
 @media (max-width:860px){
   html body.ua-panel .group-page-head > div:first-child:not(:has(button, .btn, a)){ display:none; }
 }
+
+/* ---------------------------------------------------------------------------------------------------------------
+   Round 5 — teacher overview on a phone + standard "bounded areas" for long lists (site and app)
+   --------------------------------------------------------------------------------------------------------------- */
+.greet .a-hero-meta{ display:none; }
+html body.ua-panel .greet.a-hero{ display:block; padding:20px 20px 18px; margin-bottom:14px; }
+html body.ua-panel .greet.a-hero h1{ margin:0; font-size:24px; }
+html body.ua-panel .a-hero-meta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; position:relative; z-index:1; }
+html body.ua-panel .a-pill{ display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:99px; font:600 12.5px 'Inter',sans-serif; border:1px solid transparent; }
+html body.ua-panel .a-pill svg{ width:15px; height:15px; } html body.ua-panel .a-live{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+/* today's classes: the status and the join code stay on the group's own line */
+@media (max-width:640px){
+  html body.ua-panel .tl-row{ grid-template-columns:50px 12px minmax(0,1fr) auto auto; grid-template-areas:"time dot name st code" "time dot meta meta meta"; column-gap:8px; row-gap:2px; padding:10px 4px; }
+  html body.ua-panel .tl-body{ display:contents; }
+  html body.ua-panel .tl-time{ grid-area:time; } html body.ua-panel .tl-dot{ grid-area:dot; }
+  html body.ua-panel .tl-name{ grid-area:name; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  html body.ua-panel .tl-meta{ grid-area:meta; }
+  html body.ua-panel .tl-row .lesson-status{ grid-area:st; grid-column:auto; justify-self:end; font-size:10px; padding:2px 7px; white-space:nowrap; }
+  html body.ua-panel .tl-row .lesson-code{ grid-area:code; grid-column:auto; justify-self:end; font-size:10px; padding:2px 6px; white-space:nowrap; }
+}
+
+/* "ready to teach": the three chips share one row */
+html body.ua-panel .ready-chips{ flex-wrap:nowrap; gap:6px; }
+html body.ua-panel .ready-chip{ flex:0 1 auto; min-width:0; white-space:nowrap; padding:4px 8px; font-size:11px; gap:5px; }
+html body.ua-panel .ready-chip svg{ width:14px; height:14px; flex:none; }
+
+/* quick actions: two square tiles per row (the odd last one spans the row) */
+@media (max-width:860px){
+  html body.ua-panel .qa-grid, html body.ua-panel #page-overview .ov-side .qa-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px; }
+  html body.ua-panel .qa{ aspect-ratio:1 / 1; min-height:0; flex-direction:column; align-items:flex-start; justify-content:space-between; padding:14px; text-align:start; }
+  html body.ua-panel .qa > span:last-child{ font-size:14.5px; line-height:1.25; } html body.ua-panel .qa small{ display:block; margin-top:3px; font-size:11.5px; color:var(--text-muted); font-weight:500; }
+  html body.ua-panel .qa:last-child:nth-child(odd){ grid-column:1 / -1; aspect-ratio:auto; min-height:76px; flex-direction:row; align-items:center; justify-content:flex-start; gap:14px; }
+}
+
+/* standard bounded areas: a list grows with its data up to a comfortable size, then scrolls inside its own card */
+.group-list-grid{ max-height:236px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.att-recent-scroll{ max-height:260px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.ma-scroll{ max-height:340px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.tl-list{ max-height:380px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.attn-list{ max-height:300px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.u-list{ max-height:420px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+
+/* group page, students card: the same single-column, bounded list as the student's classmates card (teacher panel on a phone) */
+@media (max-width:860px){
+  html body.ua-panel .cm-list{ grid-template-columns:1fr !important; max-height:320px; overflow-y:auto; overscroll-behavior:contain; }
+  html body.ua-panel .cm-search input{ border:0 !important; background:transparent !important; box-shadow:none !important; height:auto !important; min-height:0 !important; padding:0 !important; border-radius:0 !important; }
+}
+
+/* attendance: the lesson has not started / its day is over */
+.att-closed{ margin:0 0 12px; padding:10px 14px; border-radius:14px; background:rgba(224,165,58,.12); border:1px solid rgba(224,165,58,.35); color:#E0A53A; font-size:13px; font-weight:600; line-height:1.4; }
+.att-list.is-closed .att-row{ cursor:not-allowed; }
+@media (max-width:640px){
+  html body.ua-panel .tl-row{ grid-template-columns:44px 10px minmax(0,1fr) auto auto; column-gap:6px; }
+  html body.ua-panel .tl-name{ font-size:14px; }
+  html body.ua-panel .tl-time b{ font-size:15px; }
+  html body.ua-panel .tl-row .lesson-status{ font-size:8.5px; padding:2px 6px; letter-spacing:.02em; }
+  html body.ua-panel .tl-row .lesson-code{ font-size:9.5px; padding:2px 5px; letter-spacing:0; }
+}
+@media (max-width:860px){
+  html body.ua-panel .group-list-grid, html body.ua-panel #page-overview .ov-main .group-list-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  html body.ua-panel .group-list-card{ padding:10px 10px; } html body.ua-panel .group-list-name{ font-size:14px; } html body.ua-panel .group-list-sched{ font-size:11.5px; }
+}
+
+/* the open group chat takes the whole screen, like in the student app: the tab bar steps aside so the message box is never covered */
+body.ua-panel:has(.group-chat-fullview) .ptb{ transform:translateY(160%); opacity:0; pointer-events:none; }
+body.ua-panel:has(.group-chat-fullview) .main .content{ padding-bottom:calc(10px + env(safe-area-inset-bottom)); }

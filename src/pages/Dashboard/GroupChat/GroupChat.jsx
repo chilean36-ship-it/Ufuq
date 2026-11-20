@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useOnline } from '../../../lib/presence';
+import './chat-skin.css';
 import { createPortal } from 'react-dom';
 import { scrollWithin } from '../../../hooks/useScrollTop';
 import PageStyle from '../../../components/PageStyle';
@@ -20,6 +22,7 @@ import { Svg, IconSearch, IconClose, IconSmile, IconChevronDown, QUICK_REACTIONS
 export default function GroupChat({ chat, groupCode, groupName, memberCount, myId, myAvatarUrl, onBack }) {
   const { t } = useCabinetI18n();
   const { messages, canModerate, composer, firstUnreadId, typingNames, reactions, reactionsEnabled, readers, avatars = {} } = chat;
+  const online = useOnline();
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
@@ -347,7 +350,7 @@ export default function GroupChat({ chat, groupCode, groupName, memberCount, myI
            onContextMenu={(e) => { e.preventDefault(); openMenu(e.currentTarget.querySelector('.gc-msg-more-btn'), m.id, { x: e.clientX, y: e.clientY }); }}
            className={'gc-msg-row ' + (isMine ? 'is-mine' : '') + ' ' + (m.is_pinned ? 'gc-has-pin' : '') + ' ' + (isDim ? 'gc-dim' : '') + ' ' + (isFirstInGroup ? '' : 'gc-grouped')}>
         {isLastInGroup
-          ? <div className="gc-msg-avatar" style={isMine ? undefined : { background: gcHexToRgba(senderColor, 0.2), color: senderColor }}>{(isMine ? (myAvatarUrl || avatars[m.sender_id]) : avatars[m.sender_id])
+          ? <div className={'gc-msg-avatar' + (!isMine && online.has(m.sender_id) ? ' is-online' : '')} style={isMine ? undefined : { background: gcHexToRgba(senderColor, 0.2), color: senderColor }}>{(isMine ? (myAvatarUrl || avatars[m.sender_id]) : avatars[m.sender_id])
               ? <img src={(isMine ? (myAvatarUrl || avatars[m.sender_id]) : avatars[m.sender_id])} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
               : initial}</div>
           : <div className="gc-msg-avatar-gap" />}
