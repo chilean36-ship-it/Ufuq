@@ -46,6 +46,7 @@ function json(req: Request, body: unknown, status = 200) {
 
 const MAX_AUDIO_B64_CHARS = 5_000_000; // ~90 s of 16 kHz mono WAV
 const MAX_PER_MINUTE = 6;              // protects the Gemini quota
+const practiceHits = new Map<string, number[]>();   // self-practice checks (no assignment), best effort per instance
 // deno-lint-ignore no-explicit-any
 const quranCache = new Map<number, any>();
 
@@ -92,6 +93,44 @@ async function geminiCall(model: string, audio: string, withThinking: boolean) {
   });
 }
 
+// Tajweed / pronunciation review by Gemini: advisory only (the word-level check above is the score). It must name only what it can clearly hear.
+const LANG_NAME: Record<string, string> = { uz: "Uzbek", ru: "Russian", en: "English", ar: "Arabic" };
+// deno-lint-ignore no-explicit-any
+async function geminiTajweed(audio: string, ayahs: { n: number; words: string[] }[], lang: string): Promise<any> {
+  if (!GEMINI_API_KEY) return null;
+  const expected = ayahs.map((a) => `(${a.n}) ${a.words.join(" ")}`).join("\n");
+  const prompt =
+    "You are an experienced Qur'an teacher (Hafs 'an 'Asim). Listen to the student's recitation and compare it with the expected verses below (fully vocalised).\n" +
+    "Judge ONLY tajweed and pronunciation problems that you can clearly HEAR: madd (elongation too short or too long), ghunna, idgham / ikhfa / iqlab / izhar, qalqala, " +
+    "letters confused with a neighbour (ص/س, ح/ه, ع/ا, ق/ك, ض/د, ط/ت, ذ/ز), tafkhim / tarqiq, wrong vowels, and wrong stopping (waqf). " +
+    "Do NOT judge the voice, speed, accent or recording quality. If you are not sure about something, do not mention it. Never invent a mistake.\n" +
+    `Write each tip as ONE short, kind sentence in ${LANG_NAME[lang] ?? "English"}. The rule name stays in Arabic transliteration (for example madd, ghunna, qalqala).\n` +
+    "Return ONLY JSON: {\"overall\": <0-100 estimate of tajweed quality>, \"notes\": [{\"ayah\": <number>, \"word\": \"<the word as written>\", \"rule\": \"<rule>\", \"level\": \"minor\"|\"major\", \"tip\": \"<tip>\"}]} " +
+    "with at most 8 notes, the most important first. If the recitation is clean, notes is an empty array.\n\nExpected verses:\n" + expected;
+  const body = JSON.stringify({
+    contents: [{ role: "user", parts: [{ text: prompt }, { inline_data: { mime_type: "audio/wav", data: audio } }] }],
+    generationConfig: { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" },
+  });
+  for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, signal: AbortSignal.timeout(60_000),
+      });
+      if (!res.ok) { console.error("tajweed model failed", model, res.status, await res.text()); continue; }
+      const data = await res.json();
+      // deno-lint-ignore no-explicit-any
+      const txt = String(data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("") ?? "").replace(/^```(?:json)?|```$/g, "").trim();
+      const j = JSON.parse(txt);
+      const notes = Array.isArray(j?.notes) ? j.notes.slice(0, 8).map((x: Record<string, unknown>) => ({
+        ayah: Number(x.ayah) || 0, word: String(x.word ?? "").slice(0, 40), rule: String(x.rule ?? "").slice(0, 40),
+        level: x.level === "major" ? "major" : "minor", tip: String(x.tip ?? "").slice(0, 220),
+      })) : [];
+      return { overall: Math.max(0, Math.min(100, Math.round(Number(j?.overall) || 0))), notes };
+    } catch (e) { console.error("tajweed review failed", model, String(e)); }
+  }
+  return null;
+}
+
 async function asrGemini(audio: string): Promise<string> {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
   let res = await geminiCall(PRIMARY_MODEL, audio, true);
@@ -125,15 +164,30 @@ Deno.serve(async (req: Request) => {
     const assignmentId = String(body.assignment_id ?? "");
     if (audio.length < 400 || audio.length > MAX_AUDIO_B64_CHARS) return json(req, { error: "bad-audio" }, 400);
 
-    // RLS decides whether this student can see the assignment; only the assigned student may submit.
-    const { data: a } = await userClient.from("hifz_assignments").select("*").eq("id", assignmentId).maybeSingle();
-    if (!a || a.student_id !== user.id) return json(req, { error: "no-assignment" }, 403);
-
+    const practice = body.mode === "practice";   // the student checks any range by himself (no teacher assignment, nothing is stored)
+    // deno-lint-ignore no-explicit-any
+    let a: any;
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const since = new Date(Date.now() - 60_000).toISOString();
-    const { count } = await admin.from("hifz_attempts").select("id", { count: "exact", head: true })
-      .eq("student_id", user.id).gte("created_at", since);
-    if ((count ?? 0) >= MAX_PER_MINUTE) return json(req, { error: "slow-down" }, 429);
+    if (practice) {
+      const sN = Number(body.surah), f = Number(body.from_ayah), t2 = Number(body.to_ayah);
+      if (!(sN >= 1 && sN <= 114 && f >= 1 && t2 >= f && t2 - f < 25)) return json(req, { error: "bad-range" }, 400);
+      const { data: hasAccess } = await userClient.rpc("ufuq_has_access");
+      if (hasAccess !== true) return json(req, { error: "PAYMENT_REQUIRED" }, 402);
+      const now = Date.now();
+      const recent = (practiceHits.get(user.id) ?? []).filter((x) => now - x < 60_000);
+      if (recent.length >= MAX_PER_MINUTE) return json(req, { error: "slow-down" }, 429);
+      recent.push(now); practiceHits.set(user.id, recent);
+      a = { id: null, surah: sN, from_ayah: f, to_ayah: t2 };
+    } else {
+      // RLS decides whether this student can see the assignment; only the assigned student may submit.
+      const { data: asg } = await userClient.from("hifz_assignments").select("*").eq("id", assignmentId).maybeSingle();
+      if (!asg || asg.student_id !== user.id) return json(req, { error: "no-assignment" }, 403);
+      a = asg;
+      const since = new Date(Date.now() - 60_000).toISOString();
+      const { count } = await admin.from("hifz_attempts").select("id", { count: "exact", head: true })
+        .eq("student_id", user.id).gte("created_at", since);
+      if ((count ?? 0) >= MAX_PER_MINUTE) return json(req, { error: "slow-down" }, 429);
+    }
 
     // expected words
     let surah;
@@ -151,6 +205,10 @@ Deno.serve(async (req: Request) => {
         display.push({ ayah: ay.n, text: ay.words[k] });
       });
     }
+
+    // tajweed review runs in parallel with the speech recognition (practice mode only)
+    const tajAyahs = ayahs.map((ay: { n: number; words: string[] }) => ({ n: ay.n, words: ay.words as string[] }));
+    const tajPromise = practice && body.tajweed !== false ? geminiTajweed(audio, tajAyahs, String(body.lang ?? "en")) : Promise.resolve(null);
 
     // speech -> text
     let transcript = "";
@@ -173,14 +231,19 @@ Deno.serve(async (req: Request) => {
       ayah: display[w.i].ayah, text: display[w.i].text, status: w.status, heard: w.heard,
     }));
 
-    const { data: saved, error } = await admin.from("hifz_attempts").insert({
-      assignment_id: a.id, student_id: user.id, transcript, word_results: words, extras: res.extras,
-      score: res.score, correct_count: res.counts.correct, near_count: res.counts.near, wrong_count: res.counts.wrong,
-      missing_count: res.counts.missing, total_words: res.counts.total, asr_engine: engine,
-    }).select("id").single();
-    if (error) console.error("save attempt failed:", error.message);
+    let attemptId: string | null = null;
+    if (!practice) {
+      const { data: saved, error } = await admin.from("hifz_attempts").insert({
+        assignment_id: a.id, student_id: user.id, transcript, word_results: words, extras: res.extras,
+        score: res.score, correct_count: res.counts.correct, near_count: res.counts.near, wrong_count: res.counts.wrong,
+        missing_count: res.counts.missing, total_words: res.counts.total, asr_engine: engine,
+      }).select("id").single();
+      if (error) console.error("save attempt failed:", error.message);
+      attemptId = saved?.id ?? null;
+    }
+    const tajweed = await tajPromise;
 
-    return json(req, { ok: true, attempt_id: saved?.id ?? null, engine, score: res.score, counts: res.counts, words, extras: res.extras });
+    return json(req, { ok: true, attempt_id: attemptId, engine, score: res.score, counts: res.counts, words, extras: res.extras, tajweed });
   } catch (e) {
     console.error("ufuq-hifz-check error:", e);
     return json(req, { error: "server" }, 500);

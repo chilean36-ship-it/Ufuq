@@ -77,8 +77,9 @@ export function paginate(words, target = 70) {
  */
 export function evaluateLive(norm, heard, { startIdx = 0, final = false } = {}) {
   const states = new Array(norm.length).fill('pending');
+  const heardAt = new Array(norm.length).fill('');   // the word the recogniser put at each position (shown when the student taps a mistake)
   const exp = norm.slice(startIdx);
-  if (!exp.length || !heard.length) return { states, last: -1 };
+  if (!exp.length || !heard.length) return { states, heardAt, last: -1 };
   const al = alignRecitation(exp, heard, { prefix: true, lenient: true });
   const ok = (k) => { const w = al.words[k]; return !!w && (w.status === 'correct' || w.status === 'near'); };
   // A match is trusted only if the word before or after it matched too (or it is the very first word of the range).
@@ -89,7 +90,7 @@ export function evaluateLive(norm, heard, { startIdx = 0, final = false } = {}) 
     if (!w || w.status === 'missing') return;
     if (supported(k)) { if (first < 0) first = k; last = k; lastAny = k; } else if (first >= 0 && k > last) lastAny = Math.max(lastAny, k);
   });
-  if (first < 0) return { states, last: -1 };
+  if (first < 0) return { states, heardAt, last: -1 };
   const shownLast = final ? lastAny : last;
   for (let k = first; k <= shownLast; k++) {
     const w = al.words[k];
@@ -99,8 +100,9 @@ export function evaluateLive(norm, heard, { startIdx = 0, final = false } = {}) 
     if ((st === 'wrong' || st === 'missing') && exp[k].length <= 3 && k > 0 && ok(k - 1) && ok(k + 1)) st = 'near';
     if ((st === 'wrong' || st === 'missing') && !final && last - k < 2) continue; // not settled yet
     states[startIdx + k] = st;
+    if (w && w.heard) heardAt[startIdx + k] = w.heard;
   }
-  return { states, last: last < 0 ? -1 : startIdx + last };
+  return { states, heardAt, last: last < 0 ? -1 : startIdx + last };
 }
 
 const RANK = { pending: 0, missing: 1, wrong: 1, near: 2, correct: 3, hint: 4 };
@@ -113,6 +115,7 @@ const RANK = { pending: 0, missing: 1, wrong: 1, near: 2, correct: 3, hint: 4 };
 export function createLiveSession(norm, { startIdx = 0 } = {}) {
   const n = norm.length;
   const sticky = new Array(n).fill('pending');
+  const heardMap = new Array(n).fill('');   // what was heard at each position (for the "you said" peek)
   let start = Math.min(Math.max(0, startIdx), Math.max(0, n - 1));
   let heard = [];
 
@@ -168,7 +171,7 @@ export function createLiveSession(norm, { startIdx = 0 } = {}) {
     for (let i = start; i < n; i++) if (sticky[i] !== 'pending') shownCount++;
     const done = n > 0 && ['correct', 'near', 'hint'].includes(sticky[n - 1]) && shownCount >= Math.ceil((n - start) * 0.6);
     const score = counted ? Math.round(((counts.correct + 0.5 * counts.near) / counted) * 1000) / 10 : 0;
-    return { states: sticky.slice(), counts, counted, score, done, nextIdx: done ? -1 : nextIdx(), startIdx: start };
+    return { states: sticky.slice(), heardMap: heardMap.slice(), counts, counted, score, done, nextIdx: done ? -1 : nextIdx(), startIdx: start };
   }
 
   return {
@@ -177,7 +180,7 @@ export function createLiveSession(norm, { startIdx = 0 } = {}) {
       heard = splitWords(text);
       fast(heard);
       const r = evaluateLive(norm, heard, { startIdx: start, final });
-      r.states.forEach((st, i) => put(i, st));
+      r.states.forEach((st, i) => { put(i, st); if (st !== 'pending' && r.heardAt[i] && (sticky[i] === 'wrong' || sticky[i] === 'near')) heardMap[i] = r.heardAt[i]; });
       return snapshot();
     },
     /** Called when the microphone (re)starts: new heard-text, and the alignment continues from the first unrecited word. */
