@@ -24,6 +24,7 @@ const LibraryView = lazy(() => import('./Library/LibraryView'));
 const CertificatesView = lazy(() => import('./Certificates/CertificatesView'));
 const SettingsView = lazy(() => import('./SettingsView'));
 import BillingView, { BILLING_CSS } from './BillingView';
+import InstallNudge from '../../components/InstallNudge';
 import PaywallGate from './PaywallGate';
 import UpgradeModal from './UpgradeModal';
 import PaymentBanner from './PaymentBanner';
@@ -155,6 +156,8 @@ function DashboardInner({ initialView = 'home' }) {
       <PageStyle css={shellCss} />
       <PageStyle css={pageCss} />
       <PageStyle css={profileViewCss} />
+
+      <InstallNudge />
 
       <div className={'sidebar-backdrop' + (sidebarOpen ? ' open' : '')} id="sidebarBackdrop" onClick={() => setSidebarOpen(false)} />
       <Sidebar active={view} onNavigate={navigate} learningOpen={learningOpen} onToggleLearning={() => setLearningOpen((o) => !o)}
