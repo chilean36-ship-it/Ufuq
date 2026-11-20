@@ -75,10 +75,10 @@ export function paginate(words, target = 70) {
  * `final = false` while the recogniser is still talking: a mistake is only shown once the student has gone on for 2 more words.
  * Words before the first / after the last matched word are 'pending' (not recited yet) — never errors.
  */
-export function evaluateLive(norm, heard, { startIdx = 0, final = false } = {}) {
+export function evaluateLive(norm, heard, { startIdx = 0, final = false, endIdx = norm.length } = {}) {
   const states = new Array(norm.length).fill('pending');
   const heardAt = new Array(norm.length).fill('');   // the word the recogniser put at each position (shown when the student taps a mistake)
-  const exp = norm.slice(startIdx);
+  const exp = norm.slice(startIdx, endIdx);
   if (!exp.length || !heard.length) return { states, heardAt, last: -1 };
   const al = alignRecitation(exp, heard, { prefix: true, lenient: true });
   const ok = (k) => { const w = al.words[k]; return !!w && (w.status === 'correct' || w.status === 'near'); };
@@ -179,7 +179,13 @@ export function createLiveSession(norm, { startIdx = 0 } = {}) {
     update(text, { final = false } = {}) {
       heard = splitWords(text);
       fast(heard);
-      const r = evaluateLive(norm, heard, { startIdx: start, final });
+      // Windowed alignment: the full DP is O(expected x heard) and the transcript only grows, so on a long page (or on a phone)
+      // every update got slower and the screen fell behind the voice. Words far behind the cursor are already decided (sticky),
+      // so align only the heard tail against a window of the page around the cursor.
+      const c = nextIdx();
+      const s0 = Math.max(start, c - 8);
+      const tail = heard.length > 60 ? heard.slice(-60) : heard;
+      const r = evaluateLive(norm, tail, { startIdx: s0, endIdx: Math.min(n, s0 + 100), final });
       r.states.forEach((st, i) => { put(i, st); if (st !== 'pending' && r.heardAt[i] && (sticky[i] === 'wrong' || sticky[i] === 'near')) heardMap[i] = r.heardAt[i]; });
       return snapshot();
     },
