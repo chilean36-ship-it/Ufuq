@@ -27,9 +27,9 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
   const examId = exam ? exam.id : null;
   const kind = exam ? exam.exam_kind : null;
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (silent) => {
     if (!examId || !exam) return;
-    setRows(null);
+    if (silent !== true) setRows(null);   // after an action the list stays on screen and just updates
     try {
       const subRes = await supabase.from('written_exam_submissions').select('*').eq('exam_id', examId);
       if (subRes.error) throw subRes.error;
@@ -150,7 +150,7 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
         if (error) throw error;
       }
       toast(t('Grades approved.'), 'ok');
-      refresh();
+      refresh(true);
     } catch (e) { toast(e.message || String(e), 'err'); } finally { setBusy(false); }
   }
 
@@ -163,7 +163,7 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
       const { error } = await supabase.rpc('staff_restore_written_time', { p_submission_id: sub.id, p_minutes: 10, p_note: note.trim() });
       if (error) throw error;
       toast(t('10 minutes added.'), 'ok');
-      refresh();
+      refresh(true);
     } catch (e) { toast(e.message || String(e), 'err'); } finally { setBusy(false); }
   }
 
@@ -177,7 +177,7 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
       const { error } = await supabase.rpc('staff_reopen_written_exam', { p_submission_id: sub.id, p_keep_answers: true, p_note: note.trim() });
       if (error) throw error;
       toast(t('Paper reopened for a retake.'), 'ok');
-      refresh();
+      refresh(true);
     } catch (e) { toast(e.message || String(e), 'err'); } finally { setBusy(false); }
   }
 
@@ -194,20 +194,13 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
       <div className="er">
         <header className="er-head">
           <div>
-            <div className="er-kicker">{t('Results')}{exam ? <span className="er-chip">{kindLabel}{exam.level ? ' · ' + t('Level') + ' ' + exam.level : ''}</span> : null}</div>
+            <div className="er-kicker">{kindLabel} · {t('Results')}</div>
             <h3 className="er-title" dir="auto">{exam ? examTitleFor(exam, lang) : ''}</h3>
           </div>
         </header>
 
         {Array.isArray(rows) && rows.length > 0 && (
           <>
-            <div className="er-stats">
-              <div className="er-stat"><b>{stats.submitted}</b><span>{t('Submitted')}</span></div>
-              <div className="er-stat ok"><b>{stats.graded}</b><span>{t('Graded')}</span></div>
-              <div className={'er-stat' + (stats.pending ? ' gold' : '')}><b>{stats.pending}</b><span>{t('Needs approval')}</span></div>
-              <div className={'er-stat' + (stats.missing ? ' warn' : '')}><b>{stats.missing}</b><span>{t('Not submitted')}</span></div>
-            </div>
-
             <div className="er-bar">
               <div className="er-tabs" role="tablist">
                 {FILTERS.map(([k, label, n]) => (
@@ -252,11 +245,11 @@ export default function ExamResultsModal({ state, onClose, onGrade, onManage }) 
                       <b dir="auto">{m.name || t('Student')}</b>
                       {m.in_group === false && <em className="er-moved" title={t('Passed and moved up; the result stays here')}>{m.current_group ? t('Moved to') + ' ' + m.current_group : t('Moved up')}</em>}
                     </span>
-                    <span role="cell"><span className={'er-st ' + stCls}>{stLabel}</span></span>
-                    <span className={'er-score' + (pct === null ? '' : pct >= 80 ? ' good' : pct >= 50 ? ' mid' : ' bad')} role="cell">
+                    <span className="er-c-st" role="cell"><span className={'er-st ' + stCls}>{stLabel}</span></span>
+                    <span className={'er-c-score er-score' + (pct === null ? '' : pct >= 80 ? ' good' : pct >= 50 ? ' mid' : ' bad')} role="cell">
                       {hasScore ? <><b>{fmtPts(examPoints(pct, kind))}</b><small> / {examMax(kind)}</small></> : '—'}
                     </span>
-                    <span role="cell">
+                    <span className="er-c-viol" role="cell">
                       {viol.total > 0 ? <span className="er-viol" title={t('Times the student left the exam page')}>{'⚠'} {viol.total}</span> : (r.sub ? <span className="er-ok">{'✓'}</span> : <span className="muted">{'—'}</span>)}
                       {viol.technical > 0 && <span className="muted" title={t('Interruptions with no internet connection (not counted against the student)')}> +{viol.technical} {t('technical')}</span>}
                     </span>

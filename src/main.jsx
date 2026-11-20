@@ -10,6 +10,7 @@ import './styles/captcha.css';
 import './styles/ui-fields.css';
 import './styles/mobile-safety.css';
 import './lib/pwaInstall'; // starts listening for the browser's install event right away
+import './lib/presence'; // who is online (green dot in the group chat)
 import { applyUiPrefs } from './lib/uiPrefs';
 import { installLinkUrlHider } from './lib/hideLinkUrls';
 

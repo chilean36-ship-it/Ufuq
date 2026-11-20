@@ -105,6 +105,57 @@ export function AreaChart({ data, height = 190, color = 'var(--gold-bright)', un
   );
 }
 
+
+/** Classic line chart: smooth line, round markers, soft fill, drawn-in animation. Hover / touch shows the value. data = [{ label, value }] */
+export function LineChart({ data, height = 220, color = 'var(--gold-bright)', unit = '' }) {
+  const [hover, setHover] = useState(null);
+  const ref = useRef(null);
+  const W = 640, H = height, pl = 30, pr = 12, pt = 14, pb = 26;
+  const calc = useMemo(() => {
+    const max = Math.max(...data.map((d) => d.value), 1);
+    const nice = max <= 4 ? 4 : Math.ceil(max / 4) * 4;
+    const x = (i) => pl + (data.length > 1 ? (i / (data.length - 1)) * (W - pl - pr) : 0);
+    const y = (v) => pt + (1 - v / nice) * (H - pt - pb);
+    const pts = data.map((d, i) => [x(i), y(d.value)]);
+    // smooth curve through the points (Catmull-Rom -> Bezier), never dips below the baseline
+    let line = pts.length ? 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1) : '';
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, Math.min(H - pb, p1[1] + (p2[1] - p0[1]) / 6)];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, Math.min(H - pb, p2[1] - (p3[1] - p1[1]) / 6)];
+      line += ' C' + c1[0].toFixed(1) + ' ' + c1[1].toFixed(1) + ' ' + c2[0].toFixed(1) + ' ' + c2[1].toFixed(1) + ' ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1);
+    }
+    return { nice, x, y, pts, line, area: line + ' L' + x(data.length - 1) + ' ' + (H - pb) + ' L' + x(0) + ' ' + (H - pb) + ' Z' };
+  }, [data, H]);
+  const at = (clientX) => {
+    const r = ref.current.getBoundingClientRect();
+    const rel = (clientX - r.left) / r.width * W;
+    let best = 0, bd = 1e9;
+    calc.pts.forEach((p, i) => { const dd = Math.abs(p[0] - rel); if (dd < bd) { bd = dd; best = i; } });
+    setHover(best);
+  };
+  const gid = useMemo(() => 'l' + Math.random().toString(36).slice(2, 8), []);
+  const hp = hover != null ? calc.pts[hover] : null;
+  const every = Math.max(1, Math.ceil(data.length / 6));
+  return (
+    <div className="a-chart-wrap" ref={ref} onMouseMove={(e) => at(e.clientX)} onMouseLeave={() => setHover(null)}
+         onTouchStart={(e) => at(e.touches[0].clientX)} onTouchMove={(e) => at(e.touches[0].clientX)}>
+      <svg className="a-chart a-linechart" viewBox={'0 0 ' + W + ' ' + H} role="img" aria-label="chart">
+        <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".28" /><stop offset="1" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+        {[0, 1, 2, 3, 4].map((i) => { const tv = (calc.nice / 4) * i; return (<g key={i}><line className="grid" x1={pl} x2={W - pr} y1={calc.y(tv)} y2={calc.y(tv)} strokeDasharray={i ? '3 4' : ''} /><text x={pl - 6} y={calc.y(tv) + 3} textAnchor="end">{Math.round(tv)}</text></g>); })}
+        <path className="area" d={calc.area} fill={'url(#' + gid + ')'} />
+        <path className="line" d={calc.line} fill="none" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" pathLength="1200" style={{ '--len': 1200 }} />
+        {calc.pts.map((p, i) => (data[i].value > 0 || hover === i ? <circle key={i} className="dot" cx={p[0]} cy={p[1]} r={hover === i ? 5.5 : 3.2} fill="var(--bg-2)" stroke={color} strokeWidth="2.2" style={{ animationDelay: (500 + i * 18) + 'ms' }} /> : null))}
+        {data.map((d, i) => (i % every === 0 ? <text key={i} x={calc.x(i)} y={H - 7} textAnchor="middle">{d.label}</text> : null))}
+        {hp && <line x1={hp[0]} x2={hp[0]} y1={pt} y2={H - pb} stroke={color} strokeOpacity=".4" strokeDasharray="3 3" />}
+      </svg>
+      <div className={'a-tip' + (hp ? ' on' : '')} style={hp ? { left: (hp[0] / W * 100) + '%', top: (hp[1] / H * 100) + '%' } : undefined}>
+        {hp ? <>{data[hover].value}{unit}<small>{data[hover].label}</small></> : null}
+      </div>
+    </div>
+  );
+}
+
 /** Donut with centre total + legend. items = [{ label, value, color }] */
 export function Donut({ items, centerLabel, onPick }) {
   const total = items.reduce((s, i) => s + i.value, 0);
@@ -116,7 +167,7 @@ export function Donut({ items, centerLabel, onPick }) {
         <circle cx="75" cy="75" r={R} fill="none" stroke="var(--bg-3)" strokeWidth="16" />
         {total > 0 && items.map((it, i) => {
           const len = (it.value / total) * C;
-          const el = <circle key={i} className="seg" cx="75" cy="75" r={R} fill="none" stroke={it.color} strokeWidth="16" strokeDasharray={`${Math.max(len - 2, 0)} ${C}`} strokeDashoffset={-acc} transform="rotate(-90 75 75)" onClick={onPick ? () => onPick(it) : undefined}><title>{`${it.label}: ${it.value}`}</title></circle>;
+          const el = <circle key={i} className="seg" style={{ animationDelay: (i * 120) + 'ms' }} cx="75" cy="75" r={R} fill="none" stroke={it.color} strokeWidth="16" strokeDasharray={`${Math.max(len - 2, 0)} ${C}`} strokeDashoffset={-acc} onClick={onPick ? () => onPick(it) : undefined}><title>{`${it.label}: ${it.value}`}</title></circle>;
           acc += len; return el;
         })}
         <text x="75" y="76" textAnchor="middle" className="c-num">{total}</text>

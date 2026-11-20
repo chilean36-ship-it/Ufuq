@@ -13,9 +13,17 @@ const CSS = `
 .ua-rv-logo{position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;background:#1a1405;-webkit-mask:url(/assets/images/logo-mark.png) center/contain no-repeat;mask:url(/assets/images/logo-mark.png) center/contain no-repeat;opacity:0;transform:scale(.55);transition:opacity .35s ease .3s,transform .5s cubic-bezier(.3,1.5,.5,1) .3s}
 .ua-rv-cover.grow .ua-rv-logo{opacity:1;transform:none}
 .ua-rv-cover.fade .ua-rv-logo{transform:scale(1.7);opacity:0;transition:transform .6s cubic-bezier(.4,0,.2,1),opacity .45s ease}
+.ua-rv-ai{position:fixed;inset:0;z-index:2147483000;pointer-events:all;overflow:hidden;background:radial-gradient(130% 110% at var(--x) var(--y),#F7DE8C 0%,#DDB65D 34%,#C09440 70%,#A87C33 100%);clip-path:circle(0px at var(--x) var(--y));will-change:clip-path,opacity}
+.ua-rv-ai.grow{clip-path:circle(150vmax at var(--x) var(--y));transition:clip-path .6s cubic-bezier(.62,0,.22,1)}
+.ua-rv-ai.full{clip-path:circle(150vmax at var(--x) var(--y))}
+.ua-rv-ai.melt{opacity:0;transform:scale(1.04);transition:opacity .55s ease,transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+.ua-rv-ai.shrink{clip-path:circle(0px at var(--x) var(--y));transition:clip-path .6s cubic-bezier(.62,0,.22,1)}
+.ua-rv-ai .ua-rv-logo{opacity:0;transform:scale(.6);transition:opacity .3s ease .25s,transform .5s cubic-bezier(.3,1.5,.5,1) .25s}
+.ua-rv-ai.grow .ua-rv-logo,.ua-rv-ai.full .ua-rv-logo{opacity:1;transform:none}
+.ua-rv-ai.shrink .ua-rv-logo{opacity:0;transform:scale(.7);transition:opacity .25s ease,transform .4s ease}
 .ua-rv-ring{position:fixed;z-index:2147482999;left:var(--x);top:var(--y);width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:3px solid rgba(243,215,126,.95);box-shadow:0 0 34px rgba(243,215,126,.7),inset 0 0 22px rgba(243,215,126,.45);pointer-events:none;transform:scale(.2);opacity:.95;animation:uaRvRing .7s cubic-bezier(.5,0,.2,1) forwards}
 @keyframes uaRvRing{to{transform:scale(var(--k,40));opacity:0}}
-@media (prefers-reduced-motion:reduce){.ua-rv-cover{transition:opacity .3s ease;clip-path:none}.ua-rv-ring{display:none}}
+@media (prefers-reduced-motion:reduce){.ua-rv-cover{transition:opacity .3s ease;clip-path:none}.ua-rv-ring{display:none}.ua-rv-ai{transition:none!important}}
 `;
 
 function ensureStyle() {
@@ -47,6 +55,38 @@ export function rippleFrom(x, y) {
   r.style.setProperty('--x', x + 'px'); r.style.setProperty('--y', y + 'px'); r.style.setProperty('--k', String(k));
   document.body.appendChild(r);
   setTimeout(() => r.remove(), 800);
+}
+
+/**
+ * Ufuq AI opens: a gold disc grows out of the AI button and fills the whole screen (the chat is switched on underneath once the
+ * screen is full: `onCovered`), then the gold melts away and the chat is there, sharp and fully opaque.
+ */
+export function aiOpenCover(x, y, onCovered) {
+  ensureStyle();
+  const el = document.createElement('div');
+  el.className = 'ua-rv-ai';
+  el.style.setProperty('--x', x + 'px'); el.style.setProperty('--y', y + 'px');
+  el.innerHTML = '<span class="ua-rv-logo"></span>';
+  document.body.appendChild(el);
+  window.__uaCoverAt = Date.now();
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('grow')));
+  setTimeout(() => { try { if (onCovered) onCovered(); } catch (e) { /* ignore */ } }, 620);
+  setTimeout(() => el.classList.add('melt'), 900);
+  setTimeout(() => el.remove(), 1700);
+}
+
+/** Ufuq AI closes: the gold covers the chat at once, then shrinks back into the AI button, uncovering the app. */
+export function aiCloseCover(x, y) {
+  ensureStyle();
+  const el = document.createElement('div');
+  el.className = 'ua-rv-ai full';
+  el.style.setProperty('--x', x + 'px'); el.style.setProperty('--y', y + 'px');
+  el.style.opacity = '0';
+  el.innerHTML = '<span class="ua-rv-logo"></span>';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.transition = 'opacity .16s ease'; el.style.opacity = '1'; });
+  setTimeout(() => { el.style.transition = ''; el.classList.remove('full'); el.classList.add('shrink'); }, 260);
+  setTimeout(() => el.remove(), 1000);
 }
 
 /** Centre of an element, for use as an origin. */

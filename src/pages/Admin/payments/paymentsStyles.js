@@ -261,4 +261,39 @@ html[data-theme="light"] #page-payments .set-alert{ color:#8A5F10; }
 #page-payments .pay-filters h3 svg{ width:20px; height:20px; flex:none; color:var(--gold); }
 #page-payments .pay-filters .btn svg, #page-payments .pay-actions .btn svg{ width:15px; height:15px; vertical-align:-3px; flex:none; }
 @media (prefers-reduced-motion:reduce){ #page-payments .pay-pane{ animation:none; } #page-payments .btn{ transition:none; } #page-payments .btn:not(:disabled):hover, #page-payments .btn:not(:disabled):active{ transform:none; } }
+
+/* round 7: lists keep a standard height and scroll inside; tab-like group chips; tidy phone rows; roomy inputs */
+#page-payments .pay-table-wrap{ max-height:min(70vh,560px); overflow:auto; }
+#page-payments .pay-table thead th{ z-index:2; }
+#page-payments .acc-group-body{ max-height:min(66vh,520px); overflow:auto; }
+#page-payments .acc-group-body .pay-table thead th{ position:sticky; top:0; }
+#page-payments .acc-chips{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:thin; padding-bottom:6px; -webkit-overflow-scrolling:touch; }
+#page-payments .acc-chip{ flex:none; }
+#page-payments .dl-fields{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+#page-payments .dl-field{ display:flex; flex-direction:column; gap:8px; padding:14px; background:var(--bg-3); border:1px solid var(--line); border-radius:14px; min-width:0; }
+#page-payments .dl-field label{ font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-muted); }
+#page-payments .dl-field input{ width:100%; min-height:44px; padding:10px 14px; border-radius:12px; font-size:15px; box-sizing:border-box; }
+#page-payments .dl-field .hint{ margin:0; font-size:12px; line-height:1.4; }
+#page-payments .dl-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+#page-payments input[type=date]{ min-height:44px; }
+@media (max-width:720px){
+  #page-payments .dl-fields{ grid-template-columns:1fr; }
+  #page-payments .dl-actions .btn{ flex:1 1 150px; min-height:44px; }
+}
+@media (max-width:640px){
+  #page-payments .pay-table-wrap{ max-height:72vh; }
+  #page-payments .pay-table tbody td.pay-buyer{ display:block; text-align:left; padding:0 0 10px; margin-bottom:4px; border-bottom:1px solid var(--line); }
+  #page-payments .pay-table tbody td.pay-buyer::before{ display:none; }
+  #page-payments .pay-table tbody td.pay-buyer b{ display:block; font-size:15.5px; line-height:1.3; overflow-wrap:anywhere; }
+  #page-payments .pay-table tbody td.pay-buyer .hint{ overflow-wrap:anywhere; font-size:12.5px; margin-top:2px; }
+  #page-payments .pay-table tbody td.pay-actions{ display:flex; flex-wrap:wrap; gap:8px; justify-content:stretch; padding-top:12px; }
+  #page-payments .pay-table tbody td.pay-actions .btn{ flex:1 1 120px; min-height:42px; margin:0; }
+  #page-payments .pay-actions .btn + .btn{ margin-left:0; }
+}
+/* dialogs opened from the payments pages (they live on <body>): roomy, readable inputs */
+body.adm-shell .modal .field input:not([type=checkbox]):not([type=radio]):not([type=file]), body.adm-shell .modal .field select, body.adm-shell .modal .field textarea{
+  width:100%; min-height:46px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:var(--bg-3); color:var(--text); font:500 15px 'Inter',sans-serif; box-sizing:border-box; }
+body.adm-shell .modal .field input:focus, body.adm-shell .modal .field select:focus, body.adm-shell .modal .field textarea:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+body.adm-shell .modal .field label{ display:block; margin-bottom:6px; font-size:12px; font-weight:700; color:var(--text-muted); }
+
 `;

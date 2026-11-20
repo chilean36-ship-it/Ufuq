@@ -339,6 +339,8 @@ function MarqueeTrack({ reverse, count, children }) {
 function Testimonials({ onOpenLightbox }) {
   const { t } = useI18n();
   const media = useLandingMedia();
+  const extra = media.extraStudents();
+  const faces = [...FACES, ...extra.map((n, k) => ({ name: 'Certificate', level: '', initial: '\u2605', cls: 'face-photo-' + ((k % 6) + 1), file: '', slot: 'student_' + n }))];
   return (
     <section className="testimonials" id="stories">
       <div className="wrap">
@@ -349,9 +351,9 @@ function Testimonials({ onOpenLightbox }) {
       </div>
 
       <div className="marquee-row marquee-row-top">
-        <MarqueeTrack count={FACES.length}>
-          {FACES.map((fRaw, i) => {
-            const f = { ...fRaw, src: media.img('student_' + (i + 1), '/assets/students/' + fRaw.file) };
+        <MarqueeTrack count={faces.length}>
+          {faces.map((fRaw, i) => {
+            const f = { ...fRaw, src: media.img(fRaw.slot || ('student_' + (i + 1)), '/assets/students/' + fRaw.file) };
             const open = () => onOpenLightbox({
               img: { className: 'face-photo-img', src: f.src, alt: f.name, lazy: true, hideOnError: true },
               initial: f.initial, gradientClass: f.cls, label: f.level, title: f.name,

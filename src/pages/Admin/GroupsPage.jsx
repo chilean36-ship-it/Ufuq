@@ -15,6 +15,7 @@ const TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 // At most 7 class-group series: the letter is the permanent identity (audio names are tied to it), the level changes.
 const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+const hasRun = (g) => g.is_active !== false || !!(g.reopened_at || g.deadline_closed_at || g.moved_on_at);
 const letterOfGroup = (g) => (g && g.letter) || ((String(g && g.name || '').match(/^(?:group|guruh)[ _-]*([A-G])/i) || [])[1] || '').toUpperCase() || null;
 function groupErrorText(t, err) {
   const m = (err && err.message) || String(err || '');
@@ -91,6 +92,7 @@ export default function GroupsPage() {
     const by = {};
     myGroups.filter((g) => g.type !== 'individual' && letterOfGroup(g)).forEach((g) => { (by[letterOfGroup(g)] = by[letterOfGroup(g)] || []).push(g); });
     return Object.keys(by).sort().map((L) => ({ letter: L, groups: by[L].slice().sort((a, b) => (a.level || 0) - (b.level || 0)) }))
+      .map((x) => ({ ...x, groups: x.groups.filter(hasRun) })).filter((x) => x.groups.length > 0)
       .filter((x) => !s2 || ('group ' + x.letter).toLowerCase().includes(s2) || x.groups.some((g) => (g.name || '').toLowerCase().includes(s2)));
   }, [myGroups, q]);
   const showSeries = fType !== 'individual' && (fStatus === 'inactive' || fStatus === 'all');
@@ -121,7 +123,6 @@ export default function GroupsPage() {
   const openNew = () => setModal({ open: true, group: null });
   const openEdit = (g) => setModal({ open: true, group: g });
   const TypeChip = ({ g }) => (g.type === 'individual' ? <span className="chip chip-type-individual">{t("Qur'an lesson")}</span> : <span className="chip chip-type-class">{t('Arabic language')}</span>);
-  const zoomLink = (g) => (g.zoom_link ? <a href={safeHttpUrl(g.zoom_link) || '#'} target="_blank" rel="noopener noreferrer" className="a-link">Zoom ↗</a> : null);
 
   return (
     <section className="page active" id="page-groups">
@@ -189,7 +190,6 @@ export default function GroupsPage() {
                   <label className="a-switch-row" onClick={(e) => { e.preventDefault(); toggleActive(g); }}>
                     <Switch on={!!g.is_active} /><span>{g.is_active ? t('Active') : t('Inactive')}</span>
                   </label>
-                  {zoomLink(g)}
                 </footer>
               </article>
             );
@@ -198,7 +198,7 @@ export default function GroupsPage() {
       ) : (
         <div className="panel a-flush"><div className="a-table-wrap a-flat">
           <table>
-            <thead><tr><th>{t('Name')}</th><th>{t('Join code')}</th><th>{t('Type')}</th><th>{t('Schedule')}</th><th>{t('Students')}</th><th>Zoom</th><th>{t('Status')}</th><th></th></tr></thead>
+            <thead><tr><th>{t('Name')}</th><th>{t('Join code')}</th><th>{t('Type')}</th><th>{t('Schedule')}</th><th>{t('Students')}</th><th>{t('Status')}</th><th></th></tr></thead>
             <tbody id="groupsBody">
               {list.map((g) => (
                 <tr key={g.code}>
@@ -207,7 +207,6 @@ export default function GroupsPage() {
                   <td><TypeChip g={g} /></td>
                   <td className="muted">{g.type === 'individual' ? '\u2014' : (g.schedule || '\u2014')}</td>
                   <td>{counts ? (counts[g.code] || 0) : '…'}</td>
-                  <td>{zoomLink(g) || <span className="muted">{'\u2014'}</span>}</td>
                   <td><label className="a-switch-row" onClick={(e) => { e.preventDefault(); toggleActive(g); }}><Switch on={!!g.is_active} /></label></td>
                   <td className="a-actions"><button className="icon-btn" title={t('Edit')} aria-label={t('Edit')} onClick={() => openEdit(g)}><EditIcon /></button></td>
                 </tr>
@@ -218,7 +217,7 @@ export default function GroupsPage() {
       )}
       {myGroups.length > 0 && showSeries && seriesList.length > 0 && (
         <>
-          <h3 className="a-series-h">{t('Level groups')} <small>{t('Each letter keeps all 14 levels. Open a letter to switch its levels on or off.')}</small></h3>
+          <h3 className="a-series-h">{t('Level groups')} <small>{t('Only the level groups that have been created are listed. Open a letter to switch its levels on or off.')}</small></h3>
           <div className="a-cards a-series">
             {seriesList.map((x) => {
               const act = x.groups.filter((g) => g.is_active);
@@ -420,32 +419,35 @@ function GroupModal({ open, group: g, onClose }) {
               {g ? (
                 <input type="text" value={f.letter || '—'} disabled aria-readonly="true" />
               ) : (
-                <select value={f.letter} onChange={(e) => set('letter', e.target.value)} style={{ width: '100%' }} required>
-                  <option value="">{t('Choose a letter')}</option>
-                  {freeLetters.map((l) => <option key={l} value={l}>{t('Group')} {l}</option>)}
-                </select>
+                <div className="a-tabrow" role="radiogroup" aria-label={t('Group letter')}>
+                  {GROUP_LETTERS.map((l) => (
+                    <button type="button" role="radio" aria-checked={f.letter === l} key={l} disabled={takenLetters.has(l)} title={takenLetters.has(l) ? t('Letters already in use are not listed.') : undefined}
+                            className={f.letter === l ? 'on' : ''} onClick={() => set('letter', l)}>{l}</button>
+                  ))}
+                </div>
               )}
-              <p className="hint">{g ? t('The letter never changes: chat, audio names and history stay tied to it.') : (freeLetters.length ? t('Only A–G exist (7 groups at most). Letters already in use are not listed.') : t('All 7 letters (A–G) are already used, so no new group can be created.'))}</p>
+              <p className="hint">{g ? t('The letter never changes: chat, audio names and history stay tied to it.') : (freeLetters.length ? t('Letters that are already in use are greyed out.') : t('All 7 letters (A–G) are already used, so no new group can be created.'))}</p>
             </div>
             <div className="field">
               <label>{t('Level')}</label>
               {levelLocked ? (
                 <input type="text" value={t('Level') + ' ' + f.level} disabled aria-readonly="true" />
               ) : (
-                <select value={f.level} onChange={(e) => set('level', e.target.value)} style={{ width: '100%' }} required>
-                  <option value="">{t('Choose a level')}</option>
-                  {LEVEL_LIST.map((l) => <option key={l} value={String(l)}>{t('Level')} {l}</option>)}
-                </select>
+                <div className="a-tabrow a-tabrow-lv" role="radiogroup" aria-label={t('Level')}>
+                  {LEVEL_LIST.map((l) => (
+                    <button type="button" role="radio" aria-checked={f.level === String(l)} key={l} className={f.level === String(l) ? 'on' : ''} onClick={() => set('level', String(l))}>{l}</button>
+                  ))}
+                </div>
               )}
               <p className="hint">{levelLocked
                 ? t('The level of a group never changes. Students move to the next level group when they pass the exams; to move one student by hand use the Students page.')
-                : t('The group is named from its letter and level (Group A8). Every student moves up on his own as soon as he passes the level exams. The group switches off by itself when its last student has moved on, or when the final exam deadline ends.')}</p>
+                : t('The group is named from its letter and level (Group A8).')}</p>
             </div>
           </div>
         )}
         <div className="field">
           <label>{t('Group type')}</label>
-          <div className="a-typepick" role="radiogroup" id="groupType">
+          <div className="a-tabrow" role="radiogroup" id="groupType">
             {[['class', 'Arabic language'], ['individual', "Qur'an lesson"]].map(([v, lbl]) => (
               <button type="button" role="radio" aria-checked={f.type === v} key={v} disabled={typeLocked} className={f.type === v ? 'on' : ''} onClick={() => set('type', v)}>{t(lbl)}</button>
             ))}

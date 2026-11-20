@@ -1,4 +1,5 @@
 import { fmtDate as fmtDateL, currentLang } from './dateLocale';
+import { tashkentInstantOnDate } from './tzTime';
 import { supabase } from './supabaseClient';
 /**
  * Helpers shared by the Admin and Teacher panels (ported 1:1 from the inline scripts of
@@ -51,6 +52,29 @@ export function parseDateStr(str) {
 
 /** Local date, not UTC — toISOString() would roll the day over for anyone east of Greenwich late in the evening. */
 export function todayStr() { return fmtDateStr(new Date()); }
+
+/**
+ * Can attendance be taken for this class day right now?  'ok' | 'early' (lesson has not started) | 'late' (the lesson day is over
+ * and nothing was taken: it stays untaken) | 'edit' (a session already exists: keeps working as before) | 'free' (no timetable to judge by).
+ * The timetable is in Tashkent time.
+ */
+export function attendanceState(dateStr, g, hasSession) {
+  if (hasSession) return 'edit';
+  const entry = g && Array.isArray(g.schedule_days) ? g.schedule_days.find((d) => d && DAY_NUM[d.day] === weekdayOfDateStr(dateStr)) : null;
+  if (!entry || !/^\d{1,2}:\d{2}$/.test(entry.time || '')) return 'free';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const [hh, mm] = entry.time.split(':').map(Number);
+  const start = tashkentInstantOnDate(y, m - 1, d, hh, mm);
+  const end = tashkentInstantOnDate(y, m - 1, d + 1, 0, 0);
+  const now = new Date();
+  return now < start ? 'early' : now >= end ? 'late' : 'ok';
+}
+
+/** 'HH:MM' (Tashkent) the group's class starts on that date, or ''. */
+export function lessonTimeOn(dateStr, g) {
+  const entry = g && Array.isArray(g.schedule_days) ? g.schedule_days.find((d) => d && DAY_NUM[d.day] === weekdayOfDateStr(dateStr)) : null;
+  return entry && entry.time ? entry.time : '';
+}
 
 export function nearestAllowedDateStr(fromDateStr, g) {
   if (isDateAllowedForGroup(fromDateStr, g)) return fromDateStr;

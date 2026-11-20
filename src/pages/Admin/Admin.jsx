@@ -45,10 +45,13 @@ import adminExtra from '../../i18n/admin-extra';
 import adminRedesign from '../../i18n/admin-redesign';
 import adminStaff from '../../i18n/admin-staff';
 import adminPopup from '../../i18n/admin-popup';
+import panelAttendance from '../../i18n/panel-attendance';
+import panelUpload from '../../i18n/panel-upload';
+import adminRound7 from '../../i18n/admin-round7';
 
 // Admin shares several pages with the teacher panel, so its dictionary = teacher + new strings + admin (admin wins).
 import examModeDict from '../../i18n/exam-mode';
-const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}), ...(adminPopup[k] || {}) }; return acc; }, {});
+const adminDict = ['EN', 'UZ', 'RU', 'AR'].reduce((acc, k) => { acc[k] = { ...(adminFill[k] || {}), ...(examLevelsDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(adminDictBase[k] || {}), ...(adminExtra[k] || {}), ...(adminRedesign[k] || {}), ...(adminStaff[k] || {}), ...(examModeDict[k] || {}), ...(paymentsDict[k] || {}), ...(adminPopup[k] || {}), ...(panelAttendance[k] || {}), ...(panelUpload[k] || {}), ...(adminRound7[k] || {}) }; return acc; }, {});
 const COLLAPSE_KEY = 'ufuq-panel-collapsed';
 import { supabase } from '../../lib/supabaseClient';
 import { getFreshUser, resolveFullName, useLiveName } from '../../lib/profileName';
@@ -327,7 +330,7 @@ function AdminInner() {
       </div>
 
       {inApp() && isMobile && guard.ok && <PanelTabBar items={isSuper ? ['overview', 'groups', 'students', 'announcements'] : ['overview', 'materials', 'announcements']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setMoreOpen(true)} moreOpen={moreOpen} />}
-      {inApp() && isMobile && guard.ok && <PanelMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
+      {inApp() && isMobile && guard.ok && <PanelMoreSheet hide={isSuper ? ['overview', 'groups', 'students', 'announcements'] : ['overview', 'materials', 'announcements']} open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
                                                        switchItem={canSwitchToTeacher ? { label: t('Switch to Teacher panel'), onSelect: switchToTeacher } : null}
                                                        studentItem={!isSuper ? { label: t('Student panel'), href: outRoute('/dashboard') } : null}
                                                        name={myName} roleLabel={t(isSuper ? 'Main admin' : 'Admin')} avatarUrl={myAvatarUrl} />}

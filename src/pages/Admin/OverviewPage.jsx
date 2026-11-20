@@ -4,7 +4,7 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { usePanel } from '../../components/panel/PanelContext';
 import usePendingWork from '../../components/panel/usePendingWork';
 import useJoinCodes from '../../lib/useJoinCodes';
-import { AreaChart, Avatar, ChevronRight, Donut, EmptyState, Ico, Skeleton, StatCard } from './ui';
+import { LineChart, Avatar, ChevronRight, Donut, EmptyState, Ico, Skeleton, StatCard } from './ui';
 
 import { fmtDate as fmtDateL, currentLang } from '../../lib/dateLocale';
 const DAYS = 30;
@@ -27,9 +27,27 @@ function buildSeries(members) {
   return { perDay, cur, prev, trend, cumulative, newThisPeriod: perDay.reduce((s, d) => s + d.value, 0) };
 }
 
+/** The "Statistics" side of the new-students window: joins in 30 days, the daily average, the best day and the weekly shape. */
+function NewStats({ series, t }) {
+  const best = series.perDay.reduce((b, d) => (d.value > b.value ? d : b), { value: 0, label: '—' });
+  const weeks = [0, 1, 2, 3].map((i) => series.perDay.slice(i * 7 + 2, i * 7 + 9).reduce((s, d) => s + d.value, 0));
+  const maxW = Math.max(...weeks, 1);
+  const dir = series.trend == null ? '' : series.trend > 0 ? ' up' : series.trend < 0 ? ' down' : '';
+  return (
+    <div className="a-nstats">
+      <div className="a-nstat"><b>{series.newThisPeriod}</b><span>{t('Joined in 30 days')}</span></div>
+      <div className={'a-nstat' + dir}><b>{series.trend == null ? '—' : (series.trend > 0 ? '+' : '') + series.trend + '%'}</b><span>{t('Compared with the 15 days before')}</span></div>
+      <div className="a-nstat"><b>{(series.newThisPeriod / DAYS).toFixed(1)}</b><span>{t('Average per day')}</span></div>
+      <div className="a-nstat"><b>{best.value}</b><span>{t('Best day')} · {best.label}</span></div>
+      <div className="a-nweeks">{weeks.map((w, i) => <div key={i}><em>{w}</em><i style={{ height: Math.max(4, w / maxW * 62) + 'px', animationDelay: i * 90 + 'ms' }} /><span>{t('Week')} {i + 1}</span></div>)}</div>
+    </div>
+  );
+}
+
 export default function OverviewPage() {
   const { t, myGroups, myName, showPage, setCurrentGroupCode, can, isSuper } = usePanel();
   const [data, setData] = useState(null); // null = loading
+  const [ntab, setNtab] = useState('chart');
   const pending = usePendingWork(myGroups.map((g) => g.code));
   const { joinCodes } = useJoinCodes(myGroups.map((g) => g.code));
 
@@ -140,8 +158,9 @@ export default function OverviewPage() {
         <div className="panel">
           <div className="panel-head">
             <div><h3><span className="panel-head-bar" />{t('New students')}</h3><div className="panel-sub">{t('Last 30 days')}</div></div>
+            <div className="a-ntabs" role="tablist"><button type="button" role="tab" aria-selected={ntab === 'chart'} className={ntab === 'chart' ? 'on' : ''} onClick={() => setNtab('chart')}>{t('Chart')}</button><button type="button" role="tab" aria-selected={ntab === 'stats'} className={ntab === 'stats' ? 'on' : ''} onClick={() => setNtab('stats')}>{t('Statistics')}</button></div>
           </div>
-          {loading ? <Skeleton h={190} /> : data.empty ? <EmptyState title={t('No group has been assigned to you yet.')} /> : <AreaChart data={series.perDay} color="var(--gold-bright)" />}
+          {loading ? <Skeleton h={190} /> : data.empty ? <EmptyState title={t('No group has been assigned to you yet.')} /> : ntab === 'chart' ? <LineChart data={series.perDay} color="var(--gold-bright)" /> : <NewStats series={series} t={t} />}
         </div>
         <div className="panel">
           <div className="panel-head"><h3><span className="panel-head-bar" />{t('Student status')}</h3></div>
@@ -177,6 +196,30 @@ export default function OverviewPage() {
         </div>
       </div>
 
+      {!isSuper && (
+      <div className="panel">
+        <div className="panel-head"><h3><span className="panel-head-bar" />{t('Your groups')}</h3></div>
+        {loading ? <Skeleton h={90} /> : data.empty ? <EmptyState title={t('No group has been assigned to you yet.')} /> : (
+          <div className="a-lead-cards">
+            {myGroups.map((g) => {
+              const days = Array.isArray(g.schedule_days) ? g.schedule_days : [];
+              return (
+                <article className="a-gcard" key={g.code}>
+                  <header>
+                    <Avatar name={g.name || '?'} size={42} tone={g.type === 'individual' ? 'quran' : 'arabic'} />
+                    <div className="a-gcard-t"><h4>{g.name}</h4>{g.type === 'individual' ? <span className="chip chip-type-individual">{t("Qur'an lesson")}</span> : <span className="chip chip-type-class">{t('Arabic language')}</span>}</div>
+                  </header>
+                  <div className="a-gcard-meta"><span className="a-code" style={{ cursor: 'default' }}><small>{t('Join code')}</small><b>{joinCodes[g.code] || '\u2014'}</b></span></div>
+                  <div className="a-gcard-sched">{days.length ? days.map((d, i) => <span className="a-day" key={i}>{String(t(d.day)).slice(0, 3)} <b>{d.time}</b></span>) : <span className="muted">{g.schedule || '\u2014'}</span>}</div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      )}
+
+      {isSuper && (
       <div className="panel">
         <div className="panel-head"><h3><span className="panel-head-bar" />{t('Your groups')}</h3></div>
         <div className="a-table-wrap" style={{ border: 0 }}>
@@ -187,7 +230,7 @@ export default function OverviewPage() {
                 : data.empty ? <tr className="empty-row"><td colSpan={isSuper ? 6 : 4}>{t('No group has been assigned to you yet.')}</td></tr>
                 : myGroups.map((g) => (
                   <tr key={g.code} style={{ cursor: can('students') ? 'pointer' : 'default' }} onClick={() => { if (!can('students')) return; setCurrentGroupCode(g.code); showPage('students'); }}>
-                    <td><div className="a-cell-user"><Avatar name={g.name || '?'} size={32} /><b>{g.name}</b></div></td>
+                    <td><div className="a-cell-user"><Avatar name={g.name || '?'} size={32} tone={g.type === 'individual' ? 'quran' : 'arabic'} /><b>{g.name}</b></div></td>
                     <td className="muted">{joinCodes[g.code] || '—'}</td>
                     <td className="muted">{g.schedule || '—'}</td>
                     {isSuper && <td>{data.counts[g.code] || 0}</td>}
@@ -199,6 +242,7 @@ export default function OverviewPage() {
           </table>
         </div>
       </div>
+      )}
     </section>
   );
 }

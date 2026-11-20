@@ -83,9 +83,21 @@ async function fetchActivity(groupCode) {
   } catch (e) { return null; }
 }
 
+/** Points-based numbers (exam points of the level, task points, attendance %). null when the server function is not there yet. */
+async function fetchPoints(groupCode) {
+  try {
+    const { data, error } = await supabase.rpc('group_points_ranking', { p_group_code: groupCode });
+    if (error || !Array.isArray(data)) return null;
+    const map = {};
+    data.forEach((r) => { map[r.user_id] = r; });
+    return map;
+  } catch (e) { return null; }
+}
+const fmtPts = (n) => { const v = Math.round((Number(n) || 0) * 10) / 10; return String(v).replace(/\.0$/, ''); };
+
 /**
- * Class ranking with Fath-style tabs. Exams come from the written-exam ranking; attendance and tasks come from
- * group_activity_ranking. Without that function only the Exams list is shown (no tabs). "Overall" = mean of the three shares.
+ * Class ranking with Fath-style tabs. Overall = exam points + task points; Exams = % of all the level's exam points;
+ * Tasks = task points; Attendance = %. (Older databases without group_points_ranking keep the old percentage ranking.)
  */
 export function RankingCard({ title, onOpen }) {
   const { t: tc } = useCabinetI18n();
@@ -99,15 +111,16 @@ export function RankingCard({ title, onOpen }) {
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const load = useCallback(async () => {
     if (!groupReady || !joined) { setData(null); return; }
-    const [members, rank, act] = await Promise.all([getGroupMembers(groupCode), fetchGroupRanking(groupCode), fetchActivity(groupCode)]);
+    const [members, rank, act, pts] = await Promise.all([getGroupMembers(groupCode), fetchGroupRanking(groupCode), fetchActivity(groupCode), fetchPoints(groupCode)]);
     if (!alive.current) return;
     const exam = {};
     (rank || []).forEach((r) => { exam[r.userId] = { avg: r.avg, taken: r.taken }; });
-    setData({ members: members || [], exam, act });
+    setData({ members: members || [], exam, act, pts });
   }, [groupReady, joined, groupCode]);
   useEffect(() => { load(); }, [load]);
 
-  const hasAct = !!(data && data.act);
+  const hasPts = !!(data && data.pts);
+  const hasAct = !!(data && (data.act || data.pts));
   const tabs = hasAct ? TABS : ['exam'];
   const active = tabs.includes(tab) ? tab : tabs[0];
 
@@ -127,6 +140,22 @@ export function RankingCard({ title, onOpen }) {
 
   const rows = useMemo(() => {
     if (!data) return [];
+    if (hasPts) {
+      const pl = data.members.map((m) => {
+        const p = (m.user_id && data.pts[m.user_id]) || {};
+        const exP = Number(p.exam_points) || 0; const tkP = Number(p.task_points) || 0; const atM = Number(p.att_marked) || 0;
+        let score = 0; let label = '';
+        if (active === 'exam') { score = Number(p.exam_pct) || 0; label = exP > 0 ? score + '%' : ''; }
+        else if (active === 'att') { score = atM > 0 ? Number(p.att_pct) || 0 : 0; label = atM > 0 ? score + '%' : ''; }
+        else if (active === 'tasks') { score = tkP; label = tkP > 0 ? fmtPts(tkP) + ' ' + t('rkPt') : ''; }
+        else { score = exP + tkP; label = score > 0 ? fmtPts(score) + ' ' + t('rkPt') : ''; }
+        return { ...m, score, label };
+      });
+      pl.sort((x, y) => y.score - x.score || String(x.name).localeCompare(String(y.name)));
+      const top = Math.max(...pl.map((x) => x.score), 0);
+      const pointsTab = active === 'all' || active === 'tasks';
+      return pl.map((x) => ({ ...x, bar: pointsTab ? (top > 0 ? (x.score / top) * 100 : 0) : x.score }));
+    }
     const list = data.members.map((m) => {
       const e = m.user_id && data.exam[m.user_id];
       const a = m.user_id && data.act && data.act[m.user_id];
@@ -146,8 +175,8 @@ export function RankingCard({ title, onOpen }) {
       return { ...m, score, label };
     });
     list.sort((x, y) => y.score - x.score || String(x.name).localeCompare(String(y.name)));
-    return list;
-  }, [data, active, counted]);
+    return list.map((x) => ({ ...x, bar: x.score }));
+  }, [data, active, counted, hasPts, t]);
 
   const listRef = useRef(null);
   useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [active, data]);
@@ -165,8 +194,10 @@ export function RankingCard({ title, onOpen }) {
         </div>
       )}
       {active === 'all' && (
-        <p className="ua-rk-note">{[counted.exam && t('rkExam'), counted.att && t('rkAtt'), counted.tasks && t('rkTasks')].filter(Boolean).join(' · ') ? t('rkCounted') + ': ' + [counted.exam && t('rkExam'), counted.att && t('rkAtt'), counted.tasks && t('rkTasks')].filter(Boolean).join(' · ') : t('rkNone')}</p>
+        <p className="ua-rk-note">{hasPts ? t('rkPtsNote') : ([counted.exam && t('rkExam'), counted.att && t('rkAtt'), counted.tasks && t('rkTasks')].filter(Boolean).join(' · ') ? t('rkCounted') + ': ' + [counted.exam && t('rkExam'), counted.att && t('rkAtt'), counted.tasks && t('rkTasks')].filter(Boolean).join(' · ') : t('rkNone'))}</p>
       )}
+      {active === 'exam' && hasPts && <p className="ua-rk-note">{t('rkExamNote')}</p>}
+      {active === 'tasks' && hasPts && <p className="ua-rk-note">{t('rkTasksNote')}</p>}
       <div className="ua-rank" ref={listRef} key={active}>
         {rows.map((m, i) => {
           const isYou = userId && m.user_id ? m.user_id === userId : norm(m.name) === norm(name);
@@ -176,7 +207,7 @@ export function RankingCard({ title, onOpen }) {
               <span className="ua-rk-av">{m.avatar_url ? <img src={m.avatar_url} alt="" /> : (m.name || '?').charAt(0).toUpperCase()}</span>
               <span className="ua-rk-mid">
                 <b className="ua-rk-name">{m.name}{isYou && <em className="ua-rk-you">{tc('You')}</em>}</b>
-                <i className="ua-rk-bar"><u style={{ width: Math.max(3, Math.min(100, m.score)) + '%' }} /></i>
+                <i className="ua-rk-bar"><u style={{ width: Math.max(3, Math.min(100, m.bar)) + '%' }} /></i>
               </span>
               {m.label && <span className="ua-rk-sc">{m.label}</span>}
             </div>

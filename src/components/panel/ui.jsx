@@ -58,7 +58,9 @@ export function Modal({ open, onClose, wide, style, id, showClose = true, childr
     // Put the cursor where it is needed: the first real control, not the × button; the dialog itself if there is none.
     const raf = requestAnimationFrame(() => {
       if (!root) return;
-      const target = visibleFocusables(root).find((el) => !el.classList.contains('modal-close')) || root;
+      let target = visibleFocusables(root).find((el) => !el.classList.contains('modal-close')) || root;
+      // a text field takes focus only on a computer: on a phone / tablet the keyboard must not jump up before the person taps a field
+      try { if (target !== root && target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea') && (window.matchMedia('(pointer:coarse)').matches || window.innerWidth < 820)) target = root; } catch (e) { /* ignore */ }
       target.focus({ preventScroll: true });
     });
 

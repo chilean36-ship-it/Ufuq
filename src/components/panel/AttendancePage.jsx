@@ -7,7 +7,7 @@ import MonthlyAttendance from './MonthlyAttendance';
 import useMonthKey from '../../hooks/useMonthKey';
 import PageStyle from '../PageStyle';
 import historyCss from '../../pages/Dashboard/attendance-history.css?inline';
-import { MONTH_KEYS, allowedDaysLabel, fmtDate, isDateAllowedForGroup, nearestAllowedDateStr, todayStr } from '../../lib/panelUtils';
+import { MONTH_KEYS, attendanceState, fmtDate, isDateAllowedForGroup, lessonTimeOn, nearestAllowedDateStr, todayStr } from '../../lib/panelUtils';
 import Loader from '../../components/Loader';
 
 /**
@@ -25,11 +25,13 @@ export default function AttendancePage() {
   const [saving, setSaving] = useState(false);
   const [summaryNonce, setSummaryNonce] = useState(0);   // bumped after every save so the monthly summary re-reads Supabase
 
+  const [, setTick] = useState(0);   // re-evaluates 'has the lesson started yet' while the page stays open
+  useEffect(() => { const id = setInterval(() => setTick((n) => n + 1), 30000); return () => clearInterval(id); }, []);
+
   const monthKey = useMonthKey();   // 'YYYY-MM' — oy almashganda ro'yxat yangidan yuklanadi
 
   const loadHistory = useCallback(async (memberCount) => {
     if (!code) return;
-    setHistory(null);
     // Faqat joriy kalendar oyi (1-kun .. oxirgi kun). Yangi oyda ro'yxat avtomatik yangilanadi;
     // eski sessiyalar bazada qoladi va Monthly attendance oy tanlagichida ko'rinadi.
     const [y, m] = monthKey.split('-').map(Number);
@@ -50,7 +52,6 @@ export default function AttendancePage() {
 
   const loadForDate = useCallback(async (d) => {
     if (!code) return 0;
-    setMembers(null);
     const { data: rows, error: mErr } = await supabase.from('group_members').select('user_id, name').eq('group_code', code).order('name');
     if (mErr) { toast(mErr.message, 'err'); return 0; }
     const list = rows || [];
@@ -74,12 +75,8 @@ export default function AttendancePage() {
     let cancelled = false;
     (async () => {
       let d = date;
-      const label = allowedDaysLabel(g, t);
-      if (!isDateAllowedForGroup(d, g)) {
-        d = nearestAllowedDateStr(d, g);
-        setDate(d);
-        if (label) toast(t('This group only has class on:') + ' ' + label + '. ' + t('Jumped to the nearest matching date.'), 'ok');
-      }
+      // Not a class day: quietly jump to the nearest one (no pop-up: the date picker only offers class days anyway).
+      if (!isDateAllowedForGroup(d, g)) { d = nearestAllowedDateStr(d, g); setDate(d); }
       const n = await loadForDate(d);
       if (cancelled) return;
       await loadHistory(n);
@@ -101,8 +98,10 @@ export default function AttendancePage() {
   // Three states: true = present, false = absent, undefined = not marked yet. A student nobody marked used to show
   // "Present" and was SAVED as present, so a quick Save marked absent students as present. Now the first tap marks
   // present, the next ones toggle, and "All present" fills only the students still unmarked.
-  const toggle = (id) => setPresence((p) => ({ ...p, [id]: p[id] === undefined ? true : !p[id] }));
-  const markAllPresent = () => setPresence((p) => {
+  const state = g ? attendanceState(date, g, !!sessionId) : 'free';
+  const closed = state === 'early' || state === 'late';   // before the lesson starts / after its day is over without being taken
+  const toggle = (id) => closed ? undefined : setPresence((p) => ({ ...p, [id]: p[id] === undefined ? true : !p[id] }));
+  const markAllPresent = () => closed ? undefined : setPresence((p) => {
     const next = { ...p };
     (members || []).forEach((m) => { if (next[m.user_id] === undefined) next[m.user_id] = true; });
     return next;
@@ -111,6 +110,7 @@ export default function AttendancePage() {
 
   async function save() {
     if (!g) { toast(t('Select a group.'), 'err'); return; }
+    if (closed) return;
     const marked = (members || []).filter((m) => typeof presence[m.user_id] === 'boolean');
     if (!marked.length) { toast(t('Mark at least one student first.'), 'err'); return; }
     setSaving(true);
@@ -134,7 +134,6 @@ export default function AttendancePage() {
     } finally { setSaving(false); }
   }
 
-  const label = g ? allowedDaysLabel(g, t) : '';
 
   return (
     <section className="page active" id="page-attendance">
@@ -150,12 +149,13 @@ export default function AttendancePage() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <DatePicker value={date} group={g} onPick={pick} />
             {members && members.length > 0 && unmarked > 0 && (
-              <button type="button" className="btn btn-ghost btn-sm" onClick={markAllPresent}>{t('All present')}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={markAllPresent} disabled={closed}>{t('All present')}</button>
             )}
-            <button className="btn btn-gold btn-sm" id="saveAttendanceBtn" onClick={save} disabled={saving}>{t('Save')}</button>
+            <button className="btn btn-gold btn-sm" id="saveAttendanceBtn" onClick={save} disabled={saving || closed}>{t('Save')}</button>
           </div>
         </div>
-        <div className="att-list" id="attList">
+        {closed && <p className="att-closed" role="status">{state === 'early' ? t('Attendance opens at {time}, when the lesson starts.').replace('{time}', lessonTimeOn(date, g)) : t('The lesson day is over and attendance was not taken. It can no longer be marked.')}</p>}
+        <div className={'att-list' + (closed ? ' is-closed' : '')} id="attList">
           {!g ? <div className="empty-block">{t('Select a group')}</div>
             : members === null ? <Loader inline label={t('Loading…')} />
             : members.length === 0 ? <div className="empty-block">{t('There are no students in this group yet.')}</div>
@@ -164,7 +164,7 @@ export default function AttendancePage() {
               return (
                 <div className="att-row" key={m.user_id}>
                   <span>{m.name || t('Student')}</span>
-                  <span className="att-toggle" onClick={() => toggle(m.user_id)} style={state === undefined ? { opacity: 0.6 } : undefined}>
+                  <span className="att-toggle" onClick={() => toggle(m.user_id)} style={closed ? { opacity: 0.45, cursor: 'not-allowed' } : presence[m.user_id] === undefined ? { opacity: 0.6 } : undefined}>
                     <Switch on={state === true} />
                     {state === undefined ? t('Not marked') : t(state ? 'Present' : 'Absent')}
                   </span>

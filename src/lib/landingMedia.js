@@ -33,6 +33,10 @@ export const LANDING_LINKS = [
   { slot: 'link_instagram', label: 'Instagram', placeholder: 'https://instagram.com/…' },
   { slot: 'link_telegram', label: 'Telegram', placeholder: 'https://t.me/…' },
 ];
+/** Certificates the admin ADDED (slots student_N with N beyond the built-in ones), in order. */
+export const extraStudentSlots = (map) => Object.keys(map || {})
+  .map((k) => { const m = /^student_(\d+)$/.exec(k); return m && Number(m[1]) > FACES.length && map[k] && map[k].image_url ? Number(m[1]) : null; })
+  .filter(Boolean).sort((a, b) => a - b);
 export const LANDING_GROUPS = ['Teacher', 'Programs', 'Stories', 'Morals', 'Culture', 'Student photos', 'Site'];
 
 let cache = null;          // { slot: row }
@@ -74,6 +78,7 @@ export function useLandingMedia() {
   return {
     ready,
     img: (slot, fallback) => { if (!ready) return undefined; const r = rows[slot]; return r && r.image_url ? r.image_url + (r.image_url.includes('supabase') ? v(r) : '') : fallback; },
+    extraStudents: () => (ready ? extraStudentSlots(rows) : []),
     link: (slot, fallback) => { const r = rows[slot]; return r && r.video_url ? r.video_url : fallback; },
     video: (slot, fallback) => { if (!ready) return undefined; const r = rows[slot]; return r && r.video_url ? r.video_url : fallback; },
   };

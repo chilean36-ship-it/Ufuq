@@ -40,6 +40,9 @@ export function plannedDatesInMonth(scheduleDays, year, month, examDays) {
   return out;
 }
 
+/** 'YYYY-MM-DD' of the local calendar day. */
+export function localDateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
 /** 87.5 → "87.5", 100 → "100" */
 export function fmtPct(n) {
   const v = Math.round(n * 10) / 10;
@@ -50,12 +53,16 @@ export function fmtPct(n) {
  * @param scheduleDays  group's schedule_days ([{day:'Monday', time:'18:00'}, …])
  * @param records       [{ date:'YYYY-MM-DD', present:boolean }] — only lessons the teacher has marked
  */
-export function computeMonthAttendance({ scheduleDays, records, year, month, minRate = MIN_RATE, examDays }) {
+export function computeMonthAttendance({ scheduleDays, records, year, month, minRate = MIN_RATE, examDays, today }) {
   const prefix = monthPrefix(year, month);
-  const planned = plannedDatesInMonth(scheduleDays, year, month, examDays);
+  const todayKey = today || localDateKey(new Date());
+  const plannedAll = plannedDatesInMonth(scheduleDays, year, month, examDays);
   const inMonth = (records || []).filter((r) => r && r.date && r.date.startsWith(prefix));
   const byDate = {};
   inMonth.forEach((r) => { byDate[r.date] = !!r.present; });
+  // A lesson whose day has passed without attendance being taken is treated as if it never happened (attendance can only be
+  // taken on the lesson day, from its start). Today and the days ahead are still planned lessons.
+  const planned = plannedAll.filter((d) => d >= todayKey || byDate[d] !== undefined);
 
   const dates = Array.from(new Set([...planned, ...Object.keys(byDate)])).sort();
   // Har bir mashg'ulotning vaqti: guruh jadvalidagi shu hafta kuni vaqti (bo'lmasa null)

@@ -10,7 +10,7 @@ import { useApp } from './AppContext';
 import { haptic, readRecents, useCountUp, usePullRefresh, useToast } from './hooks';
 import { AttendanceCard, CardHead, RankingCard } from './HomeCards';
 import { Ico, Logo, Ring } from './ui';
-import { GroupIconBtn } from './AppUi';
+import { GroupIconBtn, LangBtn } from './AppUi';
 import { useTheme } from '../hooks/useTheme';
 
 const LOCALE = { UZ: 'uz', RU: 'ru', AR: 'ar', EN: 'en' };
@@ -110,6 +110,7 @@ export default function HomeScreen({ onNavigate, onUpgrade, activity }) {
             </button>
           )}
           <GroupIconBtn />
+          <LangBtn />
           <button type="button" role="switch" aria-checked={theme === 'dark'} className={'ua-tsw ' + theme} onClick={() => { haptic(6); toggleTheme(); }} aria-label={t(theme === 'dark' ? 'light' : 'dark')}>
             <i><Ico n={theme === 'dark' ? 'moon' : 'sun'} size={15} sw={2} /></i>
           </button>

@@ -49,7 +49,6 @@ html[data-theme="light"] .ua-hrow.present .ua-hrow-p{ color:#1c7a45; } html[data
 .ua-skel.tall{ height:220px; border-radius:24px; }
 
 /* ---------- motion polish used across the app ---------- */
-.ua-tab.on .ua-tab-ic svg{ animation:uaTabBounce .5s cubic-bezier(.3,1.6,.5,1); }
 @keyframes uaTabBounce{ 0%{ transform:scale(.7) translateY(4px); } 60%{ transform:scale(1.18); } 100%{ transform:none; } }
 .ua-host .tk2-card, .ua-host .audio-card, .ua-host .st-card, .ua-host .ex2-lvlcard, .ua-host .pv-panel, .ua-host .bl-card, .ua-host .cf-card, .ua-host .gm-stat{ animation:uaCardIn .5s cubic-bezier(.2,.8,.2,1) backwards; }
 .ua-host .tk2-card:nth-child(2), .ua-host .audio-card:nth-child(2), .ua-host .st-card:nth-child(2), .ua-host .pv-panel:nth-child(2){ animation-delay:.06s; }
@@ -96,3 +95,38 @@ html[data-theme="light"] .ua-hrow.present .ua-hrow-p{ color:#1c7a45; } html[data
 .ua-wd-done svg{ display:block; }
 @keyframes uaPop{ from{ transform:scale(.4); opacity:0; } }
 .ua-wd-dot{ width:6px; height:6px; }
+
+/* an app, not a web page: no text selection handles / "Copy · Web search" bubble, no image or link callouts. Fields and the chat text stay selectable. */
+.ua-body, .ua-body *{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+.ua-body input, .ua-body textarea, .ua-body [contenteditable="true"], .ua-body .uai-bubble, .ua-body .uai-bot-body, .ua-body [data-selectable], .ua-body .uai-bubble *, .ua-body .uai-bot-body *, .ua-body [data-selectable] *{ -webkit-user-select:text; user-select:text; }
+.ua-body img, .ua-body a{ -webkit-user-drag:none; }
+
+/* language button (top bar) */
+.ua-tbtn.ua-lang{ width:auto; padding:0 10px; gap:5px; display:inline-flex; align-items:center; font:800 11.5px 'Inter',sans-serif; letter-spacing:.04em; }
+.ua-tbtn.ua-lang svg{ color:var(--gold-bright); }
+.ua-brand-act{ gap:6px; }
+
+/* settings inside the app: roomy, nothing runs into anything else */
+.ua-host .st-body::after{ min-height:110px; }
+.ua-host .st-card{ border-radius:24px; }
+.ua-host .st-row-label, .ua-host .st-row-desc{ overflow-wrap:anywhere; }
+.ua-host .st-row-ctl select, .ua-host .st-row-ctl input{ max-width:100%; }
+.ua-host .st-keys{ display:none; }
+@media (max-width:560px){
+  .ua-host .st-lang-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .ua-host .st-lang{ padding:12px 10px; gap:9px; } .ua-host .st-lang em{ width:32px; height:32px; font-size:11px; }
+  .ua-host .st-row{ gap:10px; } .ua-host .st-row-ctl .st-btn{ width:100%; }
+  .ua-host .st-inline{ width:100%; } .ua-host .st-inline .st-btn{ flex:1 1 140px; justify-content:center; }
+  .ua-host .st-swatches{ gap:12px; } .ua-host .st-swatch{ width:38px; height:38px; }
+  .ua-host .st-seg{ width:100%; } .ua-host .st-seg button{ flex:1; padding:9px 8px; }
+}
+
+/* iPad / large tablets (touch, 700-999px): a wider, centred column instead of a stretched phone screen */
+@media (min-width:700px) and (max-width:999px){
+  .ua-screen, .ua-app{ max-width:780px; }
+  .ua-tabbar{ left:max(24px, 6%); right:max(24px, 6%); }
+  .ua-page > section, .ua-page > header, .ua-page > label, .ua-page > div.ua-rows2, .ua-page > h4, .ua-page > a{ margin-inline:24px; }
+  .ua-scroll{ padding-bottom:calc(112px + env(safe-area-inset-bottom)); }
+  .ua-tiles3{ gap:14px; } .ua-native{ padding-inline:8px; }
+  .ua-host .st-lang-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

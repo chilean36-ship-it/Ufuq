@@ -22,7 +22,7 @@ export default function OrdersTab() {
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('admin_list_orders', { p_status: status || null, p_from: from || null, p_to: to || null, p_q: q || null });
     if (error) { setRows((r) => r || { error: error.message }); return; }
-    setRows(data || []);
+    setRows((data || []).slice().sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));   // newest first
   }, [status, from, to, q]);
   useEffect(() => { load(); }, [load]);
   useLiveRefresh(load);

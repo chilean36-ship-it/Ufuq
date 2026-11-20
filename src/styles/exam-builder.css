@@ -307,3 +307,36 @@ html:not([data-theme="light"]) .pbx{ color-scheme:dark; }
 .pbx-datewrap .pbx-select{ padding-inline-end:44px; }
 .pbx-clear{ position:absolute; inset-inline-end:40px; width:24px; height:24px; border:0; border-radius:50%; background:var(--p-surface2); color:var(--p-mut); font-size:16px; line-height:1; cursor:pointer; display:grid; place-items:center; }
 .pbx-clear:hover{ background:var(--p-bad-soft); color:var(--p-bad); }
+
+/* ---- compact editor: level + exam type are swipeable tabs, everything starts folded ---- */
+.pbx .pbx-levels, .pbx .pbx-kindcards{ display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; padding:2px 2px 8px; margin:0; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
+.pbx .pbx-lvl{ flex:0 0 auto; min-width:44px; min-height:38px; padding:0 14px; border-radius:999px; }
+.pbx .pbx-kc{ flex:0 0 auto; display:inline-flex; align-items:center; gap:8px; min-height:38px; padding:0 14px; border-radius:999px; text-align:start; white-space:nowrap; }
+.pbx .pbx-kc b{ font-size:13.5px; } .pbx .pbx-kc span{ font-size:11.5px; }
+.pbx .pbx-kc.bad:not(.on){ border-color:var(--p-bad); background:var(--p-bad-soft); }
+.pbx .pbx-acc-b .pbx-kindcards{ margin-top:0; }
+
+/* ---- exam cards: the Draft / Published switch always sits on the type row ---- */
+.xc-top{ flex-wrap:nowrap; min-width:0; }
+.xc-top .xc-kind{ min-width:0; }
+.xc-sw{ flex:none; }
+.xh-panel.is-busy .xl-list, .xh-panel.is-busy .xl-sec{ opacity:.55; transition:opacity .15s; pointer-events:none; }
+
+/* ---- check one paper (teacher / admin) ---- */
+.gm-meta{ margin:2px 0 12px; font-size:13px; color:var(--text-muted); overflow-wrap:anywhere; }
+.gm-note{ margin:0 0 12px; padding:9px 13px; border-radius:12px; background:var(--gold-dim); color:var(--gold-bright); font-size:13px; font-weight:600; line-height:1.45; }
+.gm-list{ display:grid; gap:12px; }
+.gm-q{ display:grid; gap:8px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--bg-3); }
+.gm-q-head{ display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted); }
+.gm-q-head i{ font-style:normal; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:var(--gold); color:#171717; font-size:12px; letter-spacing:0; }
+.gm-q-text{ font-size:15px; font-weight:600; line-height:1.55; color:var(--text); overflow-wrap:anywhere; }
+.gm-label{ font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); margin-top:2px; }
+.gm-ans{ padding:10px 12px; border-radius:12px; background:var(--bg-2); border:1px solid var(--line); font-size:15px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+.gm-ans.empty{ color:var(--text-muted); font-style:italic; }
+.gm-key{ font-size:12.5px; line-height:1.5; color:var(--text-muted); } .gm-key b{ color:var(--text); }
+.gm-ai{ display:grid; gap:3px; padding:9px 12px; border-radius:12px; background:var(--gold-dim); font-size:13px; line-height:1.5; color:var(--text); }
+.gm-ai b{ color:var(--gold-bright); }
+.gm-score{ display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; color:var(--text-muted); }
+.gm-score input{ width:92px; padding:9px 10px; border-radius:11px; border:1.5px solid var(--line); background:var(--bg); color:var(--text); font:700 16px inherit; font-family:inherit; text-align:center; }
+.gm-score input:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+

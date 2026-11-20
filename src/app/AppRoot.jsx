@@ -113,7 +113,9 @@ function Root() {
   if (phase === 'in' && auth) {
     if (auth.role === 'student' && auth.status === 'blocked') return <BlockedNotice />;
     // admins may use the student app too (as on the website); teachers go to their panel
-    if (auth.role !== 'student' && !(auth.role === 'admin' && studentView)) return <StaffScreen auth={auth} onStudent={auth.role === 'admin' ? () => { try { sessionStorage.setItem('ufuq-staff-student', '1'); } catch (e) { /* ignore */ } setStudentView(true); } : null} />;
+    // a main (super) admin manages groups but never enters the student app; only an ordinary admin may
+    const mayStudent = auth.role === 'admin' && auth.tier === 'standard';
+    if (auth.role !== 'student' && !(mayStudent && studentView)) return <StaffScreen auth={auth} onStudent={mayStudent ? () => { try { sessionStorage.setItem('ufuq-staff-student', '1'); } catch (e) { /* ignore */ } setStudentView(true); } : null} />;
     return <Suspense fallback={<Splash />}><AppShell auth={auth} /></Suspense>;
   }
   if (guest === 'onboarding') return <Onboarding onFinish={() => setGuest('signup')} onHaveAccount={() => setGuest('signin')} />;
@@ -163,6 +165,9 @@ export default function AppRoot() {
     syncVV();
     if (vv) { vv.addEventListener('resize', syncVV); vv.addEventListener('scroll', syncVV); }
     window.addEventListener('resize', syncVV);
+    // a long press must not open the browser's context menu on anything but a field
+    const noMenu = (e) => { const el = e.target; if (!(el && el.closest && el.closest('input,textarea,[contenteditable="true"],[data-selectable]'))) e.preventDefault(); };
+    document.addEventListener('contextmenu', noMenu);
     document.addEventListener('gesturestart', noGesture);
     document.addEventListener('gesturechange', noGesture);
     document.addEventListener('wheel', noCtrlWheel, { passive: false });
@@ -173,6 +178,7 @@ export default function AppRoot() {
       if (vv) { vv.removeEventListener('resize', syncVV); vv.removeEventListener('scroll', syncVV); }
       window.removeEventListener('resize', syncVV);
       root.style.removeProperty('--ua-vh'); root.style.removeProperty('--ua-vt'); document.body.classList.remove('ua-kb');
+      document.removeEventListener('contextmenu', noMenu);
       document.removeEventListener('gesturestart', noGesture);
       document.removeEventListener('gesturechange', noGesture);
       document.removeEventListener('wheel', noCtrlWheel);

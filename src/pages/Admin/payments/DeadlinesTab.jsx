@@ -55,13 +55,17 @@ export default function DeadlinesTab() {
     if (error) { toast(error.message, 'err'); return; }
     toast(t('Settings saved.'), 'ok'); loadPolicy(); load();
   }
-  async function sendNow() {
-    const { data, error } = await supabase.rpc('send_payment_notices');
-    if (error) toast(error.message, 'err'); else toast(`${t('Reminders sent')}: ${data}`, 'ok');
+  function sendNow() {
+    askConfirm(t('Send reminders now'), t('Send the payment reminders to every student who needs one now?'), async () => {
+      const { data, error } = await supabase.rpc('send_payment_notices');
+      if (error) toast(error.message, 'err'); else toast(`${t('Reminders sent')}: ${data}`, 'ok');
+    }, t('Send'));
   }
-  async function remind(r) {
-    const { error } = await supabase.rpc('admin_remind_user', { p_user: r.user_id });
-    if (error) toast(error.message, 'err'); else toast(t('Reminder sent.'), 'ok');
+  function remind(r) {
+    askConfirm(t('Send a reminder'), (r.full_name || r.email) + ' \u2014 ' + t('Send a payment reminder to this student?'), async () => {
+      const { error } = await supabase.rpc('admin_remind_user', { p_user: r.user_id });
+      if (error) toast(error.message, 'err'); else toast(t('Reminder sent.'), 'ok');
+    }, t('Send'));
   }
   function openExt(r) {
     setExt(r); setExtWhy('');
@@ -105,26 +109,24 @@ export default function DeadlinesTab() {
         </div>
         {form && (
           <form onSubmit={savePolicy}>
-            <div className="set-grid">
-              <div className="field set-field">
-                <label>{t('Pay by (students who never paid keep access until this date)')}</label>
-                <input type="date" style={{ width: '100%' }} disabled={!isSuper} value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} />
+            <div className="dl-fields">
+              <div className="dl-field">
+                <label>{t('Pay by')}</label>
+                <input type="date" disabled={!isSuper} value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} />
+                <span className="hint">{t('Students who never paid keep access until this date.')}</span>
               </div>
-              <div className="field set-field">
-                <label>{t('Grace period after it (days)')}</label>
-                <input type="number" min="0" max="30" style={{ width: '100%' }} disabled={!isSuper} value={form.grace} onChange={(e) => setForm({ ...form, grace: e.target.value })} />
+              <div className="dl-field">
+                <label>{t('Grace period (days)')}</label>
+                <input type="number" min="0" max="30" inputMode="numeric" disabled={!isSuper} value={form.grace} onChange={(e) => setForm({ ...form, grace: e.target.value })} />
+                <span className="hint">{t('Extra days after the plan or the date ends.')}</span>
               </div>
-            </div>
-            <div className="set-grid">
-              <div className="field set-field">
-                <label>{t('Unpaid order stays open for (hours)')}</label>
-                <input type="number" min="1" max="720" style={{ width: '100%' }} disabled={!isSuper} value={form.hold} onChange={(e) => setForm({ ...form, hold: e.target.value })} />
-              </div>
-              <div className="field set-field" style={{ alignSelf: 'end' }}>
+              <div className="dl-field">
+                <label>{t('Unpaid order stays open (hours)')}</label>
+                <input type="number" min="1" max="720" inputMode="numeric" disabled={!isSuper} value={form.hold} onChange={(e) => setForm({ ...form, hold: e.target.value })} />
                 <span className="hint">{t('Bank-transfer orders get three times longer. Cancelled orders are deleted after 1 day.')}</span>
               </div>
             </div>
-            <div className="pay-filters-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="dl-actions">
               {isSuper && <button className="btn btn-gold btn-sm" disabled={busy}>{t('Save')}</button>}
               {form.due && isSuper && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setForm({ ...form, due: '' })}>{t('Clear date')}</button>}
               <button type="button" className="btn btn-ghost btn-sm" onClick={sendNow}>{IC_BELL}<span style={{ marginInlineStart: 6 }}>{t('Send reminders now')}</span></button>

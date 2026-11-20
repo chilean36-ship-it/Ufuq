@@ -2,9 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from '../../components/panel/PanelContext';
 import PopupCard from '../../components/PopupCard';
+import PageStyle from '../../components/PageStyle';
+
+const LIST_CSS = '.pp-list{max-height:330px;overflow-y:auto;overscroll-behavior:auto;scrollbar-width:thin;padding-right:2px}.pp-list .u-item{align-items:center}.pp-list .u-item-title{overflow-wrap:anywhere}';
 
 const BUCKET = 'landing-media';   // public bucket the super admin can already write to
 const MAX_IMG = 5 * 1024 * 1024;
+const MAX_VID = 20 * 1024 * 1024;
 const TARGETS = [['', 'Just close'], ['library', 'Library'], ['myGroup', 'My group'], ['tasks', 'Tasks'], ['exam', 'Exams'], ['progress', 'Progress'], ['attendance', 'Attendance'], ['billing', 'Plans & payments'], ['__url__', 'A web link']];
 
 /** Super admin: publish a "what's new" pop-up that every student (or one group) sees once when the app opens. */
@@ -39,8 +43,10 @@ export default function PopupComposer() {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    if (!/^image\//.test(file.type)) { setError(t('Please choose a picture.')); return; }
-    if (file.size > MAX_IMG) { setError(t('The picture is larger than 5 MB.')); return; }
+    const isVid = /^video\/(mp4|webm|quicktime)$/.test(file.type);
+    if (!isVid && !/^image\//.test(file.type)) { setError(t('Please choose a picture or a video (MP4, WebM).')); return; }
+    if (isVid && file.size > MAX_VID) { setError(t('The video is larger than 20 MB.')); return; }
+    if (!isVid && file.size > MAX_IMG) { setError(t('The picture is larger than 5 MB.')); return; }
     setError(''); setUploading(true);
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
     const path = 'popups/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
@@ -92,12 +98,12 @@ export default function PopupComposer() {
         <p className="hint" style={{ marginTop: 0 }}>{t('Shown once to each student when they open the app: a picture, a title, a text and one button.')}</p>
         <form onSubmit={publish}>
           <div className="field">
-            <label>{t('Picture')}</label>
+            <label>{t('Picture or video')}</label>
             <div className="u-toolbar">
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={pickImage} />
-              <button type="button" className="btn btn-sm" onClick={() => fileRef.current && fileRef.current.click()} disabled={uploading}>{uploading ? t('Uploading…') : image ? t('Change picture') : t('Choose picture')}</button>
+              <input ref={fileRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime" style={{ display: 'none' }} onChange={pickImage} />
+              <button type="button" className="btn btn-sm" onClick={() => fileRef.current && fileRef.current.click()} disabled={uploading}>{uploading ? t('Uploading…') : image ? t('Change picture or video') : t('Choose picture or video')}</button>
               {image && <button type="button" className="btn btn-sm" onClick={() => setImage('')}>{t('Remove')}</button>}
-              <span className="hint" style={{ margin: 0 }}>{t('Wide pictures look best (16:10), up to 5 MB.')}</span>
+              <span className="hint" style={{ margin: 0 }}>{t('Wide pictures look best (16:10), up to 5 MB. A video can be up to 20 MB.')}</span>
             </div>
           </div>
           <div className="field">
@@ -149,7 +155,8 @@ export default function PopupComposer() {
         </div>
         <div className="panel">
           <div className="panel-head"><h3>{t('Published pop-ups')}</h3></div>
-          <div className="u-list">
+          <PageStyle css={LIST_CSS} />
+          <div className="u-list pp-list">
             {list === null ? <div className="empty-block">{t('Loading…')}</div>
               : typeof list === 'string' ? <div className="empty-block">{t('The pop-up tables are not installed yet. Run supabase/migrations/20261209_app_popups.sql first.')}</div>
                 : list.length === 0 ? <div className="empty-block">{t('Nothing published yet.')}</div>

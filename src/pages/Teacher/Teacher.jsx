@@ -30,6 +30,8 @@ import { clearCachedRole, ufuqGetSession } from '../../lib/auth';
 import { fetchPanelProfile, inApp, isSuperAdmin, outRoute, panelRoute, verifySuperAdmin } from '../../lib/panelAccess';
 import PanelTabBar from '../../components/panel/PanelTabBar';
 import PanelMoreSheet from '../../components/panel/PanelMoreSheet';
+import panelAttendance from '../../i18n/panel-attendance';
+import panelUpload from '../../i18n/panel-upload';
 import panelSwitchDict from '../../i18n/panel-switch';
 import teacherClassDict from '../../i18n/teacher-class';
 import examLevelsDict from '../../i18n/exam-levels';
@@ -50,7 +52,7 @@ import AnnouncementsPage from './AnnouncementsPage';
 import PanelPending from './PanelPending';
 
 // New strings of the redesigned panel, merged over the base dictionary (EN falls back to the key itself).
-const teacherDict = Object.keys({ ...teacherDictBase, ...teacherExtra }).reduce((acc, k) => { acc[k] = { ...(examLevelsDict[k] || {}), ...(teacherClassDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(examModeDict[k] || {}) }; return acc; }, {});
+const teacherDict = Object.keys({ ...teacherDictBase, ...teacherExtra }).reduce((acc, k) => { acc[k] = { ...(examLevelsDict[k] || {}), ...(teacherClassDict[k] || {}), ...(panelSwitchDict[k] || {}), ...(fillMissing[k] || {}), ...(teacherDictBase[k] || {}), ...(teacherExtra[k] || {}), ...(examModeDict[k] || {}), ...(panelAttendance[k] || {}), ...(panelUpload[k] || {}) }; return acc; }, {});
 const COLLAPSE_KEY = 'ufuq-panel-collapsed';
 
 const GROUP_KEY = 'ufuq-admin-group'; // same key the legacy admin/teacher panels shared
@@ -284,7 +286,7 @@ function TeacherInner() {
       </div>
 
       {inApp() && isMobile && guard.ok && <PanelTabBar items={['overview', 'groups', 'attendance', 'tasks']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setMoreOpen(true)} moreOpen={moreOpen} />}
-      {inApp() && isMobile && guard.ok && <PanelMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
+      {inApp() && isMobile && guard.ok && <PanelMoreSheet hide={['overview', 'groups', 'attendance', 'tasks']} open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
                                                        switchItem={canSwitchToAdmin ? { label: t('Switch to Admin panel'), onSelect: switchToAdmin } : null}
                                                        studentItem={null} name={myName} roleLabel={t('Teacher')} avatarUrl={myAvatarUrl} />}
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} placeholder={t('Search pages…')} emptyText={t('No pages match.')}

@@ -31,7 +31,7 @@ const PAGE_ICON = {
  * "Menu" of the admin / teacher panels inside the Ufuq app: a sheet that rises from the bottom with every page as a coloured
  * tile (instead of the website's side drawer), then the account actions (profile, switch panel, student app, sign out).
  */
-export default function PanelMoreSheet({ open, onClose, nav, page, onNavigate, onProfile, switchItem, studentItem, name, roleLabel, avatarUrl }) {
+export default function PanelMoreSheet({ open, onClose, nav, page, onNavigate, onProfile, switchItem, studentItem, name, roleLabel, avatarUrl, hide }) {
   const { t } = useCabinetI18n();
   const navigate = useNavigate();
 
@@ -63,7 +63,7 @@ export default function PanelMoreSheet({ open, onClose, nav, page, onNavigate, o
             <span className="pms-ic"><svg {...s} fill="currentColor" stroke="none"><path d="M11 2.6c.6 4.3 2.6 6.3 6.9 6.9-4.3.6-6.3 2.6-6.9 6.9-.6-4.3-2.6-6.3-6.9-6.9 4.3-.6 6.3-2.6 6.9-6.9z" /><path d="M18.2 14.2c.25 1.9 1.1 2.75 3 3-1.9.25-2.75 1.1-3 3-.25-1.9-1.1-2.75-3-3 1.9-.25 2.75-1.1 3-3z" /></svg></span>
             <span className="pms-l">Ufuq AI</span>
           </button>
-          {nav.map((n, i) => (
+          {nav.filter((n) => !(hide || []).includes(n.page)).map((n, i) => (
             <button type="button" key={n.page} className={'pms-tile ' + TONES[(i + 1) % TONES.length] + (n.page === page ? ' on' : '')} style={{ '--k': i + 1 }} onClick={() => go(n.page)}>
               <span className="pms-ic">{PAGE_ICON[n.page] || n.icon}</span>
               <span className="pms-l">{t(n.label)}</span>
