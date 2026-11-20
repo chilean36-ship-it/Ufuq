@@ -12,3 +12,7 @@ as $$
 $$;
 revoke all on function public.group_written_ranking(text) from public;
 grant execute on function public.group_written_ranking(text) to authenticated;
+
+-- Follow-up (applied 2026-11-20): the counted level is the newest level with ANY graded paper (pop quizzes included), not only midterm / final:
+-- level-9 results are pop2 papers (the old finals), so a student of a level-10 group shows the level-9 result until his first level-10 paper.
+-- In group_points_ranking the CTE  lv  reads:  select user_id, max(level) as lvl from b group by user_id
