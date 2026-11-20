@@ -130,3 +130,7 @@ html[data-theme="light"] .ua-hrow.present .ua-hrow-p{ color:#1c7a45; } html[data
   .ua-tiles3{ gap:14px; } .ua-native{ padding-inline:8px; }
   .ua-host .st-lang-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+/* Hifz reading screen: the floating tab bar steps aside, the page and the dock own the screen */
+body.ua-hifz-open .ua-tabbar{ transform:translateY(140%); opacity:0; pointer-events:none; }
+body.ua-hifz-open .ua-scroll{ padding-bottom:calc(30px + env(safe-area-inset-bottom)); -webkit-mask-image:none; mask-image:none; }
