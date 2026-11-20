@@ -113,7 +113,9 @@ function Root() {
   if (phase === 'in' && auth) {
     if (auth.role === 'student' && auth.status === 'blocked') return <BlockedNotice />;
     // admins may use the student app too (as on the website); teachers go to their panel
-    if (auth.role !== 'student' && !(auth.role === 'admin' && studentView)) return <StaffScreen auth={auth} onStudent={auth.role === 'admin' ? () => { try { sessionStorage.setItem('ufuq-staff-student', '1'); } catch (e) { /* ignore */ } setStudentView(true); } : null} />;
+    // a main (super) admin manages groups but never enters the student app; only an ordinary admin may
+    const mayStudent = auth.role === 'admin' && auth.tier === 'standard';
+    if (auth.role !== 'student' && !(mayStudent && studentView)) return <StaffScreen auth={auth} onStudent={mayStudent ? () => { try { sessionStorage.setItem('ufuq-staff-student', '1'); } catch (e) { /* ignore */ } setStudentView(true); } : null} />;
     return <Suspense fallback={<Splash />}><AppShell auth={auth} /></Suspense>;
   }
   if (guest === 'onboarding') return <Onboarding onFinish={() => setGuest('signup')} onHaveAccount={() => setGuest('signin')} />;

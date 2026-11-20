@@ -36,52 +36,55 @@ export default function WrittenExamsPanel() {
   const [grade, setGrade] = useState({ open: false, submissionId: null, name: '' });
   const [missed, setMissed] = useState({ open: false, exam: null });
 
+  const [loading, setLoading] = useState(false);   // the list stays on screen (dimmed) while a group switch loads: nothing blinks away
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
     if (!code) { setExams(null); return; }
-    if (!silent) setExams(null);
+    if (!silent) setLoading(true);
     try {
-      // Level exams (midterm / final) belong to a LEVEL, not to one group: the rows sit under whichever group of the series was
-      // created first (the level-7 final is stored under Group A8's code) while the students who have not passed yet stay in
-      // Group A7. So besides the group's own exams, every group also lists the midterm / final of ITS OWN level wherever the
-      // row is stored; when several copies exist (every group keeps an empty draft copy) the real one is shown: the one with
-      // papers, then the published one, then this group's own copy.
+      // Level exams (midterm / final / pop quizzes) belong to a LEVEL, not to one group: the rows sit under whichever group of the series was
+      // created first while students who have not passed yet stay in the lower group. So every group lists the official exams of EVERY level
+      // (a group that has just been opened sees them all, as drafts, and a student who moved up keeps his old results reachable). When several
+      // copies of one (level, kind) exist the real one is shown: the one with papers, then the published one, then this group's own copy.
       const orderBy = (q) => q.order('level', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
       const [own, lvlRes] = await Promise.all([
         orderBy(supabase.from('written_exams').select('*').eq('group_code', code)),
-        g && g.type !== 'individual' && g.level != null
-          ? orderBy(supabase.from('written_exams').select('*').not('exam_kind', 'is', null).eq('level', g.level).neq('group_code', code))
+        g && g.type !== 'individual'
+          ? orderBy(supabase.from('written_exams').select('*').not('exam_kind', 'is', null).not('level', 'is', null).neq('group_code', code))
           : Promise.resolve({ data: [] }),
       ]);
       if (own.error) throw own.error;
-      const ownList = own.data || [];
-      const cand = [...ownList, ...((lvlRes && lvlRes.data) || [])];
-      if (cand.length === 0) { setExams([]); return; }
+      const cand = [...(own.data || []), ...((lvlRes && lvlRes.data) || [])];
+      if (cand.length === 0) { setExams([]); setLoading(false); return; }
       const ids = cand.map((e) => e.id);
-      const [qs, subs] = await Promise.all([
+      const chunks = []; for (let i = 0; i < ids.length; i += 60) chunks.push(ids.slice(i, i + 60));
+      const [qs, ...subParts] = await Promise.all([
         supabase.rpc('written_exam_question_counts', { p_exam_ids: ids }),   // a server-side count: listing the rows hits the 1000-row API cap once many exams have 40+ questions
-        supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', ids),
+        ...chunks.map((c) => supabase.from('written_exam_submissions').select('exam_id, status').in('exam_id', c)),
       ]);
       const qc = {}, sc = {}, pc = {}, anyN = {};
       (qs.data || []).forEach((q) => { qc[q.exam_id] = Number(q.n) || 0; });
-      (subs.data || []).forEach((s) => { anyN[s.exam_id] = (anyN[s.exam_id] || 0) + 1; if (s.status === 'submitted' || s.status === 'graded') sc[s.exam_id] = (sc[s.exam_id] || 0) + 1; if (s.status === 'submitted') pc[s.exam_id] = (pc[s.exam_id] || 0) + 1; });
-      // one copy per (level, kind) for this group's level; everything else of the group stays as it is
+      subParts.forEach((sp) => (sp.data || []).forEach((x) => { anyN[x.exam_id] = (anyN[x.exam_id] || 0) + 1; if (x.status === 'submitted' || x.status === 'graded') sc[x.exam_id] = (sc[x.exam_id] || 0) + 1; if (x.status === 'submitted') pc[x.exam_id] = (pc[x.exam_id] || 0) + 1; }));
+      // one copy per (level, kind); everything else of the group stays as it is
       const best = new Map();
       const rank = (e) => (anyN[e.id] ? 4 : 0) + (e.is_published ? 2 : 0) + (e.group_code === code ? 1 : 0);
       cand.forEach((e) => {
-        if (!(e.exam_kind && g && e.level === g.level)) return;
+        if (!(e.exam_kind && e.level)) return;
         const k = e.level + '|' + e.exam_kind;
         if (!best.has(k) || rank(e) > rank(best.get(k))) best.set(k, e);
       });
       const picked = new Set([...best.values()].map((e) => e.id));
-      const list = cand.filter((e) => (e.group_code === code && !(e.exam_kind && g && e.level === g.level)) || picked.has(e.id));
+      const list = cand.filter((e) => (e.group_code === code && !(e.exam_kind && e.level)) || picked.has(e.id));
       setMeta({ qCount: qc, subCount: sc, pendCount: pc });
       setExams(list);
     } catch (e) { if (!silent) setExams({ error: e.message || String(e) }); }
+    setLoading(false);
   }, [code, g && g.level, g && g.type]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load(); }, [load]);
   useLiveRefresh(load);
+  // open on the tab of the selected group's level (the teacher can still switch to any other)
+  useEffect(() => { setLvl(g && g.level >= 1 && g.level <= MAX_LEVEL ? g.level : 'all'); }, [code, g && g.level]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function togglePublish(exam) {
     try {
@@ -97,11 +100,11 @@ export default function WrittenExamsPanel() {
       const { error } = await supabase.from('written_exams').update({ is_published: !exam.is_published }).eq('id', exam.id);
       if (error) throw error;
       toast(t(exam.is_published ? 'Exam unpublished.' : 'Exam published.'), 'ok');
-      load();
+      load({ silent: true });
     } catch (e) {
       const m = String((e && e.message) || e);
       toast(/EXAM_LEVEL_REQUIRED/.test(m) ? t('Choose a level before publishing.') : /EXAM_NEEDS_QUESTIONS/.test(m) ? t('Add at least one question before publishing.') : m, 'err');
-      load();
+      load({ silent: true });
     }
   }
 
@@ -110,7 +113,7 @@ export default function WrittenExamsPanel() {
       const { error } = await supabase.from('written_exams').delete().eq('id', exam.id);
       if (error) { toast(error.message, 'err'); return; }
       toast(t('Exam deleted.'), 'ok');
-      load();
+      load({ silent: true });
     });
   }
 
@@ -153,7 +156,6 @@ export default function WrittenExamsPanel() {
       <article className={'xc ' + k + (e.is_published ? ' pub' : ' draft')} key={e.id}>
         <div className="xc-top">
           <span className={'xc-kind ' + k}>{KIND_ICO[k] || KIND_ICO.other}{kindText(e)}</span>
-          <span className="xc-lvl">{levelName(e.level >= 1 && e.level <= MAX_LEVEL ? e.level : 0)}</span>
           <label className="xl-switch xc-sw" title={t(e.is_published ? 'Unpublish' : 'Publish')}>
             <input type="checkbox" role="switch" checked={!!e.is_published} onChange={() => togglePublish(e)} />
             <i aria-hidden="true" />
@@ -196,7 +198,7 @@ export default function WrittenExamsPanel() {
   return (
     <div className="we-panel active" id="examsWrittenPanel">
       <PageStyle css={listCss} />
-      <div className="panel xh-panel">
+      <div className={'panel xh-panel' + (loading && Array.isArray(exams) ? ' is-busy' : '')}>
         <div className="xh">
           <div className="xh-main">
             <h3>{t('Written exams')}{g ? <span className="we-group-pill">{g.name}</span> : null}</h3>
@@ -273,14 +275,14 @@ export default function WrittenExamsPanel() {
           )}
       </div>
 
-      <ExamEditor state={builder} onClose={() => setBuilder((s) => ({ ...s, open: false }))} onSaved={load} />
-      <MissedStudentsModal state={missed} onClose={() => setMissed((s) => ({ ...s, open: false }))} onChanged={load} />
+      <ExamEditor state={builder} onClose={() => setBuilder((s) => ({ ...s, open: false }))} onSaved={() => load({ silent: true })} />
+      <MissedStudentsModal state={missed} onClose={() => { if (missed.back) setResults((r) => ({ ...r, open: true })); setMissed((s) => ({ ...s, open: false, back: false })); }} onChanged={() => load({ silent: true })} />
       <ExamResultsModal state={results} onClose={() => setResults((s) => ({ ...s, open: false }))}
-        onManage={(exam) => { setResults((s) => ({ ...s, open: false })); setMissed({ open: true, exam }); }}
+        onManage={(exam) => { setResults((s) => ({ ...s, open: false })); setMissed({ open: true, exam, back: true }); }}
         onGrade={(submissionId, name) => setGrade({ open: true, submissionId, name, kind: results.exam ? results.exam.exam_kind : null })} />
       <GradeModal state={grade} onClose={() => setGrade((s) => ({ ...s, open: false }))}
         examTitle={results.exam ? examTitleFor(results.exam, lang) : ''}
-        onSaved={() => { if (results.exam) { /* keep results modal fresh */ } load(); }} />
+        onSaved={() => load({ silent: true })} />
     </div>
   );
 }
@@ -298,7 +300,7 @@ function GradeModal({ state, onClose, examTitle, onSaved }) {
 
   const load = useCallback(async () => {
     if (!state.submissionId) return;
-    setSub(null);
+    setSub((cur) => (cur && !cur.error && cur.id === state.submissionId ? cur : null));   // a re-check updates in place instead of blanking the paper
     try {
       const { data: s, error: subErr } = await supabase.from('written_exam_submissions').select('*').eq('id', state.submissionId).single();
       if (subErr) throw subErr;
@@ -394,40 +396,36 @@ function GradeModal({ state, onClose, examTitle, onSaved }) {
   return (
     <Modal open={state.open} onClose={onClose} wide>
       <h3>{state.name || t('Student')}</h3>
-      <p className="hint" style={{ marginBottom: 14 }}>{meta}</p>
-      {sub && !sub.error && sub.status === 'graded' && (
-        <div className="we-ai" style={{ marginBottom: 14, padding: '10px 14px', border: '1px solid rgba(201,162,75,.4)', borderRadius: 10 }}>
-          {t('Graded by AI. The student already sees this result; change a score only if you disagree.')}
-        </div>
-      )}
+      <p className="gm-meta">{meta}</p>
       {sub && !sub.error && sub.status === 'submitted' && (
-        <div className="we-ai" style={{ marginBottom: 14, padding: '10px 14px', border: '1px solid rgba(201,162,75,.4)', borderRadius: 10 }}>
+        <div className="gm-note">
           {regrading ? t('Waiting for AI…') : hasAi ? t('The AI has checked this paper. Review the scores, change any you disagree with, then approve.') : t('Not checked by AI.')}
         </div>
       )}
-      <div>
+      <div className="gm-list">
         {sub === null ? <Loader inline label={t('Loading…')} />
           : sub.error ? <div className="empty-block">{sub.error}</div>
           : questions.length === 0 ? <div className="empty-block">{t('No questions yet.')}</div>
           : questions.map((q, i) => {
             const a = answers[q.id];
             const text = a && a.answer_text && a.answer_text.trim();
+            const hasAiQ = a && a.ai_score !== null && a.ai_score !== undefined;
+            const fb = hasAiQ ? pickFeedback(a, lang, t) : '';
             return (
-              <div className="we-ans" key={q.id}>
-                <div className="we-ans-type">{t('Question')} {i + 1} {'\u00b7'} {t(TYPE_LABEL[q.type] || q.type)}</div>
-                <div className="we-ans-q" dir="auto"><RichQ text={plainQ(q.question_text)} /></div>
-                {q.criteria_text && <div className="we-ai"><b>{t('Criteria')}:</b> {q.criteria_text}</div>}
-                <div className={'we-ans-text' + (text ? '' : ' we-ans-empty')} dir="auto">{text ? a.answer_text : t('No answer.')}</div>
-                <div className="we-ai">
-                  {a && a.ai_score !== null && a.ai_score !== undefined
-                    ? <><b>{t('AI score')}: {a.ai_score}</b>{pickFeedback(a, lang, t) ? <span dir="auto">{' \u2014 ' + pickFeedback(a, lang, t)}</span> : ''}</>
-                    : t('Not checked by AI.')}
-                </div>
-                <div className="we-score-row">
-                  <label>{t('Teacher score (0-100)')}</label>
-                  <input type="number" min="0" max="100" className="we-score-in" disabled={!a}
+              <div className="gm-q" key={q.id}>
+                <div className="gm-q-head"><i>{i + 1}</i><span>{t(TYPE_LABEL[q.type] || q.type)}</span></div>
+                <div className="gm-q-text" dir="auto"><RichQ text={plainQ(q.question_text)} /></div>
+                <div className="gm-label">{t('Answer')}</div>
+                <div className={'gm-ans' + (text ? '' : ' empty')} dir="auto">{text ? a.answer_text : t('No answer.')}</div>
+                {q.criteria_text && <div className="gm-key" dir="auto"><b>{t('Criteria')}:</b> {q.criteria_text}</div>}
+                {hasAiQ && (
+                  <div className="gm-ai"><b>{'AI · ' + a.ai_score}</b>{fb ? <span dir="auto">{fb}</span> : null}</div>
+                )}
+                <label className="gm-score">
+                  <span>{t('Teacher score (0-100)')}</span>
+                  <input type="number" min="0" max="100" inputMode="numeric" disabled={!a}
                          value={scores[q.id] || ''} onChange={(e) => setScores((cur) => ({ ...cur, [q.id]: e.target.value }))} />
-                </div>
+                </label>
               </div>
             );
           })}

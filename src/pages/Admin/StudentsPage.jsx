@@ -61,7 +61,7 @@ export default function StudentsPage() {
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
     if (!code) return;
-    if (!silent) setRows(null);
+    // the old rows stay on screen while they reload (no blink)
     const { data: members, error } = await supabase.from('group_members').select('user_id, name, joined_at').eq('group_code', code).order('joined_at');
     if (error) { if (!silent) toast(error.message, 'err'); return; }
     if (!members || members.length === 0) { setRows([]); return; }

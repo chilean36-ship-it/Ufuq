@@ -71,7 +71,6 @@ export default function MyGroupPage() {
     setChatShown(false);
     if (!g) { setMembers(null); return undefined; }
     let cancelled = false;
-    setMembers(null);
     (async () => {
       const { data, error: err } = await supabase.from('group_members').select('user_id, name, avatar_url').eq('group_code', g.code).order('joined_at');
       if (cancelled) return;

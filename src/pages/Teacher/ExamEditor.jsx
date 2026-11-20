@@ -88,10 +88,10 @@ function toLocalInput(iso) {
 
 
 /** A sidebar card that folds away; the summary shows the current value so nothing has to be opened to check it. */
-function Acc({ title, defaultOpen = true, bad = false, children }) {
+function Acc({ title, sum = '', defaultOpen = false, bad = false, children }) {
   return (
     <details className={'pbx-acc' + (bad ? ' bad' : '')} open={defaultOpen}>
-      <summary><span className="pbx-acc-t">{title}</span><Chevron /></summary>
+      <summary><span className="pbx-acc-t">{title}</span>{sum ? <span className="pbx-acc-s" dir="auto">{sum}</span> : null}<Chevron /></summary>
       <div className="pbx-acc-b">{children}</div>
     </details>
   );
@@ -159,7 +159,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
   useEffect(() => { if (!open) return undefined; lockScroll(); return () => unlockScroll(); }, [open]);
 
   // ---- unsaved-changes tracking ----
-  const sig = useMemo(() => JSON.stringify([title, level, dur, deadline, openAt, targets, secs.map((s) => [s.part, s.title, s.type, s.items.map((i) => [i.id, i.type, i.text, i.criteria, i.audio, i.optsText])])]), [title, level, dur, deadline, openAt, targets, secs]);
+  const sig = useMemo(() => JSON.stringify([title, level, kind, dur, deadline, openAt, targets, secs.map((s) => [s.part, s.title, s.type, s.items.map((i) => [i.id, i.type, i.text, i.criteria, i.audio, i.optsText])])]), [title, level, kind, dur, deadline, openAt, targets, secs]);
   useEffect(() => { if (ready) setBaseSig(sig); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ready]);
   const dirty = ready && baseSig !== null && sig !== baseSig;
 
@@ -244,11 +244,14 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     else apply();
   }
 
+  const needKind = !state.exam || !!state.exam.exam_kind;   // only the four official exams exist; an old untyped exam may stay as it is
+
   // ---- what is still missing (shown after the first Save attempt, and as red boxes) ----
   const problems = useMemo(() => {
     const out = [];
     if (!title.trim()) out.push(t('Title is required.'));
     if (!(Number(level) >= 1 && Number(level) <= MAX_LEVEL)) out.push(t('Choose a level') + ' (1–' + MAX_LEVEL + ').');
+    if (needKind && !kind) out.push(t('Exam type'));
     if (dur !== '' && !(Number(dur) >= 1 && Number(dur) <= 600 && Number.isInteger(Number(dur)))) out.push(t('Exam duration (minutes)') + ': 1–600');
     if (deadline && !(new Date(deadline).getTime() > 0)) out.push(t('Deadline'));
     else if (deadline && new Date(deadline).getTime() <= Date.now() && deadline !== (state.exam && state.exam.deadline_at ? toLocalInput(state.exam.deadline_at) : '')) out.push(t('The deadline must be in the future.'));   // an unchanged, already-passed deadline may stay
@@ -268,7 +271,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
       if (n) out.push(t('Section') + ' ' + (si + 1) + ': ' + t('Every matching item needs its partner word.'));
     });
     return out;
-  }, [title, level, dur, deadline, openAt, targets, secs, state.exam, t]);
+  }, [title, level, kind, dur, deadline, openAt, targets, secs, state.exam, t]);
 
   const totalQ = secs.reduce((n, s) => n + s.items.filter((it) => it.text.trim()).length, 0);
 
@@ -392,6 +395,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
     [t('Title'), !!title.trim()],
     ...(!state.exam ? [[t('Group'), targets.length > 0]] : []),
     [t('Level'), Number(level) >= 1 && Number(level) <= MAX_LEVEL],
+    ...(needKind ? [[t('Exam type'), !!kind]] : []),
     [t('Questions'), totalQ > 0],
   ];
   const problemsAll = checks.filter(([, ok]) => !ok);
@@ -429,7 +433,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             {checks.map(([label, ok]) => <span key={label} className={ok ? 'ok' : ''}><i aria-hidden="true">{ok ? '✓' : ''}</i>{label}</span>)}
           </div>
 
-          <Acc title={t(state.exam ? 'Group' : 'Send to group')}>
+          <Acc title={t(state.exam ? 'Group' : 'Send to group')} sum={state.exam ? groupName : targets.map((c) => (myGroups.find((x) => x.code === c) || {}).name).filter(Boolean).join(', ')}>
             {state.exam ? (
               <div className="pbx-fixed">{groupName}</div>
             ) : (
@@ -448,22 +452,22 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             {!state.exam && <p className="pbx-note">{targets.length > 1 ? t('A separate copy of this exam is created for each selected group.') : t('Only the selected group will see this exam.')}</p>}
           </Acc>
 
-          <Acc title={t('Level') + ' & ' + t('Exam type')} bad={attempted && !level}>
+          <Acc title={t('Level') + ' & ' + t('Exam type')} sum={[level ? t('Level') + ' ' + level : '', ({ midterm: t('Midterm'), final: t('Final exam'), pop1: t('Pop quiz 1'), pop2: t('Pop quiz 2') })[kind] || ''].filter(Boolean).join(' · ')} bad={attempted && (!level || (needKind && !kind))}>
             <div className="pbx-levels" role="group" aria-label={t('Level')}>
               {LEVEL_LIST.map(String).map((n) => (
                 <button key={n} type="button" aria-pressed={level === n} className={'pbx-lvl' + (level === n ? ' on' : '') + (attempted && !level ? ' bad' : '')} onClick={() => setLevel(n)}>{n}</button>
               ))}
             </div>
             <div className="pbx-kindcards" role="group" aria-label={t('Exam type')}>
-              {[['midterm', t('Midterm'), MIDTERM_MAX], ['final', t('Final exam'), FINAL_MAX], ['pop1', t('Pop quiz 1'), POP1_MAX], ['pop2', t('Pop quiz 2'), POP2_MAX], ['', t('Other exam'), 100]].map(([k, label, pts]) => (
-                <button key={k || 'other'} type="button" aria-pressed={kind === k} className={'pbx-kc' + (kind === k ? ' on' : '')} onClick={() => setKind(k)}>
+              {[['midterm', t('Midterm'), MIDTERM_MAX], ['final', t('Final exam'), FINAL_MAX], ['pop1', t('Pop quiz 1'), POP1_MAX], ['pop2', t('Pop quiz 2'), POP2_MAX]].map(([k, label, pts]) => (
+                <button key={k || 'other'} type="button" aria-pressed={kind === k} className={'pbx-kc' + (kind === k ? ' on' : '') + (attempted && needKind && !kind ? ' bad' : '')} onClick={() => setKind(k)}>
                   <b>{label}</b><span>{pts} {t('points')}</span>
                 </button>
               ))}
             </div>
           </Acc>
 
-          <Acc title={t('Schedule')}>
+          <Acc title={t('Schedule')} sum={openAt || deadline ? [openAt ? t('Opens at') : '', deadline ? t('Deadline') : ''].filter(Boolean).join(' · ') : ''}>
             <div className="pbx-field">
               <label>{t('Opens at')}</label>
               <div className="pbx-datewrap">
@@ -480,7 +484,7 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             </div>
           </Acc>
 
-          <Acc title={t('Time limit')} defaultOpen={false}>
+          <Acc title={t('Time limit')} sum={dur ? dur + ' ' + t('min') : t('No time limit')}>
             <div className="pbx-dur">
               <input type="number" inputMode="numeric" min="1" max="600" step="1" className={'pbx-select pbx-dur-in' + (attempted && dur !== '' && !(Number(dur) >= 1 && Number(dur) <= 600) ? ' bad' : '')} value={dur} placeholder="—"
                      aria-label={t('Exam duration (minutes)')} onChange={(e) => setDur(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))} />
@@ -492,12 +496,6 @@ export default function ExamEditor({ state, onClose, onSaved }) {
             </div>
           </Acc>
 
-          <Acc title={t('Template')} defaultOpen={false}>
-            <select className="pbx-select" value="" onChange={(e) => { loadTemplate(e.target.value); e.target.value = ''; }}>
-              <option value="">{t('Start from a template…')}</option>
-              {TEMPLATES.map((x) => <option key={x.id} value={x.id}>{t(x.label)}</option>)}
-            </select>
-          </Acc>
 
           <section className="pbx-box pbx-outline-box">
             <h4>{t('Sections')}</h4>

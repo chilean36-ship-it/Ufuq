@@ -52,9 +52,9 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
     toast(key ? t(ERR[key]) : m, 'err');
   }, [t, toast]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (silent) => {
     if (!examId) return;
-    setRows(null);
+    if (silent !== true) setRows(null);
     const { data, error } = await supabase.rpc('exam_missed_students', { p_exam_id: examId });
     if (error) { setRows({ error: error.message || String(error) }); return; }
     setRows(data || []);
@@ -68,7 +68,7 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
       await fn();
       toast(t(okMsg), 'ok');
       setExt(null); setPlace(null);
-      await refresh();
+      await refresh(true);
       if (onChanged) onChanged({ silent: true });
     } catch (e) { fail(e); } finally { setBusy(false); }
   }
@@ -117,28 +117,7 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
     }, 'Student removed from the group.'));
   }
 
-  // Out of the platform: the account is blocked first (the teacher still sees the student in the group at that moment, which
-  // the server checks), then the student leaves the group. A main admin can unblock the account on the Students page.
-  function removeFromPlatform(r) {
-    askConfirm(t('Remove from the platform'), t('Block this account and remove the student from the group? They will not be able to use the platform any more. A main admin can unblock the account later (Students page).'), () => run(async () => {
-      const b = await supabase.rpc('admin_update_student', { p_user_id: r.user_id, p_status: 'blocked' });
-      if (b.error) throw b.error;
-      const { error } = await supabase.rpc('staff_remove_missed_student', { p_exam_id: examId, p_user: r.user_id });
-      if (error) throw error;
-    }, 'Student removed from the platform.'));
-  }
-
   const now = Date.now();
-  const loc = lang === 'UZ' ? 'uz' : lang === 'RU' ? 'ru' : lang === 'AR' ? 'ar' : 'en';
-  let deadlineNote = '';
-  if (exam && exam.deadline_at) {
-    try {
-      const mins = Math.round((new Date(exam.deadline_at).getTime() - now) / 60000);
-      const rtf = new Intl.RelativeTimeFormat(loc, { numeric: 'auto' });
-      const rel = Math.abs(mins) < 60 ? rtf.format(mins, 'minute') : Math.abs(mins) < 2880 ? rtf.format(Math.round(mins / 60), 'hour') : rtf.format(Math.round(mins / 1440), 'day');
-      deadlineNote = t('Deadline') + ': ' + fmtDateTime(exam.deadline_at, lang) + ' (' + rel + ')';
-    } catch (e) { deadlineNote = ''; }
-  }
 
   return (
     <Modal open={state.open} onClose={onClose} wide>
@@ -148,10 +127,6 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
           <div className="er-kicker">{t('Students who did not submit')}{Array.isArray(rows) && rows.length > 0 ? <span className="er-chip">{rows.length}</span> : null}</div>
           <h3 className="er-title" dir="auto">{exam ? examTitleFor(exam, lang) : ''}</h3>
         </header>
-        <p className="mm-info">
-          {deadlineNote ? <b>{deadlineNote}. </b> : null}
-          {t('Decide what happens to each student: give more time, move to the nearest lower group, or take them out of the group or the platform.')}
-        </p>
 
         {rows === null ? <p className="mm-empty">{t('Loading…')}</p>
           : rows.error ? <p className="mm-empty">{rows.error}</p>
@@ -175,12 +150,11 @@ export default function MissedStudentsModal({ state, onClose, onChanged }) {
                       </div>
                     </div>
                     <div className="mm-acts">
-                      <button type="button" className="btn btn-gold btn-sm" disabled={busy} title={t('Give this student more time to take the exam')} onClick={() => { setPlace(null); setExt({ uid: r.user_id, value: tomorrow() }); }}>{t('Extend deadline')}</button>
-                      <button type="button" className="btn btn-ghost btn-sm" disabled={busy || r.level <= 1} title={r.level <= 1 ? t('This student is already on the lowest level.') : t('Move to the nearest lower group')} onClick={() => demote(r)}>{t('Lower level')}</button>
                       <RowMenu label={t('More')} disabled={busy} items={[
+                        { key: 'extend', label: t('Extend deadline'), title: t('Give this student more time to take the exam'), onClick: () => { setPlace(null); setExt({ uid: r.user_id, value: tomorrow() }); } },
+                        { key: 'lower', label: t('Lower level'), title: r.level <= 1 ? t('This student is already on the lowest level.') : t('Move to the nearest lower group'), disabled: r.level <= 1, onClick: () => demote(r) },
                         ...(r.groupless ? [{ key: 'place', label: t('Move to a running group'), title: t('Put the student in a running group'), onClick: () => openPlace(r) }] : []),
                         { key: 'group', label: r.groupless ? t('Remove from the list') : t('Remove from group'), title: t('Take the student out of the group; they wait for a new one'), onClick: () => remove(r) },
-                        { key: 'platform', label: t('Remove from platform'), title: t('Block the account and take the student out of the group'), danger: true, onClick: () => removeFromPlatform(r) },
                       ]} />
                     </div>
                     {place && place.uid === r.user_id && (

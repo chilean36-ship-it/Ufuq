@@ -32,7 +32,6 @@ export default function AttendancePage() {
 
   const loadHistory = useCallback(async (memberCount) => {
     if (!code) return;
-    setHistory(null);
     // Faqat joriy kalendar oyi (1-kun .. oxirgi kun). Yangi oyda ro'yxat avtomatik yangilanadi;
     // eski sessiyalar bazada qoladi va Monthly attendance oy tanlagichida ko'rinadi.
     const [y, m] = monthKey.split('-').map(Number);
@@ -53,7 +52,6 @@ export default function AttendancePage() {
 
   const loadForDate = useCallback(async (d) => {
     if (!code) return 0;
-    setMembers(null);
     const { data: rows, error: mErr } = await supabase.from('group_members').select('user_id, name').eq('group_code', code).order('name');
     if (mErr) { toast(mErr.message, 'err'); return 0; }
     const list = rows || [];

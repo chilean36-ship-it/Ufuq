@@ -87,7 +87,7 @@ function AudioLessons({ hidden, onCount, restricted }) {
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
     if (!code) { setList(null); return; }
-    if (!silent) setList(null);
+    // the old list stays on screen while it reloads (no blink)
     const { data, error } = await supabase.from('audio_lessons').select('*').or('group_code.eq.' + code + ',group_code.is.null').order('published_at', { ascending: false });
     if (error) { setList({ error: error.message }); return; }
     setList(data || []);
@@ -237,7 +237,7 @@ function BoardPhotos({ hidden, onCount }) {
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
     if (!code) { setList(null); return; }
-    if (!silent) setList(null);
+    // the old list stays on screen while it reloads (no blink)
     const { data, error } = await supabase.from('board_photos').select('*').eq('group_code', code).order('taken_at', { ascending: false });
     if (error) { setList({ error: error.message }); return; }
     setList(data || []);

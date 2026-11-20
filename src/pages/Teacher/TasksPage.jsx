@@ -38,7 +38,7 @@ export default function TasksPage() {
   const load = useCallback(async (opts) => {
     const silent = !!(opts && opts.silent);
     if (!code) return;
-    if (!silent) setTasks(null);
+    // the old list stays on screen while it reloads (no blink)
     const { data, error } = await supabase.from('tasks').select('*').eq('group_code', code).order('due_date', { ascending: false });
     if (error) { if (!silent) toast(error.message, 'err'); return; }
     const list = data || [];

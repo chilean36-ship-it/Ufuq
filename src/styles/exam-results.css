@@ -95,3 +95,25 @@ html[data-theme="light"] .er, html[data-theme="light"] .mm{ --er-ok:#2C8F55; --e
 .er-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; }
 .er-btn i{ font-style:normal; min-width:22px; padding:2px 7px; border-radius:99px; background:var(--gold); color:#171717; font-size:12px; text-align:center; }
 .er-btn:hover i{ background:#171717; color:var(--gold-bright); }
+
+/* ---- compact results: filters are swipeable tabs, one tidy card per student on a phone ---- */
+.er-bar{ flex-direction:column; align-items:stretch; flex-wrap:nowrap; gap:10px; }
+.er-tabs{ flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
+.er-tab{ flex:0 0 auto; white-space:nowrap; }
+.er-search{ width:100%; }
+.er-pop{ position:fixed; inset:auto; z-index:2147483000; min-width:220px; max-width:calc(100vw - 16px); }
+.mm-acts{ flex-wrap:nowrap; }
+@media (max-width:760px){
+  .er-row{ grid-template-columns:auto minmax(0,1fr) auto; grid-template-areas:"name name name" "st score viol" "acts acts acts"; gap:8px 12px; padding:12px; }
+  .er-row .er-name{ grid-area:name; grid-column:auto; }
+  .er-row .er-c-st{ grid-area:st; } .er-row .er-c-score{ grid-area:score; justify-self:start; } .er-row .er-c-viol{ grid-area:viol; justify-self:end; }
+  .er-row .er-acts{ grid-area:acts; grid-column:auto; justify-content:flex-end; }
+  .er-row .er-acts .btn{ flex:1; min-height:38px; }
+  .er-row .er-acts:empty{ display:none; }
+  .mm-card{ grid-template-columns:auto minmax(0,1fr) auto; }
+  .mm-acts{ grid-column:auto; justify-content:flex-end; }
+  .mm-ext{ grid-column:1 / -1; }
+}
+
+.er > *, .mm > *, .er-bar, .er-table, .er-row > *, .mm-card > * { min-width:0; }
+.er, .mm{ grid-template-columns:minmax(0,1fr); }

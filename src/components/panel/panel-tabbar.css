@@ -228,16 +228,16 @@ html body.ua-panel .ready-chip svg{ width:14px; height:14px; flex:none; }
 }
 
 /* standard bounded areas: a list grows with its data up to a comfortable size, then scrolls inside its own card */
-.group-list-grid{ max-height:236px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-.att-recent-scroll{ max-height:260px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-.ma-scroll{ max-height:340px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-.tl-list{ max-height:380px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-.attn-list{ max-height:300px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-.u-list{ max-height:420px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.group-list-grid{ max-height:236px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; }
+.att-recent-scroll{ max-height:260px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; }
+.ma-scroll{ max-height:340px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; }
+.tl-list{ max-height:380px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; }
+.attn-list{ max-height:300px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; }
+.u-list{ max-height:420px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; }
 
 /* group page, students card: the same single-column, bounded list as the student's classmates card (teacher panel on a phone) */
 @media (max-width:860px){
-  html body.ua-panel .cm-list{ grid-template-columns:1fr !important; max-height:320px; overflow-y:auto; overscroll-behavior:contain; }
+  html body.ua-panel .cm-list{ grid-template-columns:1fr !important; max-height:320px; overflow-y:auto; overscroll-behavior:auto; }
   html body.ua-panel .cm-search input{ border:0 !important; background:transparent !important; box-shadow:none !important; height:auto !important; min-height:0 !important; padding:0 !important; border-radius:0 !important; }
 }
 
@@ -259,3 +259,14 @@ html body.ua-panel .ready-chip svg{ width:14px; height:14px; flex:none; }
 /* the open group chat takes the whole screen, like in the student app: the tab bar steps aside so the message box is never covered */
 body.ua-panel:has(.group-chat-fullview) .ptb{ transform:translateY(160%); opacity:0; pointer-events:none; }
 body.ua-panel:has(.group-chat-fullview) .main .content{ padding-bottom:calc(10px + env(safe-area-inset-bottom)); }
+
+/* quick actions: small tiles, three to a row, the text fits inside */
+@media (max-width:860px){
+  html body.ua-panel .qa-grid, html body.ua-panel #page-overview .ov-side .qa-grid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px; }
+  html body.ua-panel .qa, html body.ua-panel .qa:last-child:nth-child(odd){ aspect-ratio:auto; min-height:0; grid-column:auto; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:8px; padding:10px; border-radius:16px; }
+  html body.ua-panel .qa-ico{ width:32px; height:32px; border-radius:11px; }
+  html body.ua-panel .qa-ico svg{ width:17px; height:17px; }
+  html body.ua-panel .qa > span:last-child{ font-size:12.5px; line-height:1.2; font-weight:700; overflow-wrap:anywhere; hyphens:auto; }
+  html body.ua-panel .qa small{ display:none; }
+}
+
