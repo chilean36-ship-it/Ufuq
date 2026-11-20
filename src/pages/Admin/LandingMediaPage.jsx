@@ -4,7 +4,7 @@ import { usePanel } from '../../components/panel/PanelContext';
 import { Ico, PageHeader, Skeleton, StatCard } from './ui';
 import CardVideo from '../Landing/CardVideo';
 import {
-  LANDING_BUCKET, LANDING_GROUPS, LANDING_LINKS, LANDING_SLOTS, IMAGE_MAX_MB, VIDEO_MAX_MB, fetchLandingMedia,
+  extraStudentSlots, LANDING_BUCKET, LANDING_GROUPS, LANDING_LINKS, LANDING_SLOTS, IMAGE_MAX_MB, VIDEO_MAX_MB, fetchLandingMedia,
 } from '../../lib/landingMedia';
 
 const CSS = `
@@ -24,6 +24,7 @@ const CSS = `
 .lm-title{ font-size:13px; font-weight:600; line-height:1.35; }
 .lm-actions{ display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; }
 .lm-busy{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.55); color:#fff; font-size:13px; font-weight:600; }
+.lm-add{ margin-inline-start:auto; }
 .lm-url{ display:flex; gap:6px; } .lm-url input{ flex:1; min-width:0; }
 `;
 
@@ -166,7 +167,16 @@ export default function LandingMediaPage() {
     setB(slot, false);
   }
 
-  const groups = useMemo(() => LANDING_GROUPS.map((g) => ({ g, slots: LANDING_SLOTS.filter((s) => s.group === g) })), []);
+  // certificates the admin added come after the built-in ones
+  const extraNums = useMemo(() => extraStudentSlots(rows || {}), [rows]);
+  const allSlots = useMemo(() => [...LANDING_SLOTS, ...extraNums.map((n) => ({ slot: 'student_' + n, group: 'Student photos', label: t('Student certificate') + ' #' + n, defaultImage: '', defaultVideo: null, extra: true }))], [extraNums, t]);
+  const groups = useMemo(() => LANDING_GROUPS.map((g) => ({ g, slots: allSlots.filter((s) => s.group === g) })), [allSlots]);
+  function addCertificate() {
+    const used = Object.keys(rows || {}).map((k) => { const m = /^student_(\d+)$/.exec(k); return m ? Number(m[1]) : 0; });
+    const next = Math.max(LANDING_SLOTS.filter((s) => s.group === 'Student photos').length, ...used) + 1;
+    pending.current = { slot: 'student_' + next, kind: 'image' };
+    if (fileRef.current) { fileRef.current.accept = 'image/jpeg,image/png,image/webp,image/avif,image/gif'; fileRef.current.value = ''; fileRef.current.click(); }
+  }
 
   return (
     <section className="page active" id="page-landing">
@@ -195,7 +205,7 @@ export default function LandingMediaPage() {
       {error && <p className="hint" style={{ color: 'var(--danger-bright)' }}>{error}</p>}
       {rows === null ? <Skeleton h={220} style={{ borderRadius: 20 }} /> : groups.map(({ g, slots }) => (
         <div className="lm-group" key={g}>
-          <h3><span className="panel-head-bar" style={{ display: 'inline-block', width: 4, height: 15, borderRadius: 3, background: 'var(--gold)' }} />{t(g)}</h3>
+          <h3><span className="panel-head-bar" style={{ display: 'inline-block', width: 4, height: 15, borderRadius: 3, background: 'var(--gold)' }} />{t(g)}{g === 'Student photos' && <button type="button" className="btn btn-gold btn-sm lm-add" onClick={addCertificate}>{'+ '}{t('Add a certificate')}</button>}</h3>
           <div className="lm-grid">
             {slots.map((s) => {
               const r = rows[s.slot] || {};
@@ -215,7 +225,7 @@ export default function LandingMediaPage() {
                     <div className="lm-title">{s.label}</div>
                     <div className="lm-actions">
                       <button className="btn btn-gold btn-sm" disabled={busy[s.slot]} onClick={() => pick(s.slot, 'image')}>{t('Change image')}</button>
-                      {imgCustom && <button className="btn btn-ghost btn-sm" disabled={busy[s.slot]} onClick={() => clearPart(s.slot, 'image')}>{t('Reset image')}</button>}
+                      {imgCustom && <button className="btn btn-ghost btn-sm" disabled={busy[s.slot]} onClick={() => clearPart(s.slot, 'image')}>{s.extra ? t('Remove') : t('Reset image')}</button>}
                       {hasVideo && <button className="btn btn-ghost btn-sm" disabled={busy[s.slot]} onClick={() => pick(s.slot, 'video')}>{t('Upload video')}</button>}
                       {hasVideo && <button className="btn btn-ghost btn-sm" disabled={busy[s.slot]} onClick={() => { setUrlOpen(urlOpen === s.slot ? null : s.slot); setUrlVal(r.video_url || ''); }}>{t('Video link')}</button>}
                       {hasVideo && vidCustom && <button className="btn btn-ghost btn-sm" disabled={busy[s.slot]} onClick={() => clearPart(s.slot, 'video')}>{t('Reset video')}</button>}

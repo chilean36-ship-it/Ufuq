@@ -3,7 +3,11 @@ import useLiveRefresh from '../../lib/liveRefresh';
 import { supabase } from '../../lib/supabaseClient';
 import { usePanel } from '../../components/panel/PanelContext';
 import { Modal } from '../../components/panel/ui';
-import { Avatar, EmptyState, Ico, PageHeader, Skeleton, StatCard } from './ui';
+import { Avatar, EmptyState, Ico, PageHeader, SearchInput, Skeleton, StatCard } from './ui';
+
+/** The founder account: nobody can remove it or lower its rights. Only the founder can remove or lower another main admin. */
+const OWNER_EMAIL = 'chilean36@gmail.com';
+const isOwnerEmail = (e) => String(e || '').trim().toLowerCase() === OWNER_EMAIL;
 
 // Kind of staff member: main admin / ordinary admin / teacher. Every change goes through SECURITY DEFINER RPCs
 // (supabase/migrations/20261026_staff_teacher_groups.sql) that re-check on the server that the caller is a main admin.
@@ -53,6 +57,7 @@ export default function AdminsPage() {
   const [rolePerson, setRolePerson] = useState(null); // staff row whose role is being changed
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('all');
+  const iAmOwner = isOwnerEmail(user && user.email);
 
   const load = useCallback(async (opts) => {
     const [st, gr] = await Promise.all([
@@ -179,10 +184,10 @@ export default function AdminsPage() {
             <div className="a-filters" role="group" aria-label={t('Account type')}>
               {FILTERS.map(([v, l, n]) => <button type="button" key={v} className={filter === v ? 'on' : ''} aria-pressed={filter === v} onClick={() => setFilter(v)}>{t(l)} <span>{n}</span></button>)}
             </div>
-            <input type="search" className="a-staff-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search by name or email…')} aria-label={t('Search by name or email…')} />
+            <SearchInput value={q} onChange={setQ} placeholder={t('Search by name or email…')} />
           </div>
         </div>
-        <div className="a-table-wrap a-flat">
+        <div className="a-table-wrap a-flat a-staff-scroll">
           <table className="a-staff-table">
             <thead><tr><th>{t('Name')}</th><th>{t('Account type')}</th><th>{t('Groups')}</th><th></th></tr></thead>
             <tbody>
@@ -193,6 +198,8 @@ export default function AdminsPage() {
                 : shown.map((a) => {
                   const me = user && a.id === user.id;
                   const k = kindOf(a);
+                  // protected: the founder (by nobody) and every main admin (by anybody but the founder)
+                  const locked = !me && (isOwnerEmail(a.email) || (k === 'super' && !iAmOwner));
                   // running groups first; links to switched-off groups only as a number
                   const own = new Set(a.group_codes || []);
                   const names = units.filter((u) => unitOn(u, own)).map((u) => u.name);
@@ -202,7 +209,7 @@ export default function AdminsPage() {
                     <tr key={a.id}>
                       <td data-label={t('Name')}><div className="a-cell-user"><Avatar name={a.full_name || a.email || '?'} /><span className="a-who"><b>{a.full_name || '\u2014'}{me ? <span className="u-pill gold" style={{ marginLeft: 8 }}>{t('You')}</span> : null}</b><small>{a.email}</small></span></div></td>
                       <td data-label={t('Account type')}>
-                        {me ? <span className="u-pill gold">{t('Main admin')}</span> : (
+                        {me || locked ? <span className="u-pill gold">{t(isOwnerEmail(a.email) ? 'Founder' : KINDS.find(([v]) => v === k)[1])}</span> : (
                           <button type="button" className={'a-role-btn ' + (k === 'super' ? 'is-super' : k === 'standard' ? 'is-admin' : 'is-teacher')} onClick={() => setRolePerson(a)} aria-label={t('Change role') + ': ' + (a.full_name || a.email)}>
                             <span>{t(KINDS.find(([v]) => v === k)[1])}</span>
                             <span className="a-role-edit" aria-hidden="true">{t('Change')}</span>
@@ -223,7 +230,7 @@ export default function AdminsPage() {
                           </button>
                         )}
                       </td>
-                      <td className="a-actions">{!me && <button className="btn btn-danger btn-sm" onClick={() => revoke(a)}>{t('Remove')}</button>}</td>
+                      <td className="a-actions">{!me && !locked && <button className="btn btn-danger btn-sm" onClick={() => revoke(a)}>{t('Remove')}</button>}</td>
                     </tr>
                   );
                 })}
@@ -272,7 +279,7 @@ function GroupPicker({ person, groups, onClose, onSaved, onError }) {
       <h3>{t('Groups')}</h3>
       <p className="hint">{person ? (person.full_name || person.email) : ''}</p>
       <div className="a-gp-tools">
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search groups…')} aria-label={t('Search groups…')} />
+        <SearchInput value={q} onChange={setQ} placeholder={t('Search groups…')} />
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAll(true)}>{t('Select all')}</button>
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAll(false)}>{t('Clear')}</button>
       </div>

@@ -13,7 +13,7 @@ import profileViewCss from '../pages/Profile/profile-view.css?inline';
 import cabinetDict from '../pages/Dashboard/cabinetDict';
 import { useApp } from './AppContext';
 import { Logo, TabIcon } from './ui';
-import { centerOf, rippleFrom } from './reveal';
+import { aiCloseCover, aiOpenCover, centerOf } from './reveal';
 import WhatsNew from './WhatsNew';
 import { haptic, useActivity } from './hooks';
 import HomeScreen from './HomeScreen';
@@ -57,7 +57,7 @@ function TabBar() {
       <div className="ua-rail-brand" aria-hidden="true"><Logo size={32} /><b>Ufuq</b></div>
       <span className={'ua-tab-pill' + (idx === 2 ? ' ai' : '')} aria-hidden="true" />
       {tabs.map((x) => (
-        <NavLink key={x.to} to={x.to} end={x.end} onClick={(e) => { haptic(6); if (x.center) { const p = centerOf(e.currentTarget.querySelector('.ua-tab-ic')); document.body.style.setProperty('--rv-x', p.x + 'px'); document.body.style.setProperty('--rv-y', p.y + 'px'); rippleFrom(p.x, p.y); } }} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
+        <NavLink key={x.to} to={x.to} end={x.end} onClick={(e) => { haptic(6); if (x.center && !e.currentTarget.classList.contains('on')) { const p = centerOf(e.currentTarget.querySelector('.ua-tab-ic')); aiOpenCover(p.x, p.y); } }} className={({ isActive }) => 'ua-tab' + (x.center ? ' center' : '') + (isActive ? ' on' : '')}>
           <span className="ua-tab-ic"><TabIcon n={x.icon} size={x.center ? 28 : 25} /></span>
           <span className="ua-tab-l">{t(x.label)}</span>
         </NavLink>
@@ -94,6 +94,13 @@ function Inner() {
 
   // The cabinet language provider and the app share one storage key; keep the app in step if a reused view changes it.
   useEffect(() => { setLang(lang, { sync: false }); }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // closing the chat: gold covers it at once and shrinks back into the AI button
+  useEffect(() => {
+    const onClosed = () => { const p = centerOf(document.querySelector('.ua-tab.center .ua-tab-ic')); aiCloseCover(p.x, p.y); };
+    window.addEventListener('ufuq-ai-closed', onClosed);
+    return () => window.removeEventListener('ufuq-ai-closed', onClosed);
+  }, []);
 
   const onNavigate = useCallback((view) => { navigate(VIEW_ROUTE[view] || '/app'); }, [navigate]);
   const openUpgrade = useCallback(() => setUpgradeOpen(true), []);

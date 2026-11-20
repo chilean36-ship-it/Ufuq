@@ -165,6 +165,9 @@ export default function AppRoot() {
     syncVV();
     if (vv) { vv.addEventListener('resize', syncVV); vv.addEventListener('scroll', syncVV); }
     window.addEventListener('resize', syncVV);
+    // a long press must not open the browser's context menu on anything but a field
+    const noMenu = (e) => { const el = e.target; if (!(el && el.closest && el.closest('input,textarea,[contenteditable="true"],[data-selectable]'))) e.preventDefault(); };
+    document.addEventListener('contextmenu', noMenu);
     document.addEventListener('gesturestart', noGesture);
     document.addEventListener('gesturechange', noGesture);
     document.addEventListener('wheel', noCtrlWheel, { passive: false });
@@ -175,6 +178,7 @@ export default function AppRoot() {
       if (vv) { vv.removeEventListener('resize', syncVV); vv.removeEventListener('scroll', syncVV); }
       window.removeEventListener('resize', syncVV);
       root.style.removeProperty('--ua-vh'); root.style.removeProperty('--ua-vt'); document.body.classList.remove('ua-kb');
+      document.removeEventListener('contextmenu', noMenu);
       document.removeEventListener('gesturestart', noGesture);
       document.removeEventListener('gesturechange', noGesture);
       document.removeEventListener('wheel', noCtrlWheel);

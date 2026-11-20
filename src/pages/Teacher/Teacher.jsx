@@ -286,7 +286,7 @@ function TeacherInner() {
       </div>
 
       {inApp() && isMobile && guard.ok && <PanelTabBar items={['overview', 'groups', 'attendance', 'tasks']} nav={flatNav} page={activePage} onNavigate={showPage} onMore={() => setMoreOpen(true)} moreOpen={moreOpen} />}
-      {inApp() && isMobile && guard.ok && <PanelMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
+      {inApp() && isMobile && guard.ok && <PanelMoreSheet hide={['overview', 'groups', 'attendance', 'tasks']} open={moreOpen} onClose={() => setMoreOpen(false)} nav={flatNav} page={activePage} onNavigate={showPage} onProfile={() => showPage('profile')}
                                                        switchItem={canSwitchToAdmin ? { label: t('Switch to Admin panel'), onSelect: switchToAdmin } : null}
                                                        studentItem={null} name={myName} roleLabel={t('Teacher')} avatarUrl={myAvatarUrl} />}
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} placeholder={t('Search pages…')} emptyText={t('No pages match.')}

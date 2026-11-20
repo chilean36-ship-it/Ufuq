@@ -1,4 +1,5 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
+import { APP_LANGS } from './strings';
 import { useDashboardData } from '../context/DashboardDataContext';
 import { useApp } from './AppContext';
 import { haptic } from './hooks';
@@ -39,6 +40,30 @@ export function GroupSheet({ open, onClose, onPick }) {
         ))}
       </div>
     </Sheet>
+  );
+}
+
+/** Language picker in the top bar: a small globe button with the language code; opens a bottom sheet with the four languages. */
+export function LangBtn() {
+  const { lang, setLang, t } = useApp();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="ua-tbtn ua-lang" onClick={() => { haptic(6); setOpen(true); }} aria-label={t('language')} aria-haspopup="dialog">
+        <Ico n="globe" size={17} /><b>{lang}</b>
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title={t('language')}>
+        <div className="ua-list">
+          {APP_LANGS.map((l) => (
+            <button type="button" key={l.code} className={'ua-opt' + (lang === l.code ? ' on' : '')} onClick={() => { haptic(); setLang(l.code); setOpen(false); }}>
+              <span className="ua-flag">{l.flag}</span>
+              <span className="ua-opt-t">{l.label}</span>
+              {lang === l.code && <Ico n="check" size={20} />}
+            </button>
+          ))}
+        </div>
+      </Sheet>
+    </>
   );
 }
 

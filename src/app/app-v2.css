@@ -19,7 +19,7 @@
 .ua-tab-pill.ai{ opacity:0; }
 [dir="rtl"] .ua-tab-pill{ left:auto; right:calc(6px + var(--idx, 0) * ((100% - 12px) / 5)); transition-property:right,opacity; }
 .ua-tab{ position:relative; z-index:1; min-height:0; height:100%; padding:0; gap:2px; border-radius:22px; font-size:10.5px; }
-.ua-tab.on .ua-tab-ic{ background:transparent; transform:translateY(-1px) scale(1.08); } .ua-tab-ic{ height:28px; width:auto; transition:transform .3s cubic-bezier(.3,1.6,.5,1); }
+.ua-tab.on .ua-tab-ic{ background:transparent; transform:none; } .ua-tab-ic{ height:28px; width:auto; transition:transform .3s cubic-bezier(.3,1.6,.5,1); }
 .ua-tab.center .ua-tab-ic{ width:58px; height:58px; margin-top:-26px; border-radius:50%; background:linear-gradient(145deg,var(--gold-bright),var(--gold)); box-shadow:0 10px 24px -6px rgba(201,162,75,.85), 0 0 0 5px color-mix(in srgb, var(--bg) 90%, transparent); }
 .ua-tab.center .ua-tab-l{ margin-top:-1px; } .ua-tab.center.on .ua-tab-ic{ transform:scale(1.06); }
 
@@ -276,8 +276,8 @@
 .ua-tsw:hover i{ box-shadow:0 0 0 4px rgba(201,162,75,.2); }
 
 /* bottom tab bar: icons answer a tap, the selected one is filled and pops */
-.ua-tab:active .ua-tab-ic{ transform:scale(.84); } .ua-tab:active .ua-tab-l{ opacity:.7; }
-.ua-tab.on:not(.center) .ua-tab-ic svg{ color:var(--gold-bright); animation:uaTabPop .5s cubic-bezier(.3,1.7,.5,1); }
+.ua-tab:active .ua-tab-l{ opacity:.7; }
+.ua-tab.on:not(.center) .ua-tab-ic svg{ color:var(--gold-bright); }
 .ua-tab.on:not(.center) .ua-tab-l{ color:var(--gold-bright); font-weight:800; }
 @keyframes uaTabPop{ 0%{ transform:translateY(5px) scale(.7); } 60%{ transform:translateY(-4px) scale(1.18); } 100%{ transform:none; } }
 .ua-tab.center .ua-tab-ic{ animation:uaAiBreath 3.4s ease-in-out infinite; } @keyframes uaAiBreath{ 50%{ box-shadow:0 12px 30px -4px rgba(201,162,75,1), 0 0 0 5px color-mix(in srgb, var(--bg) 90%, transparent); } }
@@ -403,11 +403,11 @@ html[data-theme="light"] .uai-voice .uai-cap-bot{ background:linear-gradient(180
 .ua-host .lax-search kbd, .ua-host .lax kbd, .ua-host .apx-hint{ display:none !important; }
 
 /* ---- Ufuq AI opens as a circle growing out of its tab-bar button and covering the screen (and shrinks back into it) ---- */
-.ua-body .uai-panel{ opacity:1; transform:none; visibility:hidden; clip-path:circle(0px at var(--rv-x,50%) var(--rv-y,calc(100% - 64px))); transition:clip-path .68s cubic-bezier(.65,0,.25,1), visibility 0s linear .68s; }
-.ua-body .uai-panel.open{ visibility:visible; clip-path:circle(160vmax at var(--rv-x,50%) var(--rv-y,calc(100% - 64px))); transition:clip-path .68s cubic-bezier(.65,0,.25,1), visibility 0s; }
-.ua-body .uai-panel > *{ opacity:0; transition:opacity .25s ease; }
-.ua-body .uai-panel.open > *{ opacity:1; transition:opacity .4s ease .3s; }
-@media (prefers-reduced-motion:reduce){ .ua-body .uai-panel, .ua-body .uai-panel.open{ clip-path:none; transition:none; } .ua-body .uai-panel > *{ opacity:1; transition:none; } }
+.ua-body .uai-panel{ opacity:0; transform:none; visibility:hidden; clip-path:none; transition:none; }
+.ua-body .uai-panel.open{ opacity:1; visibility:visible; transition:none; }
+.ua-body .uai-panel > *{ opacity:0; }
+.ua-body .uai-panel.open > *{ opacity:1; transition:opacity .5s ease .12s; }
+@media (prefers-reduced-motion:reduce){ .ua-body .uai-panel > *{ opacity:1; transition:none; } }
 
 /* ---- welcome screen: language picker, like the website's ---- */
 .ua-wl{ position:relative; margin-inline-start:auto; z-index:5; }
