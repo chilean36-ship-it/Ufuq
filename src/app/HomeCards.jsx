@@ -146,10 +146,10 @@ export function RankingCard({ title, onOpen }) {
         const p = (m.user_id && data.pts[m.user_id]) || {};
         const exP = Number(p.exam_points) || 0; const tkP = Number(p.task_points) || 0; const atM = Number(p.att_marked) || 0;
         let score = 0; let label = '';
-        if (active === 'exam') { score = Number(p.exam_pct) || 0; label = exP > 0 ? score + '%' : ''; }
+        if (active === 'exam') { score = Number(p.exam_pct) || 0; label = score + '%'; }
         else if (active === 'att') { score = p.att_pct == null ? 100 : Number(p.att_pct); label = score + '%'; }   // everybody starts at 100%; each missed lesson takes its share off
-        else if (active === 'tasks') { score = tkP; label = tkP > 0 ? fmtPts(tkP) + ' ' + t('rkPt') : ''; }
-        else { score = exP + tkP; label = score > 0 ? fmtPts(score) + ' ' + t('rkPt') : ''; }
+        else if (active === 'tasks') { score = tkP; label = fmtPts(tkP) + ' ' + t('rkPt'); }
+        else { score = exP + tkP; label = fmtPts(score) + ' ' + t('rkPt'); }
         return { ...m, score, label };
       });
       pl.sort((x, y) => y.score - x.score || String(x.name).localeCompare(String(y.name)));
