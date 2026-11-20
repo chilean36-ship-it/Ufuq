@@ -111,15 +111,16 @@ export default {
       const auth = await authenticate(request, env);
       if (!auth) return fail(401, 'Please sign in again.');
 
-      if (request.method === 'GET' && url.pathname === '/sign') return sign(env, auth, url, json, fail);
+      if (request.method === 'GET' && url.pathname === '/sign') return await sign(env, auth, url, json, fail);
       if (!isStaff(auth)) return fail(403, 'Teachers only.');
-      if (request.method === 'POST' && url.pathname === '/upload/init') return initUpload(request, env, auth, json, fail);
-      if (request.method === 'PUT' && url.pathname === '/upload/part') return uploadPart(request, env, auth, url, json, fail);
-      if (request.method === 'POST' && url.pathname === '/upload/complete') return completeUpload(request, env, auth, json, fail);
-      if (request.method === 'POST' && url.pathname === '/upload/abort') return abortUpload(request, env, auth, json, fail);
-      if (request.method === 'DELETE' && url.pathname === '/file') return deleteFile(env, auth, url, json, fail);
+      if (request.method === 'POST' && url.pathname === '/upload/init') return await initUpload(request, env, auth, json, fail);
+      if (request.method === 'PUT' && url.pathname === '/upload/part') return await uploadPart(request, env, auth, url, json, fail);
+      if (request.method === 'POST' && url.pathname === '/upload/complete') return await completeUpload(request, env, auth, json, fail);
+      if (request.method === 'POST' && url.pathname === '/upload/abort') return await abortUpload(request, env, auth, json, fail);
+      if (request.method === 'DELETE' && url.pathname === '/file') return await deleteFile(env, auth, url, json, fail);
       return fail(404, 'Not found');
     } catch (err) {
+      console.error('worker error', request.method, url.pathname, err && err.message);
       return fail(500, 'Server error.'); // never leak internals
     }
   },
