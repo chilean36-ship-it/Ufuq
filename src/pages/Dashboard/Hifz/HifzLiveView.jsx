@@ -1,9 +1,10 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCabinetI18n } from '../../../context/CabinetI18nContext';
 import { surahLabel, SURAH_NAMES } from '../../../lib/surahNames';
 import { startLiveStt, liveSttSupported } from '../../../lib/liveStt';
 import { flattenPage, createLiveSession, splitWords } from '../../../lib/hifzLive';
-import { PAGE_COUNT, PAGE_STARTS, SURAH_AYAHS, pageOf, pageSegments, juzOf } from '../../../lib/mushafPages';
+import { PAGE_COUNT, PAGE_STARTS, SURAH_AYAHS, JUZ_STARTS, pageOf, pageSegments, juzOf } from '../../../lib/mushafPages';
 import './hifz.css';
 
 const PREF_KEY = 'ufuq-hifz-live';
@@ -43,8 +44,8 @@ function readPrefs() {
     const p = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     let page = +p.page;
     if (!(page >= 1 && page <= PAGE_COUNT)) page = +p.surah >= 1 && +p.surah <= 114 ? pageOf(+p.surah, 1) : PAGE_COUNT; // older saved choice: surah → its first page
-    return { page: Math.floor(page), hide: p.hide !== false, auto: p.auto !== false };
-  } catch (e) { return { page: PAGE_COUNT, hide: true, auto: true }; }
+    return { page: Math.floor(page), hide: p.hide !== false, auto: p.auto !== false, fs: Math.min(1.4, Math.max(0.8, +p.fs || 1)) };
+  } catch (e) { return { page: PAGE_COUNT, hide: true, auto: true, fs: 1 }; }
 }
 const arDigits = (n) => { try { return Number(n).toLocaleString('ar-EG', { useGrouping: false }); } catch (e) { return String(n); } };
 
@@ -64,6 +65,12 @@ const Word = memo(function Word({ k, text, cls, title, hidden }) {
 const Marker = memo(function Marker({ surah, ayah, label }) {
   return <span data-m={`${surah}:${ayah}`} className="hl-marker" role="img" aria-label={label}>{'\uFD3F'}{arDigits(ayah)}{'\uFD3E'}</span>;
 });
+const IcEye = () => <Ic><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></Ic>;
+const IcEyeOff = () => <Ic><path d="M3 3l18 18M10.6 5.1A9.7 9.7 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.5 6.6A17 17 0 002 12s3.6 7 10 7a9.6 9.6 0 004.2-1" /><path d="M9.9 9.9a3 3 0 004.2 4.2" /></Ic>;
+const IcGear = () => <Ic><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></Ic>;
+const IcChev = () => <Ic size={16}><path d="M6 9l6 6 6-6" /></Ic>;
+const IcSearch = () => <Ic size={18}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Ic>;
+const IcX = () => <Ic size={18}><path d="M6 6l12 12M18 6L6 18" /></Ic>;
 const IcCheck = () => <Ic size={18}><path d="M5 12.5l4.5 4.5L19 7.5" /></Ic>;
 
 /**
@@ -89,6 +96,12 @@ export default function HifzLiveView() {
   const [err, setErr] = useState('');
   const [toast, setToast] = useState(null); // { page, score } — shown briefly when a page is finished
   const [turnDir, setTurnDir] = useState(0); // 1 = forward, -1 = back: direction of the page-turn animation
+  const [sheet, setSheet] = useState(null); // 'where' | 'settings' | null
+  const [fs, setFs] = useState(prefs0.fs); // text size factor
+  const [sumOpen, setSumOpen] = useState(true); // the result card above the dock
+  const touchRef = useRef(null);
+  const [peek, setPeek] = useState(null); // { said, expected } — tapped mistake
+  const peekTimer = useRef(null);
 
   const sessionRef = useRef(null);
   const recRef = useRef(null);
@@ -142,7 +155,7 @@ export default function HifzLiveView() {
   const selAyah = target ? target.ayah : pageAyah;
   const juz = juzOf(pageNo);
 
-  useEffect(() => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ page: pageNo, hide, auto })); } catch (e) { /* storage blocked */ } }, [pageNo, hide, auto]);
+  useEffect(() => { try { localStorage.setItem(PREF_KEY, JSON.stringify({ page: pageNo, hide, auto, fs })); } catch (e) { /* storage blocked */ } }, [pageNo, hide, auto, fs]);
 
   // ---- session control ----
   const stopRec = useCallback((hard) => {
@@ -207,7 +220,7 @@ export default function HifzLiveView() {
   // toolbar sits under the cabinet's sticky top bar: measure it so the two never overlap
   const [barH, setBarH] = useState(64);
   useEffect(() => {
-    const measure = () => { const tb = document.querySelector('.topbar'); setBarH(tb ? Math.round(tb.getBoundingClientRect().height) : 0); };
+    const measure = () => { const tb = document.querySelector('.topbar, .ua-bar'); const pos = tb ? getComputedStyle(tb).position : ''; setBarH(tb && (pos === 'sticky' || pos === 'fixed') ? Math.round(tb.getBoundingClientRect().height) : 0); };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
@@ -239,6 +252,19 @@ export default function HifzLiveView() {
     navigator.wakeLock.request('screen').then((l) => { if (gone) l.release().catch(() => {}); else lock = l; }).catch(() => {});
     return () => { gone = true; if (lock) lock.release().catch(() => {}); };
   }, [phase]);
+
+  // reading mode of the app: the tab bar steps aside so the dock and the page own the screen
+  useEffect(() => { document.body.classList.add('ua-hifz-open'); return () => document.body.classList.remove('ua-hifz-open'); }, []);
+  useEffect(() => { setSumOpen(true); }, [pageNo, phase]);
+
+  function onTouchStart(e) { const t0 = e.touches && e.touches[0]; touchRef.current = t0 ? { x: t0.clientX, y: t0.clientY } : null; }
+  function onTouchEnd(e) {   // swipe to turn the page (left to right = next, like turning a mushaf page); not while reciting
+    const a = touchRef.current; const t1 = e.changedTouches && e.changedTouches[0];
+    touchRef.current = null;
+    if (!a || !t1 || phase === 'listening') return;
+    const dx = t1.clientX - a.x; const dy = t1.clientY - a.y;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) goPage(dx > 0 ? pageNo + 1 : pageNo - 1);
+  }
 
   function start() {
     const ses = sessionRef.current;
@@ -292,7 +318,14 @@ export default function HifzLiveView() {
     const ses = sessionRef.current;
     if (!ses || !snap) return;
     if (phase === 'idle' && snap.counted === 0) { setSnap(ses.setStart(i)); return; } // choose where to start
-    if (snap.states[i] === 'pending') setSnap(ses.hint(i)); // peek
+    const st = snap.states[i];
+    if ((st === 'wrong' || st === 'near') && pageWords[i]) {   // show what was heard against the right word
+      clearTimeout(peekTimer.current);
+      setPeek({ said: snap.heardMap && snap.heardMap[i], expected: pageWords[i].text, st });
+      peekTimer.current = setTimeout(() => setPeek(null), 5000);
+      return;
+    }
+    if (st === 'pending') setSnap(ses.hint(i)); // peek
   }
   function onMarker(surah, ayah) {
     const ses = sessionRef.current;
@@ -360,103 +393,217 @@ export default function HifzLiveView() {
   flush();
 
   return (
-    <div className="hl-wrap" ref={rootRef} style={{ '--hl-top': `${barH}px` }}>
-      {/* ---- compact toolbar ---- */}
-      <div className="hl-top">
-        <div className="hl-where">
-          <select aria-label={t('Surah')} value={selSurah} onChange={(e) => changeSurah(+e.target.value)}>
-            {Array.from({ length: 114 }, (_, i) => <option key={i + 1} value={i + 1}>{surahLabel(i + 1)}</option>)}
-          </select>
-          <select aria-label={t('From ayah')} className="hl-ayah" value={selAyah} onChange={(e) => changeAyah(+e.target.value)}>
-            {Array.from({ length: SURAH_AYAHS[selSurah] }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
-          </select>
-        </div>
-        <div className="hl-pager">
-          <button type="button" className="hl-ic" onClick={() => goPage(pageNo - 1)} disabled={pageNo <= 1} aria-label={t('Previous page')} title={t('Previous page')}><IcPrev /></button>
-          <label className="hl-pg" title={`${t('Page')} (1–${PAGE_COUNT})`}>
-            <input
-              key={pageNo} type="number" inputMode="numeric" min={1} max={PAGE_COUNT} defaultValue={pageNo} aria-label={t('Page')}
-              onKeyDown={(e) => { if (e.key === 'Enter') { goPage(e.currentTarget.value); e.currentTarget.blur(); } }}
-              onBlur={(e) => { if (+e.target.value !== pageNo) goPage(e.target.value); }}
-            />
-            <span>/ {PAGE_COUNT}</span>
-          </label>
-          <button type="button" className="hl-ic" onClick={() => goPage(pageNo + 1)} disabled={pageNo >= PAGE_COUNT} aria-label={t('Next page')} title={t('Next page')}><IcNext /></button>
-        </div>
-        <div className="hl-tools">
-          <div className="hl-seg" role="group" aria-label={t('Mode')}>
-            <button type="button" className={hide ? 'on' : ''} onClick={() => setHide(true)} title={t('Hide text (memorisation)')}>{t('Memorise')}</button>
-            <button type="button" className={!hide ? 'on' : ''} onClick={() => setHide(false)} title={t('Show text (reading)')}>{t('Read')}</button>
-          </div>
-          <button type="button" className={'hl-chip' + (auto ? ' on' : '')} onClick={() => setAuto((a) => !a)} aria-pressed={auto} title={t('Turn to the next page by itself when the last word is recited')}>
-            {t('Auto-turn')}
-          </button>
-        </div>
-      </div>
+    <div className="hl-wrap" ref={rootRef} style={{ '--hl-top': `${barH}px`, '--hl-fs': fs }}>
+      {/* ---- header: where am I (tap to change), memorise / read, settings ---- */}
+      <header className="hl-bar">
+        <button type="button" className="hl-title" onClick={() => setSheet('where')} aria-haspopup="dialog">
+          <b dir="auto">{[...new Set(segments.map((sg) => sg.surah))].map((n) => SURAH_NAMES[n - 1]).join(' · ')}</b>
+          <small>{t('Juz')} {juz} · {t('Page')} {pageNo} · {hide ? t('Memorise') : t('Read')}</small>
+          <IcChev />
+        </button>
+        <button type="button" className={'hl-ic' + (hide ? ' on' : '')} onClick={() => setHide((h) => !h)} aria-pressed={hide}
+                aria-label={hide ? t('Show text (reading)') : t('Hide text (memorisation)')} title={hide ? t('Show text (reading)') : t('Hide text (memorisation)')}>
+          {hide ? <IcEyeOff /> : <IcEye />}
+        </button>
+        <button type="button" className="hl-ic" onClick={() => setSheet('settings')} aria-label={t('Settings')} title={t('Settings')}><IcGear /></button>
+      </header>
       <div className="hl-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{ width: `${progress}%` }} /></div>
 
       {loadErr && <p className="hifz-err">{t('The Qur’an text is not available yet. Tell your teacher.')}</p>}
-      {!flat && !loadErr && <p className="hifz-sub">{t('Loading…')}</p>}
+      {!flat && !loadErr && <div className="hl-skel" aria-busy="true"><i /><i /><i /><i /><i /></div>}
 
       {flat && (
-        <article onClick={onPageClick} className={'hl-mushaf' + (turnDir > 0 ? ' turn-fwd' : turnDir < 0 ? ' turn-back' : '')} key={pageNo}>
+        <article onClick={onPageClick} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+                 className={'hl-mushaf' + (turnDir > 0 ? ' turn-fwd' : turnDir < 0 ? ' turn-back' : '')} key={pageNo}>
+          <span className="hl-corner tl" aria-hidden="true" /><span className="hl-corner tr" aria-hidden="true" />
+          <span className="hl-corner bl" aria-hidden="true" /><span className="hl-corner br" aria-hidden="true" />
           <div className="hl-mushaf-head">
             <span>{t('Juz')} {juz}</span>
             <span>{[...new Set(segments.map((sg) => sg.surah))].map((n) => SURAH_NAMES[n - 1]).join(' · ')}</span>
-            <span>{t('Page')} {pageNo}</span>
           </div>
           {blocks}
-          <div className="hl-folio">{arDigits(pageNo)}</div>
+          <div className="hl-folio"><span>{arDigits(pageNo)}</span></div>
         </article>
       )}
 
-      {flat && showSummary && snap && (
-        <div className="hl-summary">
-          <div className="hl-sum-head">
-            <div className="hifz-score">{snap.score}<small>%</small></div>
-            <div>
-              <strong>{snap.done ? t('Page complete') : t('Stopped')}</strong>
-              <p className="hifz-sub" style={{ margin: '2px 0 0' }}>
-                {t('Correct')}: {counts.correct} · {t('Doubtful')}: {counts.near} · {t('Wrong')}: {counts.wrong} · {t('Missed')}: {counts.missing} · {t('Hints')}: {counts.hint}
-              </p>
-            </div>
-            {snap.done && pageNo < PAGE_COUNT && (
-              <button type="button" className="hifz-btn hl-sum-next" onClick={() => goPage(pageNo + 1)}>{t('Next page')}{' ›'}</button>
-            )}
-          </div>
-          <div className="hifz-legend">
-            <span className="hl-key hl-key-correct">{STATUS_LABEL.correct}</span><span className="hl-key hl-key-near">{STATUS_LABEL.near}</span>
-            <span className="hl-key hl-key-wrong">{STATUS_LABEL.wrong}</span><span className="hl-key hl-key-missing">{STATUS_LABEL.missing}</span>
-            <span className="hl-key hl-key-hint">{STATUS_LABEL.hint}</span>
-          </div>
-          <p className="hifz-note">{t('The live check uses your browser’s speech recognition and can mishear. A doubtful word may be recognition noise — your teacher gives the final grade.')}</p>
-        </div>
-      )}
       {flat && !listening && !started && (
         <p className="hl-tip">{t('Tap a word to start from it — the words before it are not counted. Tap a hidden word later to peek at it (counts as a hint).')}</p>
       )}
 
-      {/* ---- floating dock: one big microphone button ---- */}
+      {/* ---- bottom dock: the big microphone, hint, restart, page arrows ---- */}
       {flat && (
         <div className={'hl-dock' + (listening ? ' live' : '')}>
           {toast && <div className="hl-toast" role="status"><IcCheck /> {t('Page complete')} · {toast.page} · {toast.score}%</div>}
+          {err && <p className="hl-err">{err}</p>}
+          {peek && (
+            <div className={'hl-peek ' + peek.st} role="status" onClick={() => setPeek(null)}>
+              <span><small>{t('Correct')}</small><b dir="rtl" lang="ar">{peek.expected}</b></span>
+              <span><small>{t('You said')}</small><b dir="rtl" lang="ar">{peek.said || '—'}</b></span>
+            </div>
+          )}
           {listening && (
             <div className="hl-live" role="status">
-              <span className="hl-dot" />
+              <span className="hl-wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>
               <span className="hl-heard" dir="rtl" lang="ar" title={t('What the microphone hears')}>{heard || t('Listening… recite now')}</span>
             </div>
           )}
-          {err && <p className="hl-err">{err}</p>}
+          {showSummary && snap && sumOpen && (
+            <div className={'hl-result' + (snap.done ? ' done' : '')} role="status">
+              <button type="button" className="hl-result-x" onClick={() => setSumOpen(false)} aria-label={t('Close')}><IcX /></button>
+              <div className="hl-ring" style={{ '--p': snap.score }}>
+                <svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" className="bg" /><circle cx="40" cy="40" r="34" className="fg" pathLength="100" /></svg>
+                <b>{snap.score}<small>%</small></b>
+              </div>
+              <div className="hl-result-t">
+                <strong>{snap.done ? t('Page complete') : t('Stopped')}</strong>
+                <div className="hl-chips">
+                  <span className="hl-key hl-key-correct" title={STATUS_LABEL.correct}>{counts.correct}</span>
+                  <span className="hl-key hl-key-near" title={STATUS_LABEL.near}>{counts.near}</span>
+                  <span className="hl-key hl-key-wrong" title={STATUS_LABEL.wrong}>{counts.wrong}</span>
+                  <span className="hl-key hl-key-missing" title={STATUS_LABEL.missing}>{counts.missing}</span>
+                  <span className="hl-key hl-key-hint" title={STATUS_LABEL.hint}>{counts.hint}</span>
+                </div>
+                <small>{STATUS_LABEL.correct} · {STATUS_LABEL.near} · {STATUS_LABEL.wrong} · {STATUS_LABEL.missing} · {STATUS_LABEL.hint}</small>
+              </div>
+              <div className="hl-result-act">
+                <button type="button" className="hl-btn ghost" onClick={() => { setSumOpen(false); restart(); }}>{t('Start over')}</button>
+                {snap.done && pageNo < PAGE_COUNT && <button type="button" className="hl-btn" onClick={() => goPage(pageNo + 1)}>{t('Next page')}{' ›'}</button>}
+              </div>
+              <p className="hl-note">{t('The live check uses your browser’s speech recognition and can mishear. A doubtful word may be recognition noise — your teacher gives the final grade.')}</p>
+            </div>
+          )}
           <div className="hl-dock-row">
+            <button type="button" className="hl-ic round" onClick={() => goPage(pageNo - 1)} disabled={pageNo <= 1} aria-label={t('Previous page')} title={t('Previous page')}><IcPrev /></button>
             <button type="button" className="hl-ic round" onClick={hint} disabled={!snap || !hide || (snap && snap.done)} aria-label={t('Hint')} title={t('Hint')}><IcBulb /></button>
             <button type="button" className={'hl-mic' + (listening ? ' on' : '')} onClick={toggleMic} disabled={!listening && !!(snap && snap.done)} aria-label={listening ? t("I'm done") : started ? t('Continue') : t('Start reciting')} title={listening ? t("I'm done") : started ? t('Continue') : t('Start reciting')}>
+              <span className="hl-ring-a" aria-hidden="true" /><span className="hl-ring-b" aria-hidden="true" />
               {listening ? <IcStop /> : <IcMic />}
             </button>
             <button type="button" className="hl-ic round" onClick={restart} disabled={!started && !listening} aria-label={t('Start over')} title={t('Start over')}><IcRestart /></button>
+            <button type="button" className="hl-ic round" onClick={() => goPage(pageNo + 1)} disabled={pageNo >= PAGE_COUNT} aria-label={t('Next page')} title={t('Next page')}><IcNext /></button>
           </div>
         </div>
       )}
+
+      <WhereSheet open={sheet === 'where'} onClose={() => setSheet(null)} t={t} selSurah={selSurah} selAyah={selAyah} pageNo={pageNo}
+                  onJump={(su, ay) => { setSheet(null); jumpTo(su, ay); }} onPage={(p) => { setSheet(null); goPage(p); }} />
+      <SettingsSheet open={sheet === 'settings'} onClose={() => setSheet(null)} t={t} auto={auto} setAuto={setAuto} fs={fs} setFs={setFs} hide={hide} setHide={setHide} />
     </div>
   );
+}
 
+/* ------------------------------------------------------------------ sheets ---- */
+function SheetShell({ open, onClose, title, children }) {
+  const [shown, setShown] = useState(false);
+  const [mounted, setMounted] = useState(open);
+  useEffect(() => {
+    if (open) { setMounted(true); const id = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(id); }
+    setShown(false); const tm = setTimeout(() => setMounted(false), 240); return () => clearTimeout(tm);
+  }, [open]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const k = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [open, onClose]);
+  if (!mounted) return null;
+  return createPortal(
+    <div className={'hl-sheet-ov' + (shown ? ' show' : '')} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="hl-sheet" role="dialog" aria-modal="true" aria-label={title}>
+        <span className="hl-grab" aria-hidden="true" />
+        <div className="hl-sheet-h"><h3>{title}</h3><button type="button" className="hl-ic" onClick={onClose} aria-label="Close"><IcX /></button></div>
+        <div className="hl-sheet-b">{children}</div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/** Surah / ayah, juz or page: one bottom sheet instead of three drop-downs. */
+function WhereSheet({ open, onClose, t, selSurah, selAyah, pageNo, onJump, onPage }) {
+  const [tab, setTab] = useState('surah');
+  const [q, setQ] = useState('');
+  const [picked, setPicked] = useState(null);   // surah chosen, now choosing the ayah
+  const [pg, setPg] = useState(String(pageNo));
+  useEffect(() => { if (open) { setTab('surah'); setQ(''); setPicked(null); setPg(String(pageNo)); } }, [open, pageNo]);
+  const list = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return Array.from({ length: 114 }, (_, i) => i + 1).filter((n) => !s || String(n) === s || SURAH_NAMES[n - 1].toLowerCase().includes(s));
+  }, [q]);
+  return (
+    <SheetShell open={open} onClose={onClose} title={picked ? SURAH_NAMES[picked - 1] : t('Go to')}>
+      {!picked && (
+        <div className="hl-tabs" role="tablist">
+          {[['surah', t('Surah')], ['juz', t('Juz')], ['page', t('Page')]].map(([k, l]) => (
+            <button type="button" role="tab" aria-selected={tab === k} key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+          ))}
+        </div>
+      )}
+      {!picked && tab === 'surah' && (
+        <>
+          <label className="hl-search"><IcSearch /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search surah…')} aria-label={t('Search surah…')} /></label>
+          <div className="hl-list">
+            {list.map((n) => (
+              <button type="button" key={n} className={'hl-row' + (n === selSurah ? ' on' : '')} onClick={() => setPicked(n)}>
+                <span className="hl-num">{n}</span><span className="hl-row-t">{SURAH_NAMES[n - 1]}</span><small>{SURAH_AYAHS[n]} {t('Ayah')}</small>
+              </button>
+            ))}
+            {list.length === 0 && <p className="hifz-sub">{t('No results')}</p>}
+          </div>
+        </>
+      )}
+      {picked && (
+        <>
+          <button type="button" className="hl-btn wide" onClick={() => onJump(picked, 1)}>{t('From the beginning')}</button>
+          <p className="hifz-sub" style={{ margin: '12px 2px 6px' }}>{t('From ayah')}</p>
+          <div className="hl-ayahs">
+            {Array.from({ length: SURAH_AYAHS[picked] }, (_, i) => i + 1).map((a) => (
+              <button type="button" key={a} className={picked === selSurah && a === selAyah ? 'on' : ''} onClick={() => onJump(picked, a)}>{a}</button>
+            ))}
+          </div>
+          <button type="button" className="hl-btn ghost wide" onClick={() => setPicked(null)}>{'‹ '}{t('Surah')}</button>
+        </>
+      )}
+      {!picked && tab === 'juz' && (
+        <div className="hl-juz">
+          {JUZ_STARTS.map(([su, ay], i) => (
+            <button type="button" key={i} onClick={() => onJump(su, ay)}><b>{i + 1}</b><small>{SURAH_NAMES[su - 1]}</small></button>
+          ))}
+        </div>
+      )}
+      {!picked && tab === 'page' && (
+        <form className="hl-pageform" onSubmit={(e) => { e.preventDefault(); onPage(pg); }}>
+          <input type="number" inputMode="numeric" min={1} max={PAGE_COUNT} value={pg} onChange={(e) => setPg(e.target.value)} aria-label={t('Page')} />
+          <span>/ {PAGE_COUNT}</span>
+          <button type="submit" className="hl-btn">{t('Go')}</button>
+        </form>
+      )}
+    </SheetShell>
+  );
+}
+
+function SettingsSheet({ open, onClose, t, auto, setAuto, fs, setFs, hide, setHide }) {
+  return (
+    <SheetShell open={open} onClose={onClose} title={t('Settings')}>
+      <div className="hl-set">
+        <div className="hl-set-row">
+          <div><b>{t('Mode')}</b><small>{hide ? t('Hide text (memorisation)') : t('Show text (reading)')}</small></div>
+          <div className="hl-seg" role="group" aria-label={t('Mode')}>
+            <button type="button" className={hide ? 'on' : ''} onClick={() => setHide(true)}>{t('Memorise')}</button>
+            <button type="button" className={!hide ? 'on' : ''} onClick={() => setHide(false)}>{t('Read')}</button>
+          </div>
+        </div>
+        <div className="hl-set-row">
+          <div><b>{t('Auto-turn')}</b><small>{t('Turn to the next page by itself when the last word is recited')}</small></div>
+          <button type="button" role="switch" aria-checked={auto} className={'hl-switch' + (auto ? ' on' : '')} onClick={() => setAuto((a) => !a)}><i /></button>
+        </div>
+        <div className="hl-set-row col">
+          <div><b>{t('Text size')}</b></div>
+          <div className="hl-size"><span style={{ fontSize: 14 }}>أ</span>
+            <input type="range" min="0.8" max="1.4" step="0.05" value={fs} onChange={(e) => setFs(+e.target.value)} aria-label={t('Text size')} />
+            <span style={{ fontSize: 24 }}>أ</span></div>
+        </div>
+      </div>
+    </SheetShell>
+  );
 }
