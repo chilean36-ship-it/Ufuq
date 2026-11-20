@@ -5,7 +5,7 @@ import {
   getVoiceProvider, readSavedVoiceLang, stripForSpeech, voiceBcp, voiceLabel,
 } from './voiceAdapter';
 import { I } from './icons';
-import { releaseMic } from '../../../lib/serverStt';
+import { holdMic, muteMic, releaseMic } from '../../../lib/serverStt';
 import { stopSpeaking } from '../../../lib/speak';
 
 const MAX_SILENT_ROUNDS = 3; // after this many empty listening rounds we wait for a tap instead of looping forever
@@ -79,7 +79,8 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
     listenRef.current = prov.listen({
       lang: voiceBcp(vlangRef.current),   // only the fallback recogniser needs it
       auto: true,                         // the server recogniser works out the spoken language by itself
-      endSilenceMs: 650,                         // quick turn-taking, like a call
+      endSilenceMs: 420,                         // quick turn-taking, like a call
+      onSpeechEnd: () => { if (token === tokenRef.current) setPhaseBoth('thinking'); },   // switch to "thinking" the moment the person stops
       preheard: !!(opts && opts.bargeIn),        // the person interrupted: they are already talking
       onInterim: (txt) => { if (token === tokenRef.current) { bumpRef.current = 1; userTextRef.current = txt; setUserText(txt); } },
       onLevel: (lv) => { if (token === tokenRef.current) { levelRef.current = Math.max(levelRef.current, lv); if (lv > 0.15) bumpRef.current = 1; } },
@@ -190,9 +191,9 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
         if (phaseRef.current === 'listening') setPhaseBoth('idle');
       }
       if (watchRef.current) { watchRef.current.stop(); watchRef.current = null; }
-      releaseMic();
-      if (orbMicRef.current) { orbMicRef.current(); }
+      muteMic(true);   // the microphone only stops delivering sound; the answer being spoken goes on untouched
     } else {
+      muteMic(false);
       silenceRef.current = 0;
       if (limitRef.current) return;
       if (phaseRef.current === 'idle' || phaseRef.current === 'listening') api.current.startListening();   // speaking / thinking: it listens when the answer ends
@@ -202,6 +203,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
   // Start / tear down.
   useEffect(() => {
     aliveRef.current = true;
+    holdMic(true);   // the microphone stays open for the whole call
     let usedToday = false;
     try { usedToday = localStorage.getItem(LIMIT_KEY) === new Date().toISOString().slice(0, 10); } catch (e) { /* ignore */ }
     if (usedToday) { limitRef.current = true; setProblem('limit'); }   // already ended earlier today (the server also enforces it)
@@ -213,6 +215,7 @@ export default function VoiceMode({ uiLang, tr, getHistory, onTurn, onClose, sys
       killListen();
       killSpeech();
       killRequest();
+      holdMic(false);
       releaseMic();   // leaving the voice screen turns the microphone off at once
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

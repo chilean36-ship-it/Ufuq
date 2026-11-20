@@ -68,6 +68,19 @@ async function transcribe(samples, lang) {
 const IDLE_RELEASE_MS = 25000;
 let sharedMic = null;   // { stream, ctx }
 let idleTimer = null;
+let holdOpen = false;   // live call: keep the microphone open for the whole conversation (stopping it mid-call interrupts the answer being spoken)
+let micMuted = false;
+
+/** Live voice screen: keep the microphone stream open until the screen closes. */
+export function holdMic(on) {
+  holdOpen = !!on;
+  if (holdOpen) { clearTimeout(idleTimer); idleTimer = null; } else { micMuted = false; scheduleRelease(); }
+}
+/** Mute / unmute without tearing anything down: the tracks only stop delivering sound. */
+export function muteMic(on) {
+  micMuted = !!on;
+  if (sharedMic && sharedMic.stream) { try { sharedMic.stream.getAudioTracks().forEach((t) => { t.enabled = !micMuted; }); } catch (e) { /* ignore */ } }
+}
 
 function micIsLive(m) {
   return !!(m && m.stream && m.stream.getAudioTracks().some((t) => t.readyState === 'live') && m.ctx && m.ctx.state !== 'closed');
@@ -80,6 +93,7 @@ async function openMic() {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
   const AC = window.AudioContext || window.webkitAudioContext;
   sharedMic = { stream, ctx: new AC() };
+  if (micMuted) { try { stream.getAudioTracks().forEach((t) => { t.enabled = false; }); } catch (e) { /* ignore */ } }
   return sharedMic;
 }
 
@@ -107,12 +121,13 @@ export function releaseMic() {
 
 function scheduleRelease() {
   clearTimeout(idleTimer);
+  if (holdOpen) { idleTimer = null; return; }
   idleTimer = setTimeout(releaseMic, IDLE_RELEASE_MS);
 }
 
 // `raw: true` (used by the Hifz checker): do NOT call ufuq-stt, hand the recorded 16 kHz WAV (base64) to onDone instead.
 // maxMs / noSpeechMs / endSilenceMs let a caller allow longer pauses (a student recalling a verse needs more than a chat turn).
-export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, raw = false, maxMs = MAX_MS, noSpeechMs = NO_SPEECH_MS, endSilenceMs = END_SILENCE_MS, preheard = false }) {
+export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, onSpeechEnd, raw = false, maxMs = MAX_MS, noSpeechMs = NO_SPEECH_MS, endSilenceMs = END_SILENCE_MS, preheard = false }) {
   let finished = false;
   let silent = false;
   let ctx = null;
@@ -128,6 +143,7 @@ export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, r
   let heard = !!preheard;
   if (preheard) speechMs = 400;
   let stopping = false;
+  let voiceLevel = 0;   // running loudness of the person's own voice: the end of speech is judged against it, so steady room noise does not keep the turn open
 
   const cleanup = () => {
     try { if (proc) { proc.onaudioprocess = null; proc.disconnect(); } } catch (e) { /* ignore */ }
@@ -143,6 +159,7 @@ export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, r
     cleanup();
     if (silent) { finished = true; return; }
     if (!heard || speechMs < MIN_SPEECH_MS) { if (onError && !silent) onError('no-speech'); done(''); return; }
+    if (onSpeechEnd && !silent) { try { onSpeechEnd(); } catch (e) { /* ignore */ } }   // the person finished: the screen can show "thinking" while the clip is transcribed
     let total = 0;
     chunks.forEach((c) => { total += c.length; });
     const merged = new Float32Array(total);
@@ -175,7 +192,7 @@ export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, r
     ctx = sharedMic.ctx;
     rate = ctx.sampleRate;
     src = ctx.createMediaStreamSource(sharedMic.stream);
-    proc = ctx.createScriptProcessor(4096, 1, 1);
+    proc = ctx.createScriptProcessor(2048, 1, 1);
     proc.onaudioprocess = (e) => {
       if (finished || stopping) return;
       const input = e.inputBuffer.getChannelData(0);
@@ -186,8 +203,8 @@ export function serverListen({ lang = 'uz', onStart, onLevel, onError, onDone, r
       totalMs += frameMs;
       if (onLevel) onLevel(Math.min(1, rms * 8));
       if (calibrating > 0) { calibrating -= frameMs; noise = Math.max(noise * 0.6 + rms * 0.4, 0.004); chunks.push(new Float32Array(input)); return; }
-      const speaking = rms > Math.max(0.018, noise * 3.2);
-      if (speaking) { heard = true; speechMs += frameMs; silenceMs = 0; } else if (heard) { silenceMs += frameMs; }
+      const speaking = rms > Math.max(0.018, noise * 3.2, voiceLevel * 0.3);
+      if (speaking) { heard = true; speechMs += frameMs; silenceMs = 0; voiceLevel = voiceLevel ? voiceLevel * 0.85 + rms * 0.15 : rms; } else if (heard) { silenceMs += frameMs; }
       if (heard || chunks.length < 6) chunks.push(new Float32Array(input)); // keep a little lead-in before speech starts
       else { chunks.push(new Float32Array(input)); if (chunks.length > 8) chunks.shift(); }
       if (heard && silenceMs >= endSilenceMs) finishRecording();

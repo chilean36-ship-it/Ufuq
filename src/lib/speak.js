@@ -115,7 +115,7 @@ function toSpeechSegments(text, defaultLang) {
     let rest = seg.text.trim();
     if (!rest) return;
     if (out.length === 0) {
-      const head = chunkText(rest, 90);
+      const head = chunkText(rest, 64);
       out.push({ lang: seg.lang, text: head[0] });
       rest = head.slice(1).join(' ');
     }
@@ -204,6 +204,8 @@ function playBlob(blob, onTick) {
     const clear = () => { if (tick) clearInterval(tick); };
     audio.onended = () => { clear(); resolve(); };
     audio.onerror = (e) => { clear(); reject(e); };
+    // the phone may pause the clip by itself (audio focus changes while the microphone is on): carry on instead of hanging
+    audio.onpause = () => { if (currentAudio === audio && !audio.ended && audio.src) setTimeout(() => { if (currentAudio === audio && audio.paused && !audio.ended) audio.play().catch(() => {}); }, 120); };
     audio.play().catch((e) => { clear(); reject(e); });
   });
 }
